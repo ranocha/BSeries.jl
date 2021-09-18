@@ -127,11 +127,13 @@ function modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVect
   # Recursively solve `substitute(series, series_ex, t) == series_rk[t]`.
   # This works because
   #   substitute(series, series_ex, t) = series[t] + lower order terms
-  for o in 2:order
-    for _t in RootedTreeIterator(o)
-      t = copy(_t)
-      series[t] += series_rk[t] - substitute(series, series_ex, t)
-    end
+  # Since the `keys` are ordered, we don't need to use nested loops of the form
+  #   for o in 2:order
+  #     for _t in RootedTreeIterator(o)
+  #       t = copy(_t)
+  # which are slightly less efficient due to additional computations and allocations.
+  for t in keys(series)
+    series[t] += series_rk[t] - substitute(series, series_ex, t)
   end
 
   return series
@@ -180,11 +182,13 @@ function modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractV
   # Recursively solve `substitute(series, series_rk, t) == series_ex[t]`.
   # This works because
   #   substitute(series, series_rk, t) = series[t] + lower order terms
-  for o in 2:order
-    for _t in RootedTreeIterator(o)
-      t = copy(_t)
-      series[t] += series_ex[t] - substitute(series, series_rk, t)
-    end
+  # Since the `keys` are ordered, we don't need to use nested loops of the form
+  #   for o in 2:order
+  #     for _t in RootedTreeIterator(o)
+  #       t = copy(_t)
+  # which are slightly less efficient due to additional computations and allocations.
+  for t in keys(series)
+    series[t] += series_ex[t] - substitute(series, series_rk, t)
   end
 
   return series
