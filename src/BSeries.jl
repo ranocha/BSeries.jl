@@ -10,7 +10,7 @@ using RootedTrees: RootedTree
 
 export bseries, substitute
 
-export modified_equation
+export modified_equation, modifying_integrator
 
 
 """
@@ -96,6 +96,10 @@ Given an ordinary differential equation (ODE) ``u'(t) = f(u(t))`` and a
 Runge-Kutta method, the idea is to interpret the numerical solution with
 given time step size as exact solution of a modified ODE ``u'(t) = fₕ(u(t))``.
 
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be multiplied
+    by the corresponding elementary differential of the input vector field ``f``.
+
 See Section 3.2 of
 - Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
   Algebraic Structures of B-series
@@ -127,6 +131,59 @@ function modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVect
     for _t in RootedTreeIterator(o)
       t = copy(_t)
       series[t] += series_rk[t] - substitute(series, series_ex, t)
+    end
+  end
+
+  return series
+end
+
+
+"""
+    modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
+
+Compute the B-series of a "modifying integrator" equation of the Runge-Kutta
+method with Butcher coefficients `A, b, c` up to the prescribed `order`.
+
+Given an ordinary differential equation (ODE) ``u'(t) = f(u(t))`` and a
+Runge-Kutta method, the idea is to find a modified ODE ``u'(t) = fₕ(u(t))``
+such that the numerical solution with given time step size is the exact solution
+of the original ODE.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be multiplied
+    by the corresponding elementary differential of the input vector field ``f``.
+
+See Section 3.2 of
+- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
+  Algebraic Structures of B-series
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+"""
+function modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                              order)
+  # B-series of the Runge-Kutta method
+  series_rk = bseries(A, b, c, order)
+
+  # B-series of the exact solution
+  T = eltype(values(series_rk))
+  series_ex = ExactSolution{T}()
+
+  # Prepare B-series of the modifying integrator equation
+  series = empty(series_rk)
+  for t in keys(series_rk)
+    series[t] = zero(T)
+  end
+
+  t = rootedtree([1])
+  series[t] = series_rk[t]
+
+  # Recursively solve `substitute(series, series_rk, t) == series_ex[t]`.
+  # This works because
+  #   substitute(series, series_rk, t) = series[t] + lower order terms
+  for o in 2:order
+    for _t in RootedTreeIterator(o)
+      t = copy(_t)
+      series[t] += series_ex[t] - substitute(series, series_rk, t)
     end
   end
 
