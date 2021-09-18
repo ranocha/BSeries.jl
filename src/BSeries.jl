@@ -13,6 +13,14 @@ export bseries, substitute
 export modified_equation, modifying_integrator
 
 
+# This is a dirty workaround until the performance bugfix
+# https://github.com/JuliaLang/julia/pull/42300
+# is merged
+@static if v"1.6" <= VERSION < v"1.8"
+  Base.hastypemax(::Type{Bool}) = true
+end
+
+
 """
     substitute(b, a, t::RootedTree)
 
