@@ -78,6 +78,7 @@ end
   @test series[t58] ≈ -0.0583333333333333   atol=10*eps()
   @test series[t59] ≈ -0.0500000000000000   atol=10*eps()
 
+
   # SSPRK(3, 3)
   A = @SArray [0.0 0.0 0.0;
                1.0 0.0 0.0;
@@ -87,6 +88,7 @@ end
   order = 5
   series = modified_equation(A, b, c, order)
 
+  # tested with the python package BSeries
   @test series[t1 ] ≈ 1.0                  atol=10*eps()
   @test series[t2 ] ≈ 0                    atol=10*eps()
   @test series[t31] ≈ 0                    atol=10*eps()
@@ -104,4 +106,31 @@ end
   @test series[t57] ≈ -0.0250000000000000  atol=10*eps()
   @test series[t58] ≈ -0.0166666666666667  atol=10*eps()
   @test series[t59] ≈ 0.0333333333333333   atol=10*eps()
+
+
+  # Explicit midpoint method (Runge's method)
+  A = @SArray [0 0; 1//2 0]
+  b = @SArray [0, 1//1]
+  c = @SArray [0, 1//2]
+  order = 5
+  series = modified_equation(A, b, c, order)
+
+  # tested with the python package BSeries
+  @test series[t1 ] == 1
+  @test series[t2 ] == 0
+  @test series[t31] == -1//12
+  @test series[t32] == -1//6
+  @test series[t41] == 0
+  @test series[t42] == 0
+  @test series[t43] == 1//8
+  @test series[t44] == 1//8
+  @test series[t51] == 7//240
+  @test series[t52] == 1//40
+  @test series[t55] == 1//30
+  @test series[t53] == 3//80
+  @test series[t56] == -7//240
+  @test series[t54] == 7//240
+  @test series[t57] == -1//40
+  @test series[t58] == -19//240
+  @test series[t59] == -1//20
 end
