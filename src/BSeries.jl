@@ -28,10 +28,9 @@ Compute the coefficient correspoding to the tree `t` of the B-series that is
 formed by substituting the B-series `b` into the B-series `a`.
 """
 function substitute(b, a, t::RootedTree)
-  forests, skeletons = all_partitions(t)
   result = zero(first(values(a)) * first(values(b)))
 
-  for (forest, skeleton) in zip(forests, skeletons)
+  for (forest, skeleton) in PartitionIterator(t)
     result += reduce(*, b[tree] for tree in forest) * a[skeleton]
   end
 
