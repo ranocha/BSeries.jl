@@ -2,7 +2,7 @@ using Test
 using BSeries
 
 using StaticArrays: @SArray
-using Symbolics: Symbolics, @variables, Num
+using Symbolics: Symbolics, @variables, Num, expand
 
 
 @testset "BSeries" begin
@@ -68,7 +68,7 @@ end
     order = 5
     series = modified_equation(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] ≈ 1.0                   atol=10*eps()
     @test series[t2 ] ≈ 0                     atol=10*eps()
     @test series[t31] ≈ 0.166666666666667     atol=10*eps()
@@ -98,7 +98,7 @@ end
     order = 5
     series = modified_equation(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] ≈ 1.0                  atol=10*eps()
     @test series[t2 ] ≈ 0                    atol=10*eps()
     @test series[t31] ≈ 0                    atol=10*eps()
@@ -126,7 +126,7 @@ end
     order = 5
     series = modified_equation(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] == 1
     @test series[t2 ] == 0
     @test series[t31] == -1//12
@@ -145,6 +145,43 @@ end
     @test series[t58] == -19//240
     @test series[t59] == -1//20
   end
+end
+
+
+@testset "modified_equation with elementary differentials" begin
+  # Lotka-Volterra model
+  @variables dt
+  u = @variables p q
+  f = [p * (2 - q), q * (p - 1)]
+
+  # Explicit Euler method
+  A = @SArray [0//1;]
+  b = @SArray [1//1]
+  c = @SArray [0//1]
+
+  # tested with the Python package BSeries
+  series2 = modified_equation(f, u, dt, A, b, c, 2)
+  series2_reference = [
+    -dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
+    -dt*( p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
+  ]
+  @test mapreduce(isequal, &, series2, series2_reference)
+
+  # tested with the Python package BSeries
+  series3 = modified_equation(f, u, dt, A, b, c, 3)
+  series3_reference = [
+    -dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p^2*q*(2 - q) - p*q*(2 - q)*(p - 1) - p*q*(p - 1)^2 + p*(2 - q)^3)/3 - dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
+    dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p*q^2*(p - 1) + p*q*(2 - q)^2 + p*q*(2 - q)*(p - 1) + q*(p - 1)^3)/3 - dt*(p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
+  ]
+  @test mapreduce(iszero ∘ expand, &, series3 - series3_reference)
+
+  # tested with the Python package BSeries
+  series4 = modified_equation(f, u, dt, A, b, c, 4)
+  series4_reference = [
+    -dt^3*(-2*p^2*q*(2 - q)*(p - 1) + 2*p*q*(2 - q)*(p - 1)*(q - 2))/12 - dt^3*(-p^2*q*(2 - q)^2 + p*q^2*(p - 1)^2 + p*q*(1 - p)*(2 - q)*(p - 1) + p*q*(2 - q)*(p - 1)*(q - 2))/12 - dt^3*(p^2*q^2*(p - 1) - 2*p^2*q*(2 - q)^2 - p^2*q*(2 - q)*(p - 1) - p*q*(2 - q)^2*(p - 1) - p*q*(2 - q)*(p - 1)^2 - p*q*(p - 1)^3 + p*(2 - q)^4)/4 - dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p^2*q*(2 - q) - p*q*(2 - q)*(p - 1) - p*q*(p - 1)^2 + p*(2 - q)^3)/3 - dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
+      -dt^3*(-2*p*q^2*(2 - q)*(p - 1) + 2*p*q*(2 - q)*(p - 1)^2)/12 - dt^3*(p^2*q*(2 - q)^2 - p*q^2*(p - 1)^2 + p*q*(2 - q)^2*(p - 1) + p*q*(2 - q)*(p - 1)^2)/12 - dt^3*(-p^2*q^2*(2 - q) - p*q^2*(2 - q)*(p - 1) - 2*p*q^2*(p - 1)^2 + p*q*(2 - q)^3 + p*q*(2 - q)^2*(p - 1) + p*q*(2 - q)*(p - 1)^2 + q*(p - 1)^4)/4 + dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p*q^2*(p - 1) + p*q*(2 - q)^2 + p*q*(2 - q)*(p - 1) + q*(p - 1)^3)/3 - dt*(p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
+  ]
+  @test mapreduce(iszero ∘ expand, &, series4 - series4_reference)
 end
 
 
@@ -175,7 +212,7 @@ end
     order = 5
     series = modifying_integrator(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] ≈ 1                    atol=10*eps()
     @test series[t2 ] ≈ 0                    atol=10*eps()
     @test series[t31] ≈ -0.166666666666667   atol=10*eps()
@@ -205,7 +242,7 @@ end
     order = 5
     series = modifying_integrator(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] ≈ 1                    atol=10*eps()
     @test series[t2 ] ≈ 0                    atol=10*eps()
     @test series[t31] ≈ 0                    atol=10*eps()
@@ -233,7 +270,7 @@ end
     order = 5
     series = modifying_integrator(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] == 1
     @test series[t2 ] == 0
     @test series[t31] == 1//12
@@ -251,6 +288,49 @@ end
     @test series[t57] == 13//120
     @test series[t58] == 13//80
     @test series[t59] == 2//15
+  end
+end
+
+
+@testset "modifying_integrator with elementary differentials" begin
+  @variables dt
+  @variables α β γ
+  u = @variables u1 u2 u3
+  f = [α*u[2]*u[3], β*u[3]*u[1], γ*u[1]*u[2]]
+
+  # Implicit midpoint method
+  A = @SArray [1//2;]
+  b = @SArray [1//1]
+  c = @SArray [1//2]
+
+  # See eq. (12) of
+  # - Philippe Chartier, Ernst Hairer and Gilles Vilmart (2007)
+  #   Numerical integrators based on modified differential equations
+  #   [DOI: 10.1090/S0025-5718-07-01967-9](https://doi.org/10.1090/S0025-5718-07-01967-9)
+
+  series = modifying_integrator(f, u, dt, A, b, c, 5)
+  # Dirty workaround since there is no way to get the polynomial coefficients
+  # in Symbolics.jl at the moment, see
+  # https://github.com/JuliaSymbolics/Symbolics.jl/issues/216
+  # We differentiate the expression and set `dt` to zero to get the corresponding
+  # coefficient divided by factorial(how often we needed to differentiate).
+  d = Symbolics.Differential(dt)
+  s3_reference = -(α * β * u3^2 + α * γ * u2^2 + β * γ * u1^2) / 12
+  for i in eachindex(f)
+    s3 = Symbolics.simplify_fractions(Symbolics.substitute(
+      Symbolics.expand_derivatives(1//2 * d(d((series[i] - f[i]) / f[i]))),
+      dt => 0))
+    @test isequal(s3, s3_reference)
+  end
+
+  s5_reference = 6//5 * s3_reference^2 + 1//60 * α * β * γ * (
+    β * u1^2 * u3^2 + γ * u2^2 * u1^2 + α * u3^2 * u2^2
+  )
+  for i in eachindex(f)
+    s5 = Symbolics.simplify_fractions(Symbolics.substitute(
+      Symbolics.expand_derivatives(1//24 * d(d(d(d((series[i] - f[i]) / f[i]))))),
+      dt => 0))
+    @test iszero(expand(s5 - s5_reference))
   end
 end
 

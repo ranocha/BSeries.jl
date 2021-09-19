@@ -7,16 +7,21 @@ using RootedTrees: RootedTree
 
 @reexport using OrderedCollections: OrderedDict
 
+@reexport using Symbolics: Symbolics, Num
+using Symbolics: Differential, expand_derivatives
+
 
 export bseries, substitute
 
 export modified_equation, modifying_integrator
 
+export elementary_differentials
+
 
 # This is a dirty workaround until the performance bugfix
 # https://github.com/JuliaLang/julia/pull/42300
 # is merged
-@static if v"1.6" <= VERSION < v"1.8"
+@static if v"1.6" <= VERSION < v"1.7.0-rc2"
   Base.hastypemax(::Type{Bool}) = true
 end
 
@@ -148,6 +153,37 @@ end
 
 
 """
+    modified_equation(f, u, dt,
+                      A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
+
+Compute the B-series of the modified equation of the Runge-Kutta method with
+Butcher coefficients `A, b, c` up to the prescribed `order` with respect to
+the ordinary differential equation ``u'(t) = f(u(t))`` with vector field `f`
+and dependent variables `u` for a time step size `dt`.
+
+Here, `u` is assumed to be a vector of variables from Symbolics.jl (`Symbolics.Num`)
+and `f` is assumed to be a vector of expressions in these variables.
+
+See Section 3.2 of
+- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
+  Algebraic Structures of B-series
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+"""
+function modified_equation(f, u, dt,
+                           A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                           order)
+  series = modified_equation(A, b, c, order)
+  differentials = elementary_differentials(f, u, order)
+  result = zero(f)
+  for t in keys(series)
+    result += dt^(RootedTrees.order(t) - 1) / symmetry(t) * series[t] * differentials[t]
+  end
+  result
+end
+
+
+"""
     modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
 
 Compute the B-series of a "modifying integrator" equation of the Runge-Kutta
@@ -199,6 +235,115 @@ function modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractV
   end
 
   return series
+end
+
+
+"""
+    modifying_integrator(f, u, dt,
+                         A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
+
+Compute the B-series of a "modifying integrator" equation of the Runge-Kutta
+method with Butcher coefficients `A, b, c` up to the prescribed `order` with
+respect to the ordinary differential equation ``u'(t) = f(u(t))`` with vector
+field `f` and dependent variables `u` for a time step size `dt`.
+
+Here, `u` is assumed to be a vector of variables from Symbolics.jl (`Symbolics.Num`)
+and `f` is assumed to be a vector of expressions in these variables.
+
+See Section 3.2 of
+- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
+  Algebraic Structures of B-series
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+"""
+function modifying_integrator(f, u, dt,
+                              A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                              order)
+  series = modifying_integrator(A, b, c, order)
+  differentials = elementary_differentials(f, u, order)
+  result = zero(f)
+  for t in keys(series)
+    result += dt^(RootedTrees.order(t) - 1) / symmetry(t) * series[t] * differentials[t]
+  end
+  result
+end
+
+
+
+"""
+    elementary_differentials(f, u, order)
+
+Compute all elementary differentials of the vector field `f` with independent
+variables `u` up to the given `order`. The return value can be indexed by
+rooted trees to obtain the corresponding elementary differential.
+"""
+function elementary_differentials(f, u, order)
+  order >= 1 || throw(ArgumentError("The `order` must be at least one (got $order)"))
+  differentials = OrderedDict{RootedTree{Int, Vector{Int}}, typeof(f)}()
+
+  t = rootedtree([1])
+  differentials[t] = f
+
+  # Compute all necessary partial derivatives at first
+  derivatives = Array{eltype(f)}[]
+  push!(derivatives, f)
+  for o in 1:(order-1)
+    d = similar(f, eltype(f), (length(f), ntuple(_ -> length(u), o)...))
+    _compute_partial_derivatives!(d, f, u)
+    push!(derivatives, d)
+  end
+
+  # Compute all elementary differentials
+  for o in 2:order
+    for _t in RootedTreeIterator(o)
+      t = copy(_t)
+      differentials[t] = elementary_differential(f, t, differentials, derivatives)
+    end
+  end
+
+  return differentials
+end
+
+function _compute_partial_derivatives!(d, f, u)
+  for idx in CartesianIndices(d)
+    idx_tuple = Tuple(idx)
+    f_idx = first(idx_tuple)
+    u_idx = Base.tail(idx_tuple)
+    partial_derivative = f[f_idx]
+    for i in u_idx
+      partial_derivative = Differential(u[i])(partial_derivative)
+    end
+    d[idx] = expand_derivatives(partial_derivative)
+  end
+end
+
+function elementary_differential(f, t, differentials, derivatives)
+  subtr = RootedTrees.subtrees(t)
+  result = similar(f)
+
+  input_differentials = ntuple(n -> differentials[subtr[n]], length(subtr))
+  input_derivative = derivatives[length(subtr) + 1]
+
+  _compute_elementary_differential!(result, input_differentials, input_derivative)
+
+  return result
+end
+
+@generated function _compute_elementary_differential!(result, input_differentials, input_derivative::AbstractArray{T,N}) where {T,N}
+  quote
+    for i in eachindex(result)
+      val = zero(eltype(result))
+
+      Base.Cartesian.@nloops $(N-1) j input_derivative begin
+        # term = Base.Cartesian.@nref $N input_derivative j
+        term = Base.Cartesian.@ncall $(N-1) getindex input_derivative i j
+        Base.Cartesian.@nexprs $(N-1) d -> term *= input_differentials[d][j_d]
+        val += term
+      end
+
+      result[i] = val
+    end
+  end
 end
 
 
