@@ -2,7 +2,7 @@ using Test
 using BSeries
 
 using StaticArrays: @SArray
-using Symbolics: Symbolics, @variables, Num
+using Symbolics: Symbolics, @variables, Num, expand
 
 
 @testset "BSeries" begin
@@ -160,12 +160,20 @@ end
   c = @SArray [0//1]
 
   # tested with the Python package BSeries
-  series = modified_equation(f, u, dt, A, b, c, 2)
-  series_reference = [
+  series2 = modified_equation(f, u, dt, A, b, c, 2)
+  series2_reference = [
     -dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
     -dt*( p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
   ]
-  @test mapreduce(isequal, &, series, series_reference)
+  @test mapreduce(isequal, &, series2, series2_reference)
+
+  # tested with the Python package BSeries
+  series3 = modified_equation(f, u, dt, A, b, c, 3)
+  series3_reference = [
+    -dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p^2*q*(2 - q) - p*q*(2 - q)*(p - 1) - p*q*(p - 1)^2 + p*(2 - q)^3)/3 - dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
+    dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p*q^2*(p - 1) + p*q*(2 - q)^2 + p*q*(2 - q)*(p - 1) + q*(p - 1)^3)/3 - dt*(p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
+  ]
+  @test mapreduce(iszero ∘ expand, &, series3 - series3_reference)
 end
 
 
