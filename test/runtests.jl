@@ -68,7 +68,7 @@ end
     order = 5
     series = modified_equation(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] ≈ 1.0                   atol=10*eps()
     @test series[t2 ] ≈ 0                     atol=10*eps()
     @test series[t31] ≈ 0.166666666666667     atol=10*eps()
@@ -98,7 +98,7 @@ end
     order = 5
     series = modified_equation(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] ≈ 1.0                  atol=10*eps()
     @test series[t2 ] ≈ 0                    atol=10*eps()
     @test series[t31] ≈ 0                    atol=10*eps()
@@ -126,7 +126,7 @@ end
     order = 5
     series = modified_equation(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] == 1
     @test series[t2 ] == 0
     @test series[t31] == -1//12
@@ -145,6 +145,27 @@ end
     @test series[t58] == -19//240
     @test series[t59] == -1//20
   end
+end
+
+
+@testset "modified_equation with elementary differentials" begin
+  # Lotka-Volterra model
+  @variables dt
+  u = @variables p q
+  f = [p * (2 - q), q * (p - 1)]
+
+  # Explicit Euler method
+  A = @SArray [0//1;]
+  b = @SArray [1//1]
+  c = @SArray [0//1]
+
+  # tested with the Python package BSeries
+  series = modified_equation(f, u, dt, A, b, c, 2)
+  series_reference = [
+    -dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
+    -dt*( p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
+  ]
+  @test mapreduce(isequal, &, series, series_reference)
 end
 
 
@@ -175,7 +196,7 @@ end
     order = 5
     series = modifying_integrator(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] ≈ 1                    atol=10*eps()
     @test series[t2 ] ≈ 0                    atol=10*eps()
     @test series[t31] ≈ -0.166666666666667   atol=10*eps()
@@ -205,7 +226,7 @@ end
     order = 5
     series = modifying_integrator(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] ≈ 1                    atol=10*eps()
     @test series[t2 ] ≈ 0                    atol=10*eps()
     @test series[t31] ≈ 0                    atol=10*eps()
@@ -233,7 +254,7 @@ end
     order = 5
     series = modifying_integrator(A, b, c, order)
 
-    # tested with the python package BSeries
+    # tested with the Python package BSeries
     @test series[t1 ] == 1
     @test series[t2 ] == 0
     @test series[t31] == 1//12
