@@ -7,6 +7,13 @@ using Symbolics: Symbolics, @variables, Num
 
 @testset "BSeries" begin
 
+
+@testset "lazy representation of exact ODE solution" begin
+  exact = BSeries.ExactSolution{Rational{Int}}()
+  terms = collect(Iterators.take(exact, 4))
+  @test terms == [1//1, 1//2, 1//6, 1//3]
+end
+
 @testset "subsitution" begin
   @variables a1 a2 a31 a32
   a = OrderedDict{RootedTrees.RootedTree{Int, Vector{Int}}, Num}(
