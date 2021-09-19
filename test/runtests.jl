@@ -174,6 +174,14 @@ end
     dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p*q^2*(p - 1) + p*q*(2 - q)^2 + p*q*(2 - q)*(p - 1) + q*(p - 1)^3)/3 - dt*(p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
   ]
   @test mapreduce(iszero ∘ expand, &, series3 - series3_reference)
+
+  # tested with the Python package BSeries
+  series4 = modified_equation(f, u, dt, A, b, c, 4)
+  series4_reference = [
+    -dt^3*(-2*p^2*q*(2 - q)*(p - 1) + 2*p*q*(2 - q)*(p - 1)*(q - 2))/12 - dt^3*(-p^2*q*(2 - q)^2 + p*q^2*(p - 1)^2 + p*q*(1 - p)*(2 - q)*(p - 1) + p*q*(2 - q)*(p - 1)*(q - 2))/12 - dt^3*(p^2*q^2*(p - 1) - 2*p^2*q*(2 - q)^2 - p^2*q*(2 - q)*(p - 1) - p*q*(2 - q)^2*(p - 1) - p*q*(2 - q)*(p - 1)^2 - p*q*(p - 1)^3 + p*(2 - q)^4)/4 - dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p^2*q*(2 - q) - p*q*(2 - q)*(p - 1) - p*q*(p - 1)^2 + p*(2 - q)^3)/3 - dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
+      -dt^3*(-2*p*q^2*(2 - q)*(p - 1) + 2*p*q*(2 - q)*(p - 1)^2)/12 - dt^3*(p^2*q*(2 - q)^2 - p*q^2*(p - 1)^2 + p*q*(2 - q)^2*(p - 1) + p*q*(2 - q)*(p - 1)^2)/12 - dt^3*(-p^2*q^2*(2 - q) - p*q^2*(2 - q)*(p - 1) - 2*p*q^2*(p - 1)^2 + p*q*(2 - q)^3 + p*q*(2 - q)^2*(p - 1) + p*q*(2 - q)*(p - 1)^2 + q*(p - 1)^4)/4 + dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p*q^2*(p - 1) + p*q*(2 - q)^2 + p*q*(2 - q)*(p - 1) + q*(p - 1)^3)/3 - dt*(p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
+  ]
+  @test mapreduce(iszero ∘ expand, &, series4 - series4_reference)
 end
 
 
