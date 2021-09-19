@@ -238,6 +238,37 @@ function modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractV
 end
 
 
+"""
+    modifying_integrator(f, u, dt,
+                         A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
+
+Compute the B-series of a "modifying integrator" equation of the Runge-Kutta
+method with Butcher coefficients `A, b, c` up to the prescribed `order` with
+respect to the ordinary differential equation ``u'(t) = f(u(t))`` with vector
+field `f` and dependent variables `u` for a time step size `dt`.
+
+Here, `u` is assumed to be a vector of variables from Symbolics.jl (`Symbolics.Num`)
+and `f` is assumed to be a vector of expressions in these variables.
+
+See Section 3.2 of
+- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
+  Algebraic Structures of B-series
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+"""
+function modifying_integrator(f, u, dt,
+                              A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                              order)
+  series = modifying_integrator(A, b, c, order)
+  differentials = elementary_differentials(f, u, order)
+  result = zero(f)
+  for t in keys(series)
+    result += dt^(RootedTrees.order(t) - 1) / symmetry(t) * series[t] * differentials[t]
+  end
+  result
+end
+
+
 
 """
     elementary_differentials(f, u, order)

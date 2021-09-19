@@ -292,4 +292,47 @@ end
 end
 
 
+@testset "modifying_integrator with elementary differentials" begin
+  @variables dt
+  @variables α β γ
+  u = @variables u1 u2 u3
+  f = [α*u[2]*u[3], β*u[3]*u[1], γ*u[1]*u[2]]
+
+  # Implicit midpoint method
+  A = @SArray [1//2;]
+  b = @SArray [1//1]
+  c = @SArray [1//2]
+
+  # See eq. (12) of
+  # - Philippe Chartier, Ernst Hairer and Gilles Vilmart (2007)
+  #   Numerical integrators based on modified differential equations
+  #   [DOI: 10.1090/S0025-5718-07-01967-9](https://doi.org/10.1090/S0025-5718-07-01967-9)
+
+  series = modifying_integrator(f, u, dt, A, b, c, 5)
+  # Dirty workaround since there is no way to get the polynomial coefficients
+  # in Symbolics.jl at the moment, see
+  # https://github.com/JuliaSymbolics/Symbolics.jl/issues/216
+  # We differentiate the expression and set `dt` to zero to get the corresponding
+  # coefficient divided by factorial(how often we needed to differentiate).
+  d = Symbolics.Differential(dt)
+  s3_reference = -(α * β * u3^2 + α * γ * u2^2 + β * γ * u1^2) / 12
+  for i in eachindex(f)
+    s3 = Symbolics.simplify_fractions(Symbolics.substitute(
+      Symbolics.expand_derivatives(1//2 * d(d((series[i] - f[i]) / f[i]))),
+      dt => 0))
+    @test isequal(s3, s3_reference)
+  end
+
+  s5_reference = 6//5 * s3_reference^2 + 1//60 * α * β * γ * (
+    β * u1^2 * u3^2 + γ * u2^2 * u1^2 + α * u3^2 * u2^2
+  )
+  for i in eachindex(f)
+    s5 = Symbolics.simplify_fractions(Symbolics.substitute(
+      Symbolics.expand_derivatives(1//24 * d(d(d(d((series[i] - f[i]) / f[i]))))),
+      dt => 0))
+    @test iszero(expand(s5 - s5_reference))
+  end
+end
+
+
 end # @testset "BSeries"
