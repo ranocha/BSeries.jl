@@ -29,13 +29,21 @@ end
 """
     substitute(b, a, t::RootedTree)
 
-Compute the coefficient correspoding to the tree `t` of the B-series that is
+Compute the coefficient corresponding to the tree `t` of the B-series that is
 formed by substituting the B-series `b` into the B-series `a`.
 """
-function substitute(b, a, t::RootedTree)
+substitute(b, a, t::RootedTree) = substitute!((nothing, nothing), b, a, t)
+
+"""
+    substitute!(cache, b, a, t::RootedTree)
+
+Like [`substitute`](@ref) but with possible speed-up from memoization
+(at the cost of more memory usage in the `cache`).
+"""
+function substitute!(cache, b, a, t::RootedTree)
   result = zero(first(values(a)) * first(values(b)))
 
-  for (forest, skeleton) in PartitionIterator(t)
+  for (forest, skeleton) in PartitionIterator(t, cache)
     result += reduce(*, b[tree] for tree in forest) * a[skeleton]
   end
 
@@ -222,6 +230,10 @@ function modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractV
   t = rootedtree([1])
   series[t] = series_rk[t]
 
+  cache = create_cache(PartitionIterator, t)
+  # cache = (first(cache), nothing) # TODO: Why is this faster?
+  # cache = (nothing, nothing)
+
   # Recursively solve `substitute(series, series_rk, t) == series_ex[t]`.
   # This works because
   #   substitute(series, series_rk, t) = series[t] + lower order terms
@@ -231,7 +243,7 @@ function modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractV
   #       t = copy(_t)
   # which are slightly less efficient due to additional computations and allocations.
   for t in keys(series)
-    series[t] += series_ex[t] - substitute(series, series_rk, t)
+    series[t] += series_ex[t] - substitute!(cache, series, series_rk, t)
   end
 
   return series
