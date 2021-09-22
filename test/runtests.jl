@@ -14,7 +14,8 @@ using Symbolics: Symbolics, @variables, Num, expand
   @test terms == [1//1, 1//2, 1//6, 1//3]
 end
 
-@testset "subsitution" begin
+
+@testset "substitute" begin
   @variables a1 a2 a31 a32
   a = OrderedDict{RootedTrees.RootedTree{Int, Vector{Int}}, Num}(
         rootedtree(Int[])     => 1,
@@ -38,6 +39,45 @@ end
   t = rootedtree([1, 2, 3])
   @inferred substitute(b, a, t)
   @test isequal(substitute(b, a, t), a1 * b32 + 2 * a2 * b1 * b2 + a32 * b1^3)
+end
+
+
+@testset "compose" begin
+  @variables a0 a1 a2 a31 a32
+  a = OrderedDict{RootedTrees.RootedTree{Int, Vector{Int}}, Num}(
+        rootedtree(Int[])     => a0,
+        rootedtree([1])       => a1,
+        rootedtree([1, 2])    => a2,
+        rootedtree([1, 2, 2]) => a31,
+        rootedtree([1, 2, 3]) => a32)
+
+  @variables b1 b2 b31 b32
+  b = OrderedDict{RootedTrees.RootedTree{Int, Vector{Int}}, Num}(
+        rootedtree(Int[])     => 0,
+        rootedtree([1])       => b1,
+        rootedtree([1, 2])    => b2,
+        rootedtree([1, 2, 2]) => b31,
+        rootedtree([1, 2, 3]) => b32)
+
+  # See equation (5) of
+  # - Philippe Chartier, Ernst Hairer and Gilles Vilmart (2007)
+  #   Numerical integrators based on modified differential equations
+  #   [DOI: 10.1090/S0025-5718-07-01967-9](https://doi.org/10.1090/S0025-5718-07-01967-9)
+  t = rootedtree([1])
+  @inferred compose(b, a, t)
+  @test isequal(compose(b, a, t), a0 * b1 + a1)
+
+  t = rootedtree([1, 2])
+  @inferred compose(b, a, t)
+  @test isequal(compose(b, a, t), a0 * b2 + a1 * b1 + a2)
+
+  t = rootedtree([1, 2, 2])
+  @inferred compose(b, a, t)
+  @test isequal(compose(b, a, t), a0 * b31 + a1 * b1^2 + 2 * a2 * b1 + a31)
+
+  t = rootedtree([1, 2, 3])
+  @inferred compose(b, a, t)
+  @test isequal(compose(b, a, t), a0 * b32 + a1 * b2 + a2 * b1 + a32)
 end
 
 

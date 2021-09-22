@@ -13,7 +13,7 @@ Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 [compat]
 OrderedCollections = "1"
 Reexport = "1"
-RootedTrees = "2"
+RootedTrees = "2.1"
 Symbolics = "3"
 julia = "1"
 

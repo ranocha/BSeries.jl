@@ -11,7 +11,7 @@ using RootedTrees: RootedTree
 using Symbolics: Differential, expand_derivatives
 
 
-export bseries, substitute
+export bseries, substitute, compose
 
 export modified_equation, modifying_integrator
 
@@ -31,12 +31,49 @@ end
 
 Compute the coefficient correspoding to the tree `t` of the B-series that is
 formed by substituting the B-series `b` into the B-series `a`.
+
+# References
+
+Section 3.2 of
+- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
+  Algebraic Structures of B-series
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
 function substitute(b, a, t::RootedTree)
   result = zero(first(values(a)) * first(values(b)))
 
   for (forest, skeleton) in PartitionIterator(t)
     result += reduce(*, b[tree] for tree in forest) * a[skeleton]
+  end
+
+  return result
+end
+
+
+"""
+    compose(b, a, t::RootedTree)
+
+Compute the coefficient correspoding to the tree `t` of the B-series that is
+formed by composing the B-series `a` with the B-series `b`.
+
+# References
+
+Section 3.1 of
+- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
+  Algebraic Structures of B-series
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+"""
+function compose(b, a, t::RootedTree)
+  result = zero(first(values(a)) * first(values(b)))
+
+  for (forest, subtree) in SplittingIterator(t)
+    if isempty(forest)
+      result += a[subtree]
+    else
+      result += reduce(*, b[tree] for tree in forest) * a[subtree]
+    end
   end
 
   return result
