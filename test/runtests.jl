@@ -32,9 +32,22 @@ end
         rootedtree([1, 2, 2]) => b31,
         rootedtree([1, 2, 3]) => b32)
 
+  # See equation (6) of
+  # - Philippe Chartier, Ernst Hairer and Gilles Vilmart (2007)
+  #   Numerical integrators based on modified differential equations
+  #   [DOI: 10.1090/S0025-5718-07-01967-9](https://doi.org/10.1090/S0025-5718-07-01967-9)
+
   t = rootedtree([1])
   @inferred substitute(b, a, t)
   @test isequal(substitute(b, a, t), a1 * b1)
+
+  t = rootedtree([1, 2])
+  @inferred substitute(b, a, t)
+  @test isequal(substitute(b, a, t), a1 * b2 + a2 * b1^2)
+
+  t = rootedtree([1, 2, 2])
+  @inferred substitute(b, a, t)
+  @test isequal(substitute(b, a, t), a1 * b31 + 2 * a2 * b1 * b2 + a31 * b1^3)
 
   t = rootedtree([1, 2, 3])
   @inferred substitute(b, a, t)
