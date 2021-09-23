@@ -346,6 +346,12 @@ function _compute_partial_derivatives!(d, f, u)
     idx_tuple = Tuple(idx)
     f_idx = first(idx_tuple)
     u_idx = Base.tail(idx_tuple)
+
+    # All this B-series analysis only really makes sense for smooth functions.
+    # Hence, we can use the symmetry of the partial derivatives to speed-up
+    # the computations - Hermann Amandus Schwarz helps us again!
+    issorted(u_idx) || continue
+
     partial_derivative = f[f_idx]
     for i in u_idx
       partial_derivative = Differential(u[i])(partial_derivative)
@@ -372,8 +378,18 @@ end
       val = zero(eltype(result))
 
       Base.Cartesian.@nloops $(N-1) j input_derivative begin
-        # term = Base.Cartesian.@nref $N input_derivative j
-        term = Base.Cartesian.@ncall $(N-1) getindex input_derivative i j
+        # A naive version uses the full input of all possible combinations of
+        # partial derivatives. If these were all computed in
+        # `_compute_partial_derivatives!` above, we could just use
+        #   term = Base.Cartesian.@ncall $(N-1) getindex input_derivative i j
+        # and get rid of `sorted_j` here. However, all this B-series analysis
+        # only really makes sense for smooth functions. Hence, we can use the
+        # symmetry of the partial derivatives to speed-up the computations
+        # - Hermann Amandus Schwarz helps us again!
+        # TODO: Shall we use the non-allocating version `TupleTools.sort∘tuple`
+        # instead of `sort!∘Base.vect`?
+        sorted_j = Base.Cartesian.@ncall $(N-1) sort!∘Base.vect j
+        term = Base.Cartesian.@ncall $(N-1) getindex input_derivative i d -> sorted_j[d]
         Base.Cartesian.@nexprs $(N-1) d -> term *= input_differentials[d][j_d]
         val += term
       end
