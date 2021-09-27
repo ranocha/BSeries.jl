@@ -21,7 +21,7 @@ export elementary_differentials
 # This is a dirty workaround until the performance bugfix
 # https://github.com/JuliaLang/julia/pull/42300
 # is merged
-@static if v"1.6" <= VERSION < v"1.7.0-rc2"
+@static if v"1.6" <= VERSION < v"1.8.0"
   Base.hastypemax(::Type{Bool}) = true
 end
 
@@ -36,7 +36,7 @@ formed by substituting the B-series `b` into the B-series `a`.
 
 Section 3.2 of
 - Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
-  Algebraic Structures of B-series
+  Algebraic Structures of B-series.
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
@@ -61,7 +61,7 @@ formed by composing the B-series `a` with the B-series `b`.
 
 Section 3.1 of
 - Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
-  Algebraic Structures of B-series
+  Algebraic Structures of B-series.
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
@@ -149,9 +149,11 @@ given time step size as exact solution of a modified ODE ``u'(t) = fₕ(u(t))``.
     The coefficients of the B-series returned by this method need to be multiplied
     by the corresponding elementary differential of the input vector field ``f``.
 
-See Section 3.2 of
+# References
+
+Section 3.2 of
 - Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
-  Algebraic Structures of B-series
+  Algebraic Structures of B-series.
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
@@ -201,9 +203,11 @@ and dependent variables `u` for a time step size `dt`.
 Here, `u` is assumed to be a vector of variables from Symbolics.jl (`Symbolics.Num`)
 and `f` is assumed to be a vector of expressions in these variables.
 
-See Section 3.2 of
+# References
+
+Section 3.2 of
 - Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
-  Algebraic Structures of B-series
+  Algebraic Structures of B-series.
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
@@ -235,9 +239,11 @@ of the original ODE.
     The coefficients of the B-series returned by this method need to be multiplied
     by the corresponding elementary differential of the input vector field ``f``.
 
-See Section 3.2 of
+# References
+
+Section 3.2 of
 - Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
-  Algebraic Structures of B-series
+  Algebraic Structures of B-series.
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
@@ -287,9 +293,11 @@ field `f` and dependent variables `u` for a time step size `dt`.
 Here, `u` is assumed to be a vector of variables from Symbolics.jl (`Symbolics.Num`)
 and `f` is assumed to be a vector of expressions in these variables.
 
-See Section 3.2 of
+# References
+
+Section 3.2 of
 - Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
-  Algebraic Structures of B-series
+  Algebraic Structures of B-series.
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """

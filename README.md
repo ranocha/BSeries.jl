@@ -7,7 +7,7 @@
 A collection of functionality around [B-series](https://en.wikipedia.org/wiki/Butcher_group) in [Julia](https://julialang.org/). See
 
 - Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
-  Algebraic Structures of B-series
+  Algebraic Structures of B-series.
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 
