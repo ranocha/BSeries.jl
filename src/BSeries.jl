@@ -326,7 +326,7 @@ function elementary_differentials(f, u, order)
   push!(derivatives, f)
   for o in 1:(order-1)
     d = similar(f, eltype(f), (length(f), ntuple(_ -> length(u), o)...))
-    _compute_partial_derivatives!(d, f, u)
+    _compute_partial_derivatives!(d, f, u, derivatives[o])
     push!(derivatives, d)
   end
 
@@ -341,10 +341,9 @@ function elementary_differentials(f, u, order)
   return differentials
 end
 
-function _compute_partial_derivatives!(d, f, u)
+function _compute_partial_derivatives!(d, f, u, lower_derivatives)
   for idx in CartesianIndices(d)
     idx_tuple = Tuple(idx)
-    f_idx = first(idx_tuple)
     u_idx = Base.tail(idx_tuple)
 
     # All this B-series analysis only really makes sense for smooth functions.
@@ -352,10 +351,18 @@ function _compute_partial_derivatives!(d, f, u)
     # the computations - Hermann Amandus Schwarz helps us again!
     issorted(u_idx) || continue
 
-    partial_derivative = f[f_idx]
-    for i in u_idx
-      partial_derivative = Differential(u[i])(partial_derivative)
-    end
+    # Next, we re-use already computed partial derivatives. Thus, we do not
+    # compute the full set of derivatives as in
+    #   f_idx = first(idx_tuple)
+    #   partial_derivative = f[f_idx]
+    #   for i in u_idx
+    #     partial_derivative = Differential(u[i])(partial_derivative)
+    #   end
+    # but we re-use the already computed `lower_derivatives`.
+    idx_known = Base.front(idx_tuple)
+    idx_new = last(idx_tuple)
+    partial_derivative = Differential(u[idx_new])(lower_derivatives[idx_known...])
+
     d[idx] = expand_derivatives(partial_derivative)
   end
 end
