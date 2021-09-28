@@ -1,0 +1,19 @@
+{
+  "description": "Computing with B-series in Julia",
+  "license": "MIT",
+  "title": "BSeries.jl",
+  "upload_type": "software",
+  "creators": [
+      {
+          "affiliation": "Applied Mathematics Münster, University of Münster, Germany",
+          "name": "Ranocha, Hendrik",
+          "orcid": "0000-0002-3456-2277"
+      },
+      {
+          "affiliation": "King Abdullah University of Science & Technology (KAUST), Saudi Arabia",
+          "name": "Ketcheson, David I.",
+          "orcid": "0000-0002-1212-126X"
+      }
+  ],
+  "access_right": "open"
+}
