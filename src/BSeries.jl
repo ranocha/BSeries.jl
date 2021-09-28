@@ -7,8 +7,7 @@ using RootedTrees: RootedTree
 
 @reexport using OrderedCollections: OrderedDict
 
-@reexport using Symbolics: Symbolics, Num
-using Symbolics: Differential, expand_derivatives
+using Requires: @require
 
 
 export bseries, substitute, compose
@@ -24,6 +23,47 @@ export elementary_differentials
 @static if v"1.6" <= VERSION < v"1.8.0"
   Base.hastypemax(::Type{Bool}) = true
 end
+
+
+"""
+    compute_derivative(expression, variable)
+
+Internal function specialized on symbolic variables and expressions from
+[SymEngine.jl](https://github.com/symengine/SymEngine.jl),
+[SymPy.jl](https://github.com/JuliaPy/SymPy.jl), and
+[Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
+if these packages are loaded (via Requires.jl).
+"""
+@noinline function compute_derivative(expression, variable)
+  error("Needs to be specialized")
+end
+
+function __init__()
+  @require SymEngine="123dc426-2d89-5057-bbad-38513e3affd8" begin
+    using .SymEngine: SymEngine
+
+    function compute_derivative(expression::SymEngine.Basic, variable::SymEngine.Basic)
+      SymEngine.diff(expression, variable)
+    end
+  end
+
+  @require SymPy="24249f21-da20-56a4-8eb1-6a02cf4ae2e6" begin
+    using .SymPy: SymPy
+
+    function compute_derivative(expression::SymPy.Sym, variable::SymPy.Sym)
+      SymPy.diff(expression, variable)
+    end
+  end
+
+  @require Symbolics="0c5d862f-8b57-4792-8d23-62f2024744c7" begin
+    using .Symbolics: Symbolics
+
+    function compute_derivative(expression::Symbolics.Num, variable::Symbolics.Num)
+      Symbolics.expand_derivatives(Symbolics.Differential(variable)(expression))
+    end
+  end
+end
+
 
 
 """
@@ -364,14 +404,14 @@ function _compute_partial_derivatives!(d, f, u, lower_derivatives)
     #   f_idx = first(idx_tuple)
     #   partial_derivative = f[f_idx]
     #   for i in u_idx
-    #     partial_derivative = Differential(u[i])(partial_derivative)
+    #     partial_derivative = compute_derivative(partial_derivative, u[i])
     #   end
     # but we re-use the already computed `lower_derivatives`.
     idx_known = Base.front(idx_tuple)
     idx_new = last(idx_tuple)
-    partial_derivative = Differential(u[idx_new])(lower_derivatives[idx_known...])
+    partial_derivative = compute_derivative(lower_derivatives[idx_known...], u[idx_new])
 
-    d[idx] = expand_derivatives(partial_derivative)
+    d[idx] = partial_derivative
   end
 end
 
