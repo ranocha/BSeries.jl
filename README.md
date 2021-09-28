@@ -15,7 +15,11 @@ A collection of functionality around [B-series](https://en.wikipedia.org/wiki/Bu
 
 ## API Documentation
 
-Please note that this project is work in progress.
+The Julia library
+[BSeries.jl](https://github.com/ranocha/BSeries.jl)
+is work in progress. Nevertheless, we follow semantic versioning. Thus, you can
+safely use the package right now. Extended documentation will be provided in the
+future.
 
 BSeries.jl re-exports everything from
 [RootedTrees.jl](https://github.com/SciML/RootedTrees.jl).

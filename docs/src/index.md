@@ -6,6 +6,13 @@ is work in progress. Nevertheless, we follow semantic versioning. Thus, you can
 safely use the package right now. Extended documentation will be provided in the
 future.
 
+BSeries.jl re-exports everything from
+[RootedTrees.jl](https://github.com/SciML/RootedTrees.jl).
+However, if you rely on functionality from that package,
+you should also include it explicitly in your project dependencies
+to track breaking changes, since the version numbers of RootedTrees.jl
+and BSeries.jl are not necessarily synchronized.
+
 
 ## Installation
 
