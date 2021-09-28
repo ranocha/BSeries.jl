@@ -29,14 +29,14 @@ end
     compute_derivative(expression, variable)
 
 Internal function specialized on symbolic variables and expressions from
-[SymEngine.jl](https://github.com/symengine/SymEngine.jl),
-[SymPy.jl](https://github.com/JuliaPy/SymPy.jl), and
-[Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
+
+- [SymEngine.jl](https://github.com/symengine/SymEngine.jl),
+- [SymPy.jl](https://github.com/JuliaPy/SymPy.jl), and
+- [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
+
 if these packages are loaded (via Requires.jl).
 """
-@noinline function compute_derivative(expression, variable)
-  error("Needs to be specialized")
-end
+function compute_derivative end
 
 function __init__()
   @require SymEngine="123dc426-2d89-5057-bbad-38513e3affd8" begin
