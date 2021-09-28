@@ -6,7 +6,7 @@
 [![Coveralls](https://coveralls.io/repos/github/ranocha/BSeries.jl/badge.svg?branch=main)](https://coveralls.io/github/ranocha/BSeries.jl?branch=main)
 [![Codecov](https://codecov.io/gh/ranocha/BSeries.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ranocha/BSeries.jl)
 [![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT)
-<!-- [![DOI](https://zenodo.org/badge/DOI/.svg)](https://doi.org/) -->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5534602.svg)](https://doi.org/10.5281/zenodo.5534602)
 
 A collection of functionality around [B-series](https://en.wikipedia.org/wiki/Butcher_group) in [Julia](https://julialang.org/). See
 
