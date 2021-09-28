@@ -45,7 +45,7 @@ for your research, please cite it using the bibtex entry
   year={2021},
   month={09},
   howpublished={\url{https://github.com/ranocha/BSeries.jl}},
-  doi={}
+  doi={10.5281/zenodo.5534602}
 }
 ```
 Please also cite the appropriate references for specific functions you use,
