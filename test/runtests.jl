@@ -548,4 +548,63 @@ end
 end
 
 
+@testset "nonlinear oscillator" begin
+  @testset "SymEngine.jl" begin
+    dt = SymEngine.symbols("dt")
+    u = SymEngine.symbols("u_1, u_2")
+    f = [-u[2], u[1]] / (u[1]^2 + u[2]^2)
+
+    # explicit midpoint method
+    A = @SArray [0 0; 1//2 0]
+    b = @SArray [0, 1//1]
+    c = @SArray [0, 1//2];
+
+    # tested with Mathematica using
+    # ```
+    # ClearAll["Global`*"];
+    #
+    # solution[t_,
+    #   u0_] := {u0[[1]]*Cos[t/(u0[[1]]^2 + u0[[2]]^2)] -
+    #   u0[[2]]*Sin[t/(u0[[1]]^2 + u0[[2]]^2)],
+    #   u0[[2]]*Cos[t/(u0[[1]]^2 + u0[[2]]^2)] +
+    #   u0[[1]]*Sin[t/(u0[[1]]^2 + u0[[2]]^2)]}
+    #
+    # factorF2[u_] := 1/(12*(u[[1]]^2 + u[[2]]^2)^2)
+    # (*factorF2[u_]:=ff2*)
+    # factorF4[u_] := 1/(20*(u[[1]]^2 + u[[2]]^2)^4)
+    # (*factorF4[u_]:=ff4*)
+    #
+    # factorF6[u_] := 127/(2016*(u[[1]]^2 + u[[2]]^2)^6)
+    # (*factorF6[u_]:=ff6*)
+    # factorU3[u_] := 0
+    # (*factorU3[u_]:=fu3*)
+    # factorU5[u_] := 1/(48*(u[[1]]^2 + u[[2]]^2)^6)
+    # (*factorU5[u_]:=fu5*)
+    #
+    # factorU7[u_] := 31/(640*(u[[1]]^2 + u[[2]]^2)^8)
+    # (*factorU7[u_]:=fu7*)
+    #
+    # newModifiedF[
+    #   u_] :=
+    # (1 + factorF2[u]*h^2 + factorF4[u]*h^4 + factorF6[u]*h^6)*
+    #   originalF[
+    #     u] + (factorU3[u]*h^3 + factorU5[u]*h^5 + factorU7[u]*h^7)*u
+    #
+    # u0 = {u01, u02};
+    # f = newModifiedF;
+    # y2 = u0 + h/2*f[u0];
+    # unew = u0 + h*f[y2];
+    # difference = Simplify@Series[unew - solution[h, u0], {h, 0, 10}];
+    #
+    # Simplify[difference[[1]]]
+    # Simplify[difference[[2]]]
+    # ```
+    series = modifying_integrator(f, u, dt, A, b, c, 8)
+    terms = SymEngine.subs.(series, (Dict(u[1] => 1//1, u[2] => 0//1), ))
+
+    @test isequal(terms[1], 1//48 * dt^5 + 31//640 * dt^7)
+    @test isequal(terms[2], 1 + 1//12 * dt^2 + 1//20 * dt^4 + 127//2016 * dt^6)
+  end
+end
+
 end # @testset "BSeries"
