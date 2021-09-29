@@ -573,16 +573,19 @@ end
     # (*factorF2[u_]:=ff2*)
     # factorF4[u_] := 1/(20*(u[[1]]^2 + u[[2]]^2)^4)
     # (*factorF4[u_]:=ff4*)
-    #
     # factorF6[u_] := 127/(2016*(u[[1]]^2 + u[[2]]^2)^6)
     # (*factorF6[u_]:=ff6*)
+    # factorF8[u_] := 1513/(12960*(u[[1]]^2 + u[[2]]^2)^8)
+    # (*factorF8[u_]:=ff8*)
+    #
     # factorU3[u_] := 0
     # (*factorU3[u_]:=fu3*)
     # factorU5[u_] := 1/(48*(u[[1]]^2 + u[[2]]^2)^6)
     # (*factorU5[u_]:=fu5*)
-    #
     # factorU7[u_] := 31/(640*(u[[1]]^2 + u[[2]]^2)^8)
     # (*factorU7[u_]:=fu7*)
+    # factorU9[u_] := 8969/(80640*(u[[1]]^2 + u[[2]]^2)^10)
+    # (*factorU9[u_]:=fu9*)
     #
     # newModifiedF[
     #   u_] :=
@@ -599,11 +602,11 @@ end
     # Simplify[difference[[1]]]
     # Simplify[difference[[2]]]
     # ```
-    series = modifying_integrator(f, u, dt, A, b, c, 8)
+    series = modifying_integrator(f, u, dt, A, b, c, 10)
     terms = SymEngine.subs.(series, (Dict(u[1] => 1//1, u[2] => 0//1), ))
 
-    @test isequal(terms[1], 1//48 * dt^5 + 31//640 * dt^7)
-    @test isequal(terms[2], 1 + 1//12 * dt^2 + 1//20 * dt^4 + 127//2016 * dt^6)
+    @test isequal(terms[1], 1//48 * dt^5 + 31//640 * dt^7 + 8969//80640 * dt^9)
+    @test isequal(terms[2], 1 + 1//12 * dt^2 + 1//20 * dt^4 + 127//2016 * dt^6 + 1513//12960 * dt^8)
   end
 end
 
