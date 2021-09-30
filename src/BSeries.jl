@@ -204,7 +204,16 @@ function modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVect
 
   # B-series of the exact solution
   T = eltype(values(series_rk))
-  series_ex = ExactSolution{T}()
+  # We could just use
+  #   series_ex = ExactSolution{T}()
+  # However, we need to access elements of `series_ex` more than once in the
+  # subsitution below. Thus, it's cheaper to compute every entry only once and
+  # re-use it later.
+  exact = ExactSolution{T}()
+  series_ex = empty(series_rk)
+  for t in keys(series_rk)
+    series_ex[t] = exact[t]
+  end
 
   # Prepare B-series of the modified equation
   series = empty(series_rk)
