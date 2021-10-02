@@ -17,13 +17,6 @@ export modified_equation, modifying_integrator
 export elementary_differentials
 
 
-# This is a dirty workaround until the performance bugfix
-# https://github.com/JuliaLang/julia/pull/42300
-# is merged
-@static if v"1.6" <= VERSION < v"1.7.0-rc2"
-  Base.hastypemax(::Type{Bool}) = true
-end
-
 
 """
     compute_derivative(expression, variable)
