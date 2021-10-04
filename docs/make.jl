@@ -57,7 +57,7 @@ makedocs(
       "tutorials/modifying_integrators.md",
     ],
     # "Applications & references" => "applications.md",
-    # "Benchmarks" => "benchmarks.md",
+    "Benchmarks" => "benchmarks.md",
     "API reference" => "api_reference.md",
     "Contributing" => "contributing.md",
     "License" => "license.md"
