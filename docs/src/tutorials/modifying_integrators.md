@@ -1,8 +1,11 @@
 # Modifying integrators
 
-This tutorial describes the API of [BSeries.jl](https://github.com/ranocha/BSeries.jl)
-related to the notion of *modifying integrators*. Given a first-order autonomous
-ordinary differential equation (ODE)
+This tutorial describes the API of
+[BSeries.jl](https://github.com/ranocha/BSeries.jl)
+related to the notion of *modifying integrators*. The main API entry point is
+[`modifying_integrator`](@ref).
+
+Given a first-order autonomous ordinary differential equation (ODE)
 
 ```math
 u'(t) = f(u(t))
@@ -14,9 +17,9 @@ and a B-series time integration method, the idea is to find a modified ODE
 u'(t) = f_h(u(t))
 ```
 
-such that the numerical solution with given time step size of the original ODE
-is the exact solution of the modified ODE, see [^ChartierHairerVilmart2007]
-and [^ChartierHairerVilmart2010].
+such that the numerical solution with given time step size ``h`` of the
+original ODE is the exact solution of the modified ODE, see
+[^ChartierHairerVilmart2007] and [^ChartierHairerVilmart2010].
 
 
 ## Lotka-Volterra model
@@ -62,7 +65,7 @@ fig = plot(xguide=L"$q$", yguide=L"$p$")
 default(linewidth=2)
 plot!(fig, sol_ref, vars=(2, 1), label="Reference solution")
 scatter!(fig, last.(sol_euler.u), first.(sol_euler.u),
-         label="Explicit Euler, dt = $dt", )
+         label="Explicit Euler, dt = $dt")
 plot!(fig, xlims=(0.0, 4.0), ylims=(0.0, 2.5))
 
 savefig(fig, "lotka_volterra_original.svg"); nothing # hide
