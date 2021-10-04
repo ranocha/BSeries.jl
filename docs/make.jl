@@ -52,12 +52,9 @@ makedocs(
   pages = [
     "Home" => "index.md",
     # "Introduction" => "introduction.md",
-    # "Tutorials" => [
-    #   "tutorials/constant_linear_advection.md",
-    #   "tutorials/advection_diffusion.md",
-    #   "tutorials/variable_linear_advection.md",
-    #   "tutorials/wave_equation.md",
-    # ],
+    "Tutorials" => [
+      "tutorials/modifying_integrators.md",
+    ],
     # "Applications & references" => "applications.md",
     # "Benchmarks" => "benchmarks.md",
     "API reference" => "api_reference.md",
