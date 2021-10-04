@@ -53,6 +53,7 @@ makedocs(
     "Home" => "index.md",
     # "Introduction" => "introduction.md",
     "Tutorials" => [
+      "tutorials/modified_equations.md",
       "tutorials/modifying_integrators.md",
     ],
     # "Applications & references" => "applications.md",
