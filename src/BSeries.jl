@@ -77,7 +77,11 @@ function substitute(b, a, t::RootedTree)
   result = zero(first(values(a)) * first(values(b)))
 
   for (forest, skeleton) in PartitionIterator(t)
-    result += reduce(*, b[tree] for tree in forest) * a[skeleton]
+    update = a[skeleton]
+    for tree in forest
+      update *= b[tree]
+    end
+    result += update
   end
 
   return result
@@ -102,11 +106,11 @@ function compose(b, a, t::RootedTree)
   result = zero(first(values(a)) * first(values(b)))
 
   for (forest, subtree) in SplittingIterator(t)
-    if isempty(forest)
-      result += a[subtree]
-    else
-      result += reduce(*, b[tree] for tree in forest) * a[subtree]
+    update = a[subtree]
+    for tree in forest
+      update *= b[tree]
     end
+    result += update
   end
 
   return result
