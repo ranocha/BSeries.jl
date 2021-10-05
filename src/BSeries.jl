@@ -10,11 +10,104 @@ using RootedTrees: RootedTree
 using Requires: @require
 
 
+export BSeries0, BSeries1
+
 export bseries, substitute, compose
 
 export modified_equation, modifying_integrator
 
 export elementary_differentials
+
+
+"""
+    AbstractBSeries{T<:RootedTree, V}
+
+An abstract type representing general B-series via their coefficients.
+
+Concrete subtypes are required to implement basic the interface of a dictionary
+`AbstractDict{T, V}`. In particular, given a `series::AbstractBSeries`, the
+coefficient associated with a rooted tree `t` can be accessed via `series[t]`.
+
+However, subtypes are not required to implement a specific performance model.
+In particular, both "lazy" iterators computing coefficients on the fly as well
+as "eager" collections are allowed.
+"""
+abstract type AbstractBSeries{T<:RootedTree, V} <: AbstractDict{T, V} end
+
+
+"""
+    BSeries1{T<:RootedTree, V}
+
+An [`AbstractBSeries`](@ref) with coefficient unity of the empty tree.
+This type of B-series can be used to describe numerical integration schemes
+such as Runge-Kutta methods.
+
+Generally, it should be constructed via [`bseries`](@ref).
+"""
+struct BSeries1{T<:RootedTree, V} <: AbstractBSeries{T, V}
+  coef::OrderedDict{T, V}
+end
+
+BSeries1{T, V}() where {T<:RootedTree, V} = BSeries1{T, V}(OrderedDict{T, V}())
+
+
+"""
+    BSeries0{T<:RootedTree, V}
+
+An [`AbstractBSeries`](@ref) with coefficient zero of the empty tree.
+This type of B-series can be used to describe right-hand sides of ordinary
+differential equations and perturbations thereof.
+
+See also [`modified_equation`](@ref) and [`modifying_integrator`](@ref).
+"""
+struct BSeries0{T<:RootedTree, V} <: AbstractBSeries{T, V}
+  coef::OrderedDict{T, V}
+end
+
+BSeries0{T, V}() where {T<:RootedTree, V} = BSeries0{T, V}(OrderedDict{T, V}())
+
+
+# general interface methods for AbstractBSeries (assuming eager evaluation for now)
+Base.iterate(series::AbstractBSeries) = iterate(series.coef)
+Base.iterate(series::AbstractBSeries, state) = iterate(series.coef, state)
+
+Base.length(series::AbstractBSeries) = length(series.coef)
+
+Base.getindex(series::AbstractBSeries, t::RootedTree) = getindex(series.coef, t)
+Base.setindex!(series::AbstractBSeries, val, t::RootedTree) = setindex!(series.coef, val, t)
+
+Base.get(series::AbstractBSeries, t::RootedTree, default) = get(series.coef, t, default)
+Base.get(f::Function, series::AbstractBSeries, t::RootedTree) = get(f, series.coef, t)
+
+Base.getkey(series::AbstractBSeries, t::RootedTree, default) = getkey(series.coef, t, default)
+
+Base.delete!(series::AbstractBSeries, t::RootedTree) = (delete!(series.coef, t); series)
+
+Base.pop!(series::AbstractBSeries, t::RootedTree) = pop!(series.coef, t)
+Base.pop!(series::AbstractBSeries, t::RootedTree, default) = pop!(series.coef, t, default)
+
+Base.sizehint!(series::AbstractBSeries, n) = sizehint!(series.coef, n)
+
+
+"""
+    bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
+
+Compute the B-series of the Runge-Kutta method with Butcher coefficients
+`A, b, c` up to a prescribed `order`
+"""
+function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                 order)
+  T = promote_type(eltype(A), eltype(b), eltype(c))
+  series = OrderedDict{RootedTree{Int, Vector{Int}}, T}()
+
+  for o in 1:order
+    for t in RootedTreeIterator(o)
+      series[copy(t)] = elementary_weight(t, A, b, c)
+    end
+  end
+
+  return series
+end
 
 
 
@@ -114,28 +207,6 @@ function compose(b, a, t::RootedTree)
   end
 
   return result
-end
-
-
-
-"""
-    bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
-
-Compute the B-series of the  Runge-Kutta method with Butcher coefficients
-`A, b, c` up to a prescribed `order`
-"""
-function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
-                 order)
-  T = promote_type(eltype(A), eltype(b), eltype(c))
-  series = OrderedDict{RootedTree{Int, Vector{Int}}, T}()
-
-  for o in 1:order
-    for t in RootedTreeIterator(o)
-      series[copy(t)] = elementary_weight(t, A, b, c)
-    end
-  end
-
-  return series
 end
 
 
