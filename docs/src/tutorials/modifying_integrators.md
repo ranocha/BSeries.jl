@@ -37,16 +37,17 @@ First, we set up the ODE and compute some numerical solutions using
 [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl).
 
 ```@example ex:lotka-volterra
-using OrdinaryDiffEq, StaticArrays
+using OrdinaryDiffEq
 
-function f(u, params, t)
+function f(du, u, params, t)
   p, q = u
   dp = (2 - q) * p
   dq = (p - 1) * q
-  return SVector(dp, dq)
+  du[1] = dp; du[2] = dq
+  return nothing
 end
 
-u0 = SVector(1.5, 2.25)
+u0 = [1.5, 2.25]
 tspan = (0.0, 15.0)
 ode = ODEProblem(f, u0, tspan)
 
@@ -90,7 +91,7 @@ Here, we use [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
 for the symbolic computations.
 
 ```@example ex:lotka-volterra
-using BSeries, Symbolics
+using BSeries, StaticArrays, Symbolics
 
 # Explicit Euler method
 A = @SArray [0//1;]
@@ -100,7 +101,7 @@ c = @SArray [0//1]
 # Setup of symbolic variables
 @variables dt_sym
 u_sym = @variables p q
-f_sym = [f(u_sym, nothing, nothing)...]
+f_sym = similar(u_sym); f(f_sym, u_sym, nothing, nothing)
 
 for truncation_order in 2:4
   series = modifying_integrator(f_sym, u_sym, dt_sym, A, b, c, truncation_order)
