@@ -49,38 +49,48 @@ function benchmark(u, dt, subs, order)
   # nonlinear oscillator
   f = [-u[2], u[1]] / (u[1]^2 + u[2]^2)
 
+  println("\n Computing the series coefficients:")
+  @time coefficients = modifying_integrator(A, b, c, order)
+  @time coefficients = modifying_integrator(A, b, c, order)
+
+  println("\n Computing the series including elementary differentials:")
   @time series = modifying_integrator(f, u, dt, A, b, c, order)
   @time series = modifying_integrator(f, u, dt, A, b, c, order)
 
   substitution_variables = Dict(u[1] => 1//1, u[2] => 0//1)
 
+  println("\n Substituting the initial condition:")
   @time subs.(series, (substitution_variables, ))
   @time subs.(series, (substitution_variables, ))
 
-  nothing
+  println("\n")
 end
 ```
 
 Next, we load the symbolic packages and run the benchmarks.
+
+```@setup nonlinear-oscillator
+using SymPy # generates annoying output online when conda installs sympy
+```
 
 ```@example nonlinear-oscillator
 using SymEngine: SymEngine
 using SymPy: SymPy
 using Symbolics: Symbolics
 
-# SymEngine
+println("SymEngine")
 dt   = SymEngine.symbols("dt")
 u    = SymEngine.symbols("u1, u2")
 subs = SymEngine.subs
 benchmark(u, dt, subs, 8)
 
-# SymPy
+println("SymPy")
 dt   = SymPy.symbols("dt")
 u    = SymPy.symbols("u1, u2")
 subs = SymPy.subs
 benchmark(u, dt, subs, 8)
 
-# Symbolics
+println("Symbolics")
 Symbolics.@variables dt
 u = Symbolics.@variables u1 u2
 subs = Symbolics.substitute
@@ -89,7 +99,7 @@ benchmark(u, dt, subs, 8)
 
 These results were obtained using the following versions.
 
-```
+```@example
 using InteractiveUtils
 versioninfo()
 
