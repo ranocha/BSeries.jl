@@ -69,9 +69,8 @@ end
 
 Next, we load the symbolic packages and run the benchmarks.
 
-```@example hidden-example-to-avoid-ugly-output-online-when-conda-installs-sympy
-using SymPy # hide
-nothing # hide
+```@setup nonlinear-oscillator
+using SymPy # generates annoying output online when conda installs sympy
 ```
 
 ```@example nonlinear-oscillator
