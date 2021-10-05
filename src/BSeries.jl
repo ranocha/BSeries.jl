@@ -10,7 +10,7 @@ using RootedTrees: RootedTree
 using Requires: @require
 
 
-export BSeries0, BSeries1
+export TruncatedBSeries, ExactSolution
 
 export bseries, substitute, compose
 
@@ -19,74 +19,112 @@ export modified_equation, modifying_integrator
 export elementary_differentials
 
 
-"""
-    AbstractBSeries{T<:RootedTree, V}
 
-An abstract type representing general B-series via their coefficients.
+# types used for traits
+abstract type AbstractEvaluation end
+struct LazyEvaluation     <: AbstractEvaluation end # lazy evaluation up to arbitrary order
+struct EagerEvaluation    <: AbstractEvaluation end # eager evaluation up to a fixed order
+struct MemoizedEvaluation <: AbstractEvaluation end # lazy evaluation up to arbitrary order memoizing the results
 
-Concrete subtypes are required to implement basic the interface of a dictionary
-`AbstractDict{T, V}`. In particular, given a `series::AbstractBSeries`, the
-coefficient associated with a rooted tree `t` can be accessed via `series[t]`.
-
-However, subtypes are not required to implement a specific performance model.
-In particular, both "lazy" iterators computing coefficients on the fly as well
-as "eager" collections are allowed.
-"""
-abstract type AbstractBSeries{T<:RootedTree, V} <: AbstractDict{T, V} end
+# internal interface
+# TODO: `bseries(series::AbstractBSeries) = series` or a `copy`?
+# TODO: `bseries(series, order)`` returns a `copy`? up to `order`, if available
+# TODO: `truncate!(series, order)`
 
 
 """
-    BSeries1{T<:RootedTree, V}
+    TruncatedBSeries
 
-An [`AbstractBSeries`](@ref) with coefficient unity of the empty tree.
-This type of B-series can be used to describe numerical integration schemes
-such as Runge-Kutta methods.
+An [`AbstractBSeries`](@ref) that can describe B-series of both numerical
+integration methods (where the coefficient of the empty tree is unity)
+and right-hand sides of an ordinary differential equation and perturbations
+thereof (where the coefficient of the empty tree is zero) up to a prescribed
+[`order`](@ref).
 
-Generally, it should be constructed via [`bseries`](@ref).
+Generally, it should be constructed via [`bseries`](@ref) or one of the
+methods returning a B-series.
 """
-struct BSeries1{T<:RootedTree, V} <: AbstractBSeries{T, V}
+struct TruncatedBSeries{T<:RootedTree, V} <: AbstractDict{T, V}
   coef::OrderedDict{T, V}
 end
 
-BSeries1{T, V}() where {T<:RootedTree, V} = BSeries1{T, V}(OrderedDict{T, V}())
+TruncatedBSeries{T, V}() where {T, V} = TruncatedBSeries{T, V}(OrderedDict{T, V}())
+
+
+# general interface methods of `AbstractDict` for `TruncatedBSeries`
+@inline Base.iterate(series::TruncatedBSeries) = iterate(series.coef)
+@inline Base.iterate(series::TruncatedBSeries, state) = iterate(series.coef, state)
+
+@inline Base.empty(series::TruncatedBSeries) = TruncatedBSeries(empty(series.coef))
+@inline Base.empty(series::TruncatedBSeries, ::Type{T}, ::Type{V}) where {T, V} = TruncatedBSeries(empty(series.coef, T, V))
+@inline Base.empty!(series::TruncatedBSeries) = (empty!(series.coef); series)
+
+@inline Base.length(series::TruncatedBSeries) = length(series.coef)
+
+@inline Base.getindex(series::TruncatedBSeries, t::RootedTree) = getindex(series.coef, t)
+@inline Base.setindex!(series::TruncatedBSeries, val, t::RootedTree) = setindex!(series.coef, val, t)
+
+@inline Base.get(series::TruncatedBSeries, t::RootedTree, default) = get(series.coef, t, default)
+@inline Base.get(f::F, series::TruncatedBSeries, t::RootedTree) where {F<:Function} = get(f, series.coef, t)
+
+@inline Base.getkey(series::TruncatedBSeries, t::RootedTree, default) = getkey(series.coef, t, default)
+
+@inline Base.delete!(series::TruncatedBSeries, t::RootedTree) = (delete!(series.coef, t); series)
+
+@inline Base.pop!(series::TruncatedBSeries, t::RootedTree) = pop!(series.coef, t)
+@inline Base.pop!(series::TruncatedBSeries, t::RootedTree, default) = pop!(series.coef, t, default)
+
+@inline Base.sizehint!(series::TruncatedBSeries, n) = sizehint!(series.coef, n)
+
+
+# internal interface of B-series
+@inline evaluation_type(::TruncatedBSeries) = EagerEvaluation()
+
+# TODO: TruncatedBSeries
+# This assumes that the `coef` are always stored with increasing `order` of the
+# rooted trees and that the underlying data format in OrderedCollections.jl does
+# not change. A general fallback would be
+#   RootedTrees.order(series::TruncatedBSeries) = maximum(order, keys(series.coef))
+# but that is O(n) instead of O(1).
+RootedTrees.order(series::TruncatedBSeries) = order(series.coef.keys[end])
+
 
 
 """
-    BSeries0{T<:RootedTree, V}
+    ExactSolution{V}()
 
-An [`AbstractBSeries`](@ref) with coefficient zero of the empty tree.
-This type of B-series can be used to describe right-hand sides of ordinary
-differential equations and perturbations thereof.
-
-See also [`modified_equation`](@ref) and [`modifying_integrator`](@ref).
+Lazy representation of the B-series of the exact solution of an ordinary
+differential equation using coefficients of type at least as representative as
+`V`.
 """
-struct BSeries0{T<:RootedTree, V} <: AbstractBSeries{T, V}
-  coef::OrderedDict{T, V}
+struct ExactSolution{V} end
+
+Base.getindex(::ExactSolution{V}, t::RootedTree) where {V} = inv(convert(V, γ(t)))
+
+# internal interface of B-series
+@inline evaluation_type(::ExactSolution) = LazyEvaluation()
+
+# general interface methods of iterators for `ExactSolution`
+Base.IteratorSize(::Type{<:ExactSolution}) = Base.SizeUnknown()
+Base.eltype(::Type{ExactSolution{V}}) where {V} = V
+
+function Base.iterate(exact::ExactSolution)
+  iterator = RootedTreeIterator(1)
+  t, state = iterate(iterator)
+  (exact[t], (state, iterator))
 end
 
-BSeries0{T, V}() where {T<:RootedTree, V} = BSeries0{T, V}(OrderedDict{T, V}())
+function Base.iterate(exact::ExactSolution, state_iterator)
+  state, iterator = state_iterator
+  t_state = iterate(iterator, state)
+  if t_state === nothing
+    iterator = RootedTreeIterator(iterator.order + 1)
+    t_state = iterate(iterator)
+  end
+  t, state = t_state
+  (exact[t], (state, iterator))
+end
 
-
-# general interface methods for AbstractBSeries (assuming eager evaluation for now)
-Base.iterate(series::AbstractBSeries) = iterate(series.coef)
-Base.iterate(series::AbstractBSeries, state) = iterate(series.coef, state)
-
-Base.length(series::AbstractBSeries) = length(series.coef)
-
-Base.getindex(series::AbstractBSeries, t::RootedTree) = getindex(series.coef, t)
-Base.setindex!(series::AbstractBSeries, val, t::RootedTree) = setindex!(series.coef, val, t)
-
-Base.get(series::AbstractBSeries, t::RootedTree, default) = get(series.coef, t, default)
-Base.get(f::Function, series::AbstractBSeries, t::RootedTree) = get(f, series.coef, t)
-
-Base.getkey(series::AbstractBSeries, t::RootedTree, default) = getkey(series.coef, t, default)
-
-Base.delete!(series::AbstractBSeries, t::RootedTree) = (delete!(series.coef, t); series)
-
-Base.pop!(series::AbstractBSeries, t::RootedTree) = pop!(series.coef, t)
-Base.pop!(series::AbstractBSeries, t::RootedTree, default) = pop!(series.coef, t, default)
-
-Base.sizehint!(series::AbstractBSeries, n) = sizehint!(series.coef, n)
 
 
 """
@@ -97,8 +135,8 @@ Compute the B-series of the Runge-Kutta method with Butcher coefficients
 """
 function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                  order)
-  T = promote_type(eltype(A), eltype(b), eltype(c))
-  series = OrderedDict{RootedTree{Int, Vector{Int}}, T}()
+  V = promote_type(eltype(A), eltype(b), eltype(c))
+  series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
 
   for o in 1:order
     for t in RootedTreeIterator(o)
@@ -109,46 +147,8 @@ function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
   return series
 end
 
-
-
-"""
-    compute_derivative(expression, variable)
-
-Internal function specialized on symbolic variables and expressions from
-
-- [SymEngine.jl](https://github.com/symengine/SymEngine.jl),
-- [SymPy.jl](https://github.com/JuliaPy/SymPy.jl), and
-- [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
-
-if these packages are loaded (via Requires.jl).
-"""
-function compute_derivative end
-
-function __init__()
-  @require SymEngine="123dc426-2d89-5057-bbad-38513e3affd8" begin
-    using .SymEngine: SymEngine
-
-    function compute_derivative(expression::SymEngine.Basic, variable::SymEngine.Basic)
-      SymEngine.diff(expression, variable)
-    end
-  end
-
-  @require SymPy="24249f21-da20-56a4-8eb1-6a02cf4ae2e6" begin
-    using .SymPy: SymPy
-
-    function compute_derivative(expression::SymPy.Sym, variable::SymPy.Sym)
-      SymPy.diff(expression, variable)
-    end
-  end
-
-  @require Symbolics="0c5d862f-8b57-4792-8d23-62f2024744c7" begin
-    using .Symbolics: Symbolics
-
-    function compute_derivative(expression::Symbolics.Num, variable::Symbolics.Num)
-      Symbolics.expand_derivatives(Symbolics.Differential(variable)(expression))
-    end
-  end
-end
+# TODO: bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector)
+# should create a lazy version, optionally a meoized one
 
 
 
@@ -156,7 +156,8 @@ end
     substitute(b, a, t::RootedTree)
 
 Compute the coefficient correspoding to the tree `t` of the B-series that is
-formed by substituting the B-series `b` into the B-series `a`.
+formed by substituting the B-series `b` into the B-series `a`. It is assumed
+that the B-series `b` has the coefficient zero of the empty tree.
 
 # References
 
@@ -185,7 +186,8 @@ end
     compose(b, a, t::RootedTree)
 
 Compute the coefficient correspoding to the tree `t` of the B-series that is
-formed by composing the B-series `a` with the B-series `b`.
+formed by composing the B-series `a` with the B-series `b`. It is assumed that
+the B-series `b` has the coefficient unity of the empty tree.
 
 # References
 
@@ -210,52 +212,21 @@ function compose(b, a, t::RootedTree)
 end
 
 
-"""
-    ExactSolution{T}()
-
-Lazy representation of the B-series of the exact solution of an ordinary
-differential equation using coefficients of type at least as representative as
-`T`.
-"""
-struct ExactSolution{T} end
-
-Base.getindex(::ExactSolution{T}, t::RootedTree) where {T} = one(T) / γ(t)
-
-Base.IteratorSize(::Type{<:ExactSolution}) = Base.SizeUnknown()
-Base.eltype(::Type{ExactSolution{T}}) where {T} = promote_type(T, Int)
-
-function Base.iterate(exact::ExactSolution)
-  iterator = RootedTreeIterator(1)
-  t, state = iterate(iterator)
-  (exact[t], (state, iterator))
-end
-
-function Base.iterate(exact::ExactSolution, state_iterator)
-  state, iterator = state_iterator
-  t_state = iterate(iterator, state)
-  if t_state === nothing
-    iterator = RootedTreeIterator(iterator.order + 1)
-    t_state = iterate(iterator)
-  end
-  t, state = t_state
-  (exact[t], (state, iterator))
-end
-
-
 
 """
-    modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
+    modified_equation(series_integrator)
 
-Compute the B-series of the modified equation of the Runge-Kutta method with
-Butcher coefficients `A, b, c` up to the prescribed `order`.
+Compute the B-series of the modified equation of the time integration method
+with B-series `series_integrator`.
 
 Given an ordinary differential equation (ODE) ``u'(t) = f(u(t))`` and a
 Runge-Kutta method, the idea is to interpret the numerical solution with
 given time step size as exact solution of a modified ODE ``u'(t) = fₕ(u(t))``.
 
 !!! note "Normalization by elementary differentials"
-    The coefficients of the B-series returned by this method need to be multiplied
-    by the corresponding elementary differential of the input vector field ``f``.
+    The coefficients of the B-series returned by this method need to be
+    multiplied by the corresponding elementary differential of the input
+    vector field ``f``.
 
 # References
 
@@ -265,34 +236,34 @@ Section 3.2 of
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
-function modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
-                           order)
-  # B-series of the Runge-Kutta method
-  series_rk = bseries(A, b, c, order)
+modified_equation(series_integrator) = modified_equation(series_integrator,
+                                                         evaluation_type(series_integrator))
 
+function modified_equation(series_integrator, ::EagerEvaluation)
   # B-series of the exact solution
-  T = eltype(values(series_rk))
+  V = valtype(series_integrator)
+
   # We could just use
-  #   series_ex = ExactSolution{T}()
+  #   series_ex = ExactSolution{V}()
   # However, we need to access elements of `series_ex` more than once in the
   # subsitution below. Thus, it's cheaper to compute every entry only once and
   # re-use it later.
-  exact = ExactSolution{T}()
-  series_ex = empty(series_rk)
-  for t in keys(series_rk)
+  exact = ExactSolution{V}()
+  series_ex = empty(series_integrator)
+  for t in keys(series_integrator)
     series_ex[t] = exact[t]
   end
 
   # Prepare B-series of the modified equation
-  series = empty(series_rk)
-  for t in keys(series_rk)
-    series[t] = zero(T)
+  series = empty(series_integrator)
+  for t in keys(series_integrator)
+    series[t] = zero(V)
   end
 
-  t = rootedtree([1])
-  series[t] = series_rk[t]
+  t = first(keys(series_integrator))
+  series[t] = series_integrator[t]
 
-  # Recursively solve `substitute(series, series_ex, t) == series_rk[t]`.
+  # Recursively solve `substitute(series, series_ex, t) == series_integrator[t]`.
   # This works because
   #   substitute(series, series_ex, t) = series[t] + lower order terms
   # Since the `keys` are ordered, we don't need to use nested loops of the form
@@ -300,11 +271,66 @@ function modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVect
   #     for _t in RootedTreeIterator(o)
   #       t = copy(_t)
   # which are slightly less efficient due to additional computations and allocations.
-  for t in keys(series)
-    series[t] += series_rk[t] - substitute(series, series_ex, t)
+  for t in keys(series_integrator)
+    series[t] += series_integrator[t] - substitute(series, series_ex, t)
   end
 
   return series
+end
+
+"""
+    modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                      order)
+
+Compute the B-series of the [`modified_equation`](@ref) of the Runge-Kutta
+method with Butcher coefficients `A, b, c` up to the prescribed `order`.
+"""
+function modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                           order)
+  # B-series of the Runge-Kutta method
+  series = bseries(A, b, c, order)
+  modified_equation(series)
+end
+
+
+"""
+    modified_equation(f, u, dt, series_integrator)
+
+Compute the [`modified_equation`](@ref) of the time integration method with
+B-series `series_integrator` specialized to the ordinary differential equation
+``u'(t) = f(u(t))`` with vector field `f` and dependent variables `u` for a
+time step size `dt`.
+
+Here, `u` is assumed to be a vector of symbolic variables and `f` is assumed
+to be a vector of expressions in these variables. Currently, symbolic variables
+from
+
+- [SymEngine.jl](https://github.com/symengine/SymEngine.jl),
+- [SymPy.jl](https://github.com/JuliaPy/SymPy.jl), and
+- [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
+
+are supported.
+
+# References
+
+Section 3.2 of
+- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
+  Algebraic Structures of B-series.
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+"""
+modified_equation(f, u, dt, series_integrator)
+
+function modified_equation(f, u, dt,
+                           A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                           order)
+  series = modified_equation(A, b, c, order)
+  differentials = elementary_differentials(f, u, order)
+  result = zero(f)
+  for t in keys(series)
+    result += dt^(RootedTrees.order(t) - 1) / symmetry(t) * series[t] * differentials[t]
+  end
+  result
 end
 
 
@@ -312,10 +338,10 @@ end
     modified_equation(f, u, dt,
                       A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
 
-Compute the B-series of the modified equation of the Runge-Kutta method with
-Butcher coefficients `A, b, c` up to the prescribed `order` with respect to
-the ordinary differential equation ``u'(t) = f(u(t))`` with vector field `f`
-and dependent variables `u` for a time step size `dt`.
+Compute the B-series of the [`modified_equation`](@ref) of the Runge-Kutta
+method with Butcher coefficients `A, b, c` up to the prescribed `order` with
+respect to the ordinary differential equation ``u'(t) = f(u(t))`` with vector
+field `f` and dependent variables `u` for a time step size `dt`.
 
 Here, `u` is assumed to be a vector of symbolic variables and `f` is assumed
 to be a vector of expressions in these variables. Currently, symbolic variables
@@ -377,13 +403,13 @@ function modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractV
   series_rk = bseries(A, b, c, order)
 
   # B-series of the exact solution
-  T = eltype(values(series_rk))
-  series_ex = ExactSolution{T}()
+  V = valtype(series_rk)
+  series_ex = ExactSolution{V}()
 
   # Prepare B-series of the modifying integrator equation
   series = empty(series_rk)
   for t in keys(series_rk)
-    series[t] = zero(T)
+    series[t] = zero(V)
   end
 
   t = rootedtree([1])
@@ -503,6 +529,45 @@ function _compute_partial_derivatives!(d, f, u, lower_derivatives)
     partial_derivative = compute_derivative(lower_derivatives[idx_known...], u[idx_new])
 
     d[idx] = partial_derivative
+  end
+end
+
+"""
+    compute_derivative(expression, variable)
+
+Internal function specialized on symbolic variables and expressions from
+
+- [SymEngine.jl](https://github.com/symengine/SymEngine.jl),
+- [SymPy.jl](https://github.com/JuliaPy/SymPy.jl), and
+- [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
+
+if these packages are loaded (via Requires.jl).
+"""
+function compute_derivative end
+
+function __init__()
+  @require SymEngine="123dc426-2d89-5057-bbad-38513e3affd8" begin
+    using .SymEngine: SymEngine
+
+    function compute_derivative(expression::SymEngine.Basic, variable::SymEngine.Basic)
+      SymEngine.diff(expression, variable)
+    end
+  end
+
+  @require SymPy="24249f21-da20-56a4-8eb1-6a02cf4ae2e6" begin
+    using .SymPy: SymPy
+
+    function compute_derivative(expression::SymPy.Sym, variable::SymPy.Sym)
+      SymPy.diff(expression, variable)
+    end
+  end
+
+  @require Symbolics="0c5d862f-8b57-4792-8d23-62f2024744c7" begin
+    using .Symbolics: Symbolics
+
+    function compute_derivative(expression::Symbolics.Num, variable::Symbolics.Num)
+      Symbolics.expand_derivatives(Symbolics.Differential(variable)(expression))
+    end
   end
 end
 
