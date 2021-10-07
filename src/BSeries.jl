@@ -12,7 +12,7 @@ using Requires: @require
 
 export TruncatedBSeries, ExactSolution
 
-export bseries, substitute, compose
+export bseries, substitute, compose, evaluate
 
 export modified_equation, modifying_integrator
 
@@ -94,6 +94,12 @@ TruncatedBSeries{T, V}() where {T, V} = TruncatedBSeries{T, V}(OrderedDict{T, V}
 # but that is O(n) instead of O(1). Since we do not consider the constructor as
 # public API but as internal implementation detail, users violating this assumption
 # are outside of the public API and may run into self-made problems.
+"""
+    order(series::TruncatedBSeries)
+
+The maximal `order` of a rooted tree with non-vanishing coefficient in the
+truncated B-series `series`.
+"""
 RootedTrees.order(series::TruncatedBSeries) = order(series.coef.keys[end])
 
 
