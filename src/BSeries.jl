@@ -276,7 +276,7 @@ end
 
 
 """
-    evaluate(f, u, dt, series)
+    evaluate(f, u, dt, series, reduce_order_by=0)
 
 Evaluate the B-series `series` specialized to the ordinary differential equation
 ``u'(t) = f(u(t))`` with vector field `f` and dependent variables `u` for a
@@ -291,6 +291,13 @@ from
 - [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
 
 are supported.
+
+The powers of `dt` can be controled by `reduce_order_by` to make them different
+from the usual `order(t)` for a rooted tree `t`. This can be useful in the
+context of [`modified_equation`](@ref)s or [`modifying_integrator`](@ref)s,
+where the B-series coeffcients are those of ``h fₕ``, i.e., they contain an
+additional power of `dt`. In this case, the B-series of the vector field can
+be obtained using `reduce_order_by = 1`.
 
 # References
 
@@ -337,6 +344,7 @@ with B-series `series_integrator`.
 Given an ordinary differential equation (ODE) ``u'(t) = f(u(t))`` and a
 Runge-Kutta method, the idea is to interpret the numerical solution with
 given time step size as exact solution of a modified ODE ``u'(t) = fₕ(u(t))``.
+This method returns the B-series of ``h fₕ``.
 
 !!! note "Normalization by elementary differentials"
     The coefficients of the B-series returned by this method need to be
@@ -471,7 +479,7 @@ integration method with B-series `series_integrator`.
 Given an ordinary differential equation (ODE) ``u'(t) = f(u(t))`` and a
 Runge-Kutta method, the idea is to find a modified ODE ``u'(t) = fₕ(u(t))``
 such that the numerical solution with given time step size is the exact solution
-of the original ODE.
+of the original ODE. This method returns the B-series of ``h fₕ``.
 
 !!! note "Normalization by elementary differentials"
     The coefficients of the B-series returned by this method need to be
