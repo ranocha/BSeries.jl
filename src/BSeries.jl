@@ -20,11 +20,17 @@ export elementary_differentials
 
 
 
-# types used for traits
+# Types used for traits
+# These traits may decide bewteen different algorithms based on the
+# corresponding complexity etc.
 abstract type AbstractEvaluation end
 struct LazyEvaluation     <: AbstractEvaluation end # lazy evaluation up to arbitrary order
 struct EagerEvaluation    <: AbstractEvaluation end # eager evaluation up to a fixed order
-struct MemoizedEvaluation <: AbstractEvaluation end # lazy evaluation up to arbitrary order memoizing the results
+struct MemoizedEvaluation <: AbstractEvaluation end # lazy evaluation memoizing the results
+
+evaluation_type(::Any) = LazyEvaluation() # assume lazy evaluation by default
+evaluation_type(::AbstractDict) = EagerEvaluation() # dictionaries store results eagerly
+
 
 # internal interface
 # TODO: `bseries(series::AbstractBSeries) = series` or a `copy`?
@@ -35,14 +41,14 @@ struct MemoizedEvaluation <: AbstractEvaluation end # lazy evaluation up to arbi
 """
     TruncatedBSeries
 
-An [`AbstractBSeries`](@ref) that can describe B-series of both numerical
-integration methods (where the coefficient of the empty tree is unity)
-and right-hand sides of an ordinary differential equation and perturbations
-thereof (where the coefficient of the empty tree is zero) up to a prescribed
-[`order`](@ref).
+An struct that can describe B-series of both numerical integration methods
+(where the coefficient of the empty tree is unity) and right-hand sides of an
+ordinary differential equation and perturbations thereof (where the coefficient
+of the empty tree is zero) up to a prescribed [`order`](@ref).
 
-Generally, it should be constructed via [`bseries`](@ref) or one of the
-methods returning a B-series.
+Generally, this kind of `struct` should be constructed via [`bseries`](@ref)
+or one of the other functions returning a B-series, e.g.,
+[`modified_equation`](@ref) or [`modifying_integrator`](@ref).
 """
 struct TruncatedBSeries{T<:RootedTree, V} <: AbstractDict{T, V}
   coef::OrderedDict{T, V}
@@ -78,14 +84,16 @@ TruncatedBSeries{T, V}() where {T, V} = TruncatedBSeries{T, V}(OrderedDict{T, V}
 
 
 # internal interface of B-series
-@inline evaluation_type(::TruncatedBSeries) = EagerEvaluation()
+# evaluation_type(::TruncatedBSeries) = EagerEvaluation() # is already the default for dicts
 
 # TODO: TruncatedBSeries
 # This assumes that the `coef` are always stored with increasing `order` of the
 # rooted trees and that the underlying data format in OrderedCollections.jl does
 # not change. A general fallback would be
 #   RootedTrees.order(series::TruncatedBSeries) = maximum(order, keys(series.coef))
-# but that is O(n) instead of O(1).
+# but that is O(n) instead of O(1). Since we do not consider the constructor as
+# public API but as internal implementation detail, users violating this assumption
+# are outside of the public API and may run into self-made problems.
 RootedTrees.order(series::TruncatedBSeries) = order(series.coef.keys[end])
 
 
@@ -100,9 +108,6 @@ differential equation using coefficients of type at least as representative as
 struct ExactSolution{V} end
 
 Base.getindex(::ExactSolution{V}, t::RootedTree) where {V} = inv(convert(V, γ(t)))
-
-# internal interface of B-series
-@inline evaluation_type(::ExactSolution) = LazyEvaluation()
 
 # general interface methods of iterators for `ExactSolution`
 Base.IteratorSize(::Type{<:ExactSolution}) = Base.SizeUnknown()
@@ -125,13 +130,46 @@ function Base.iterate(exact::ExactSolution, state_iterator)
   (exact[t], (state, iterator))
 end
 
+# internal interface of B-series
+# @inline evaluation_type(::ExactSolution) = LazyEvaluation() # this is the default assumption
+
+"""
+    ExactSolution(series_integrator)
+
+A representation of the B-series of the exact solution of an ODE using the same
+type of coefficients as the B-series `series_integrator`.
+"""
+function ExactSolution(series_integrator)
+  ExactSolution(series_integrator, evaluation_type(series_integrator))
+end
+
+function ExactSolution(series_integrator, ::LazyEvaluation)
+  ExactSolution{valtype(series_integrator)}()
+end
+
+function ExactSolution(series_integrator, ::EagerEvaluation)
+  exact = ExactSolution{valtype(series_integrator)}()
+  series = TruncatedBSeries{keytype(series_integrator), valtype(series_integrator)}()
+  for t in keys(series_integrator)
+    series[t] = exact[t]
+  end
+  series
+end
+
 
 
 """
     bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
 
 Compute the B-series of the Runge-Kutta method with Butcher coefficients
-`A, b, c` up to a prescribed `order`
+`A, b, c` up to a prescribed integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
 """
 function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                  order)
@@ -148,7 +186,7 @@ function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
 end
 
 # TODO: bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector)
-# should create a lazy version, optionally a meoized one
+# should create a lazy version, optionally a memoized one
 
 
 
@@ -214,90 +252,9 @@ end
 
 
 """
-    modified_equation(series_integrator)
+    evaluate(f, u, dt, series)
 
-Compute the B-series of the modified equation of the time integration method
-with B-series `series_integrator`.
-
-Given an ordinary differential equation (ODE) ``u'(t) = f(u(t))`` and a
-Runge-Kutta method, the idea is to interpret the numerical solution with
-given time step size as exact solution of a modified ODE ``u'(t) = fₕ(u(t))``.
-
-!!! note "Normalization by elementary differentials"
-    The coefficients of the B-series returned by this method need to be
-    multiplied by the corresponding elementary differential of the input
-    vector field ``f``.
-
-# References
-
-Section 3.2 of
-- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
-  Algebraic Structures of B-series.
-  Foundations of Computational Mathematics
-  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
-"""
-modified_equation(series_integrator) = modified_equation(series_integrator,
-                                                         evaluation_type(series_integrator))
-
-function modified_equation(series_integrator, ::EagerEvaluation)
-  # B-series of the exact solution
-  V = valtype(series_integrator)
-
-  # We could just use
-  #   series_ex = ExactSolution{V}()
-  # However, we need to access elements of `series_ex` more than once in the
-  # subsitution below. Thus, it's cheaper to compute every entry only once and
-  # re-use it later.
-  exact = ExactSolution{V}()
-  series_ex = empty(series_integrator)
-  for t in keys(series_integrator)
-    series_ex[t] = exact[t]
-  end
-
-  # Prepare B-series of the modified equation
-  series = empty(series_integrator)
-  for t in keys(series_integrator)
-    series[t] = zero(V)
-  end
-
-  t = first(keys(series_integrator))
-  series[t] = series_integrator[t]
-
-  # Recursively solve `substitute(series, series_ex, t) == series_integrator[t]`.
-  # This works because
-  #   substitute(series, series_ex, t) = series[t] + lower order terms
-  # Since the `keys` are ordered, we don't need to use nested loops of the form
-  #   for o in 2:order
-  #     for _t in RootedTreeIterator(o)
-  #       t = copy(_t)
-  # which are slightly less efficient due to additional computations and allocations.
-  for t in keys(series_integrator)
-    series[t] += series_integrator[t] - substitute(series, series_ex, t)
-  end
-
-  return series
-end
-
-"""
-    modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
-                      order)
-
-Compute the B-series of the [`modified_equation`](@ref) of the Runge-Kutta
-method with Butcher coefficients `A, b, c` up to the prescribed `order`.
-"""
-function modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
-                           order)
-  # B-series of the Runge-Kutta method
-  series = bseries(A, b, c, order)
-  modified_equation(series)
-end
-
-
-"""
-    modified_equation(f, u, dt, series_integrator)
-
-Compute the [`modified_equation`](@ref) of the time integration method with
-B-series `series_integrator` specialized to the ordinary differential equation
+Evaluate the B-series `series` specialized to the ordinary differential equation
 ``u'(t) = f(u(t))`` with vector field `f` and dependent variables `u` for a
 time step size `dt`.
 
@@ -319,24 +276,112 @@ Section 3.2 of
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
-modified_equation(f, u, dt, series_integrator)
+function evaluate(f, u, dt, series, reduce_order_by=0)
+  evaluate(f, u, dt, series, evaluation_type(series), reduce_order_by)
+end
 
-function modified_equation(f, u, dt,
-                           A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
-                           order)
-  series = modified_equation(A, b, c, order)
-  differentials = elementary_differentials(f, u, order)
+function evaluate(f, u, dt, series, ::EagerEvaluation, reduce_order_by)
+  differentials = elementary_differentials(f, u, order(series))
   result = zero(f)
   for t in keys(series)
-    result += dt^(RootedTrees.order(t) - 1) / symmetry(t) * series[t] * differentials[t]
+    result += dt^(RootedTrees.order(t) - reduce_order_by) / symmetry(t) * series[t] * differentials[t]
   end
   result
 end
 
 
+
+"""
+    modified_equation(series_integrator)
+
+Compute the B-series of the modified equation of the time integration method
+with B-series `series_integrator`.
+
+Given an ordinary differential equation (ODE) ``u'(t) = f(u(t))`` and a
+Runge-Kutta method, the idea is to interpret the numerical solution with
+given time step size as exact solution of a modified ODE ``u'(t) = fₕ(u(t))``.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+
+# References
+
+Section 3.2 of
+- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
+  Algebraic Structures of B-series.
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+"""
+function modified_equation(series_integrator)
+  modified_equation(series_integrator, evaluation_type(series_integrator))
+end
+
+function modified_equation(series_integrator, ::EagerEvaluation)
+  V = valtype(series_integrator)
+
+  # B-series of the exact solution
+  # We could just use the lazy version
+  #   series_ex = ExactSolution{V}()
+  # However, we need to access elements of `series_ex` more than once in the
+  # subsitution below. Thus, it's cheaper to compute every entry only once and
+  # re-use it later.
+  series_ex = ExactSolution(series_integrator)
+
+  # Prepare B-series of the modified equation
+  series = empty(series_integrator)
+  for t in keys(series_integrator)
+    series[t] = zero(V)
+  end
+
+  t = first(keys(series_integrator))
+  series[t] = series_integrator[t]
+
+  # Recursively solve
+  #   substitute(series, series_ex, t) == series_integrator[t]
+  # This works because
+  #   substitute(series, series_ex, t) = series[t] + lower order terms
+  # Since the `keys` are ordered, we don't need to use nested loops of the form
+  #   for o in 2:order
+  #     for _t in RootedTreeIterator(o)
+  #       t = copy(_t)
+  # which are slightly less efficient due to additional computations and
+  # allocations.
+  for t in keys(series_integrator)
+    series[t] += series_integrator[t] - substitute(series, series_ex, t)
+  end
+
+  return series
+end
+
+"""
+    modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                      order)
+
+Compute the B-series of the [`modified_equation`](@ref) of the Runge-Kutta
+method with Butcher coefficients `A, b, c` up to the prescribed `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+"""
+function modified_equation(A::AbstractMatrix, b::AbstractVector,
+                           c::AbstractVector, order)
+  # B-series of the Runge-Kutta method
+  series = bseries(A, b, c, order)
+  modified_equation(series)
+end
+
 """
     modified_equation(f, u, dt,
-                      A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
+                      A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                      order)
 
 Compute the B-series of the [`modified_equation`](@ref) of the Runge-Kutta
 method with Butcher coefficients `A, b, c` up to the prescribed `order` with
@@ -352,33 +397,24 @@ from
 - [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
 
 are supported.
-
-# References
-
-Section 3.2 of
-- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
-  Algebraic Structures of B-series.
-  Foundations of Computational Mathematics
-  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
 function modified_equation(f, u, dt,
-                           A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
-                           order)
+                           A::AbstractMatrix, b::AbstractVector,
+                           c::AbstractVector, order)
   series = modified_equation(A, b, c, order)
-  differentials = elementary_differentials(f, u, order)
-  result = zero(f)
-  for t in keys(series)
-    result += dt^(RootedTrees.order(t) - 1) / symmetry(t) * series[t] * differentials[t]
-  end
-  result
+  reduce_order_by = 1 # reduce the powers of `dt` by one since dt*f is given
+                      # by recursively solving `substitute`
+  evaluate(f, u, dt, series, reduce_order_by)
 end
 
 
-"""
-    modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
 
-Compute the B-series of a "modifying integrator" equation of the Runge-Kutta
-method with Butcher coefficients `A, b, c` up to the prescribed `order`.
+
+"""
+    modifying_integrator(series_integrator)
+
+Compute the B-series of a "modifying integrator" equation of the time
+integration method with B-series `series_integrator`.
 
 Given an ordinary differential equation (ODE) ``u'(t) = f(u(t))`` and a
 Runge-Kutta method, the idea is to find a modified ODE ``u'(t) = fₕ(u(t))``
@@ -386,8 +422,11 @@ such that the numerical solution with given time step size is the exact solution
 of the original ODE.
 
 !!! note "Normalization by elementary differentials"
-    The coefficients of the B-series returned by this method need to be multiplied
-    by the corresponding elementary differential of the input vector field ``f``.
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
 
 # References
 
@@ -397,48 +436,75 @@ Section 3.2 of
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
-function modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
-                              order)
-  # B-series of the Runge-Kutta method
-  series_rk = bseries(A, b, c, order)
+function modifying_integrator(series_integrator)
+  modifying_integrator(series_integrator, evaluation_type(series_integrator))
+end
+
+function modifying_integrator(series_integrator, ::EagerEvaluation)
+  V = valtype(series_integrator)
 
   # B-series of the exact solution
-  V = valtype(series_rk)
+  # Since we access each coefficient of this B-series only once below, it's
+  # okay to use the lazy version of the exact solution.
   series_ex = ExactSolution{V}()
 
   # Prepare B-series of the modifying integrator equation
-  series = empty(series_rk)
-  for t in keys(series_rk)
+  series = empty(series_integrator)
+  for t in keys(series_integrator)
     series[t] = zero(V)
   end
 
-  t = rootedtree([1])
-  series[t] = series_rk[t]
+  t = first(keys(series_integrator))
+  series[t] = series_integrator[t]
 
-  # Recursively solve `substitute(series, series_rk, t) == series_ex[t]`.
+  # Recursively solve
+  #   substitute(series, series_integrator, t) == series_ex[t]
   # This works because
-  #   substitute(series, series_rk, t) = series[t] + lower order terms
+  #   substitute(series, series_integrator, t) = series[t] + lower order terms
   # Since the `keys` are ordered, we don't need to use nested loops of the form
   #   for o in 2:order
   #     for _t in RootedTreeIterator(o)
   #       t = copy(_t)
-  # which are slightly less efficient due to additional computations and allocations.
-  for t in keys(series)
-    series[t] += series_ex[t] - substitute(series, series_rk, t)
+  # which are slightly less efficient due to additional computations and
+  # allocations.
+  for t in keys(series_integrator)
+    series[t] += series_ex[t] - substitute(series, series_integrator, t)
   end
 
   return series
 end
 
+"""
+    modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                         order)
+
+Compute the B-series of the [`modifying_integrator](@ref`) equation of the
+Runge-Kutta method with Butcher coefficients `A, b, c` up to the prescribed
+`order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+"""
+function modifying_integrator(A::AbstractMatrix, b::AbstractVector,
+                              c::AbstractVector, order)
+  # B-series of the Runge-Kutta method
+  series = bseries(A, b, c, order)
+  modifying_integrator(series)
+end
 
 """
     modifying_integrator(f, u, dt,
-                         A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
+                         A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                         order)
 
-Compute the B-series of a "modifying integrator" equation of the Runge-Kutta
-method with Butcher coefficients `A, b, c` up to the prescribed `order` with
-respect to the ordinary differential equation ``u'(t) = f(u(t))`` with vector
-field `f` and dependent variables `u` for a time step size `dt`.
+Compute the B-series of the [`modifying_integrator](@ref`) equation of the
+Runge-Kutta method with Butcher coefficients `A, b, c` up to the prescribed
+`order` with respect to the ordinary differential equation ``u'(t) = f(u(t))``
+with vector field `f` and dependent variables `u` for a time step size `dt`.
 
 Here, `u` is assumed to be a vector of symbolic variables and `f` is assumed
 to be a vector of expressions in these variables. Currently, symbolic variables
@@ -449,25 +515,14 @@ from
 - [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
 
 are supported.
-
-# References
-
-Section 3.2 of
-- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
-  Algebraic Structures of B-series.
-  Foundations of Computational Mathematics
-  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
 function modifying_integrator(f, u, dt,
-                              A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
-                              order)
+                              A::AbstractMatrix, b::AbstractVector,
+                              c::AbstractVector, order)
   series = modifying_integrator(A, b, c, order)
-  differentials = elementary_differentials(f, u, order)
-  result = zero(f)
-  for t in keys(series)
-    result += dt^(RootedTrees.order(t) - 1) / symmetry(t) * series[t] * differentials[t]
-  end
-  result
+  reduce_order_by = 1 # reduce the powers of `dt` by one since dt*f is given
+                      # by recursively solving `substitute`
+  evaluate(f, u, dt, series, reduce_order_by)
 end
 
 
