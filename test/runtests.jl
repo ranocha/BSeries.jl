@@ -1,7 +1,10 @@
 using Test
 using BSeries
 
+using Latexify: latexify
+
 using StaticArrays: @SArray
+
 using SymEngine: SymEngine
 using SymPy: SymPy
 using Symbolics: Symbolics
@@ -11,9 +14,50 @@ using Symbolics: Symbolics
 
 
 @testset "lazy representation of exact ODE solution" begin
-  exact = BSeries.ExactSolution{Rational{Int}}()
+  exact = ExactSolution{Rational{Int}}()
   terms = collect(Iterators.take(exact, 4))
   @test terms == [1//1, 1//2, 1//6, 1//3]
+  @test exact == ExactSolution(exact)
+end
+
+
+@testset "latexify" begin
+  # explicit midpoint method
+  A = @SArray [0 0; 1//2 0]; b = @SArray [0, 1//1]; c = @SArray [0, 1//2];
+
+  series_integrator = bseries(A, b, c, 2)
+  @test_nowarn latexify(series_integrator)
+  @test_nowarn latexify(series_integrator, cdot=false)
+  @test_nowarn latexify(series_integrator, dt=SymEngine.symbols("h"))
+end
+
+
+@testset "AbstractDict interface" begin
+  # explicit midpoint method
+  A = @SArray [0 0; 1//2 0]; b = @SArray [0, 1//1]; c = @SArray [0, 1//2];
+  series_integrator = bseries(A, b, c, 2)
+
+  # These are mostly simple smoke tests
+  @test_nowarn begin
+    @test isempty(empty(series_integrator, RootedTrees.RootedTree{Int32, Vector{Int32}}, Rational{Int32}))
+  end
+  empty!(series_integrator)
+  @test isempty(series_integrator)
+  @test isempty(keys(series_integrator))
+  @test isempty(values(series_integrator))
+  @test length(series_integrator) == 0
+  @test get(series_integrator, rootedtree([1]), :default) == :default
+  @test get(series_integrator, rootedtree([1])) do
+    :default
+  end == :default
+  @test getkey(series_integrator, rootedtree([1]), :default) == :default
+  @test_nowarn sizehint!(series_integrator, 10)
+
+  @test get!(series_integrator, rootedtree([1]), 2) == 2
+  @test pop!(series_integrator, rootedtree([1])) == 2
+  @test pop!(series_integrator, rootedtree([1]), :default) == :default
+  series_integrator[rootedtree([1])] = 3
+  @test isempty(delete!(series_integrator, rootedtree([1])))
 end
 
 
