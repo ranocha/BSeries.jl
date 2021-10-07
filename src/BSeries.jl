@@ -157,9 +157,24 @@ end
 
 function ExactSolution(series_integrator, ::EagerEvaluation)
   exact = ExactSolution{valtype(series_integrator)}()
-  series = TruncatedBSeries{keytype(series_integrator), valtype(series_integrator)}()
-  for t in keys(series_integrator)
+  T = keytype(series_integrator)
+  V = valtype(series_integrator)
+  series = TruncatedBSeries{T, V}()
+  series_keys = keys(series_integrator)
+
+  iter = iterate(series_keys)
+  if iter !== nothing
+    t, t_state = iter
+    if isempty(t)
+      series[t] = one(V)
+      iter = iterate(series_keys, t_state)
+    end
+  end
+
+  while iter !== nothing
+    t, t_state = iter
     series[t] = exact[t]
+    iter = iterate(series_keys, t_state)
   end
   series
 end
@@ -184,7 +199,7 @@ function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
   V = promote_type(eltype(A), eltype(b), eltype(c))
   series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
 
-  # series[rootedtree(Int[])] = one(V)
+  series[rootedtree(Int[])] = one(V)
   for o in 1:order
     for t in RootedTreeIterator(o)
       series[copy(t)] = elementary_weight(t, A, b, c)
@@ -261,7 +276,7 @@ end
 
 
 """
-    evaluate(f, u, dt, series)
+    evaluate(f, u, dt, series, reduce_order_by=0)
 
 Evaluate the B-series `series` specialized to the ordinary differential equation
 ``u'(t) = f(u(t))`` with vector field `f` and dependent variables `u` for a
@@ -276,6 +291,13 @@ from
 - [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
 
 are supported.
+
+The powers of `dt` can be controled by `reduce_order_by` to make them different
+from the usual `order(t)` for a rooted tree `t`. This can be useful in the
+context of [`modified_equation`](@ref)s or [`modifying_integrator`](@ref)s,
+where the B-series coeffcients are those of ``h fₕ``, i.e., they contain an
+additional power of `dt`. In this case, the B-series of the vector field can
+be obtained using `reduce_order_by = 1`.
 
 # References
 
@@ -293,7 +315,20 @@ function evaluate(f, u, dt, series, ::EagerEvaluation, reduce_order_by)
   differentials = elementary_differentials(f, u, order(series))
   result = zero(f)
   for t in keys(series)
-    result += dt^(RootedTrees.order(t) - reduce_order_by) / symmetry(t) * series[t] * differentials[t]
+    # Otherwise, SymPy.jl might result in
+    #   DomainError with -1:
+    #   Cannot raise an integer x to a negative power -1.
+    #   Convert input to float.
+    power = order(t) - reduce_order_by
+    if power > 0
+      dt_term = dt^power
+    elseif power == 0
+      dt_term = one(dt)
+    else
+      dt_term = inv(dt^(-power))
+    end
+
+    result += dt_term / symmetry(t) * series[t] * differentials[t]
   end
   result
 end
@@ -309,6 +344,7 @@ with B-series `series_integrator`.
 Given an ordinary differential equation (ODE) ``u'(t) = f(u(t))`` and a
 Runge-Kutta method, the idea is to interpret the numerical solution with
 given time step size as exact solution of a modified ODE ``u'(t) = fₕ(u(t))``.
+This method returns the B-series of ``h fₕ``.
 
 !!! note "Normalization by elementary differentials"
     The coefficients of the B-series returned by this method need to be
@@ -341,13 +377,26 @@ function modified_equation(series_integrator, ::EagerEvaluation)
   series_ex = ExactSolution(series_integrator)
 
   # Prepare B-series of the modified equation
+  series_keys = keys(series_integrator)
   series = empty(series_integrator)
-  for t in keys(series_integrator)
+  for t in series_keys
     series[t] = zero(V)
   end
 
-  t = first(keys(series_integrator))
-  series[t] = series_integrator[t]
+  iter = iterate(series_keys)
+  if iter !== nothing
+    t, t_state = iter
+    if isempty(t)
+      iter = iterate(series_keys, t_state)
+      if iter !== nothing
+        t, t_state = iter
+      end
+    end
+
+    series[t] = series_integrator[t]
+    iter = iterate(series_keys, t_state)
+  end
+
 
   # Recursively solve
   #   substitute(series, series_ex, t) == series_integrator[t]
@@ -359,8 +408,10 @@ function modified_equation(series_integrator, ::EagerEvaluation)
   #       t = copy(_t)
   # which are slightly less efficient due to additional computations and
   # allocations.
-  for t in keys(series_integrator)
+  while iter !== nothing
+    t, t_state = iter
     series[t] += series_integrator[t] - substitute(series, series_ex, t)
+    iter = iterate(series_keys, t_state)
   end
 
   return series
@@ -428,7 +479,7 @@ integration method with B-series `series_integrator`.
 Given an ordinary differential equation (ODE) ``u'(t) = f(u(t))`` and a
 Runge-Kutta method, the idea is to find a modified ODE ``u'(t) = fₕ(u(t))``
 such that the numerical solution with given time step size is the exact solution
-of the original ODE.
+of the original ODE. This method returns the B-series of ``h fₕ``.
 
 !!! note "Normalization by elementary differentials"
     The coefficients of the B-series returned by this method need to be
@@ -458,13 +509,25 @@ function modifying_integrator(series_integrator, ::EagerEvaluation)
   series_ex = ExactSolution{V}()
 
   # Prepare B-series of the modifying integrator equation
+  series_keys = keys(series_integrator)
   series = empty(series_integrator)
-  for t in keys(series_integrator)
+  for t in series_keys
     series[t] = zero(V)
   end
 
-  t = first(keys(series_integrator))
-  series[t] = series_integrator[t]
+  iter = iterate(series_keys)
+  if iter !== nothing
+    t, t_state = iter
+    if isempty(t)
+      iter = iterate(series_keys, t_state)
+      if iter !== nothing
+        t, t_state = iter
+      end
+    end
+
+    series[t] = series_integrator[t]
+    iter = iterate(series_keys, t_state)
+  end
 
   # Recursively solve
   #   substitute(series, series_integrator, t) == series_ex[t]
@@ -476,8 +539,10 @@ function modifying_integrator(series_integrator, ::EagerEvaluation)
   #       t = copy(_t)
   # which are slightly less efficient due to additional computations and
   # allocations.
-  for t in keys(series_integrator)
+  while iter !== nothing
+    t, t_state = iter
     series[t] += series_ex[t] - substitute(series, series_integrator, t)
+    iter = iterate(series_keys, t_state)
   end
 
   return series
@@ -546,6 +611,9 @@ rooted trees to obtain the corresponding elementary differential.
 function elementary_differentials(f, u, order)
   order >= 1 || throw(ArgumentError("The `order` must be at least one (got $order)"))
   differentials = OrderedDict{RootedTree{Int, Vector{Int}}, typeof(f)}()
+
+  t = rootedtree(Int[])
+  differentials[t] = one.(f)
 
   t = rootedtree([1])
   differentials[t] = f
