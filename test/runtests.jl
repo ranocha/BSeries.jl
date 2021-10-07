@@ -56,6 +56,8 @@ end
   @test get!(series_integrator, rootedtree([1]), 2) == 2
   @test pop!(series_integrator, rootedtree([1])) == 2
   @test pop!(series_integrator, rootedtree([1]), :default) == :default
+  series_integrator[rootedtree([1])] = 3
+  @test isempty(delete!(series_integrator, rootedtree([1])))
 end
 
 
