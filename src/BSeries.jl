@@ -725,13 +725,31 @@ function __init__()
 
       expressions = []
       for (t, val) in series
+        iszero(val) && continue
         elementary_differential = LatexifyElementaryDifferential(t, f)
         if dt isa Symbol || dt isa AbstractString
           # insert the symbol of dt
-          push!(expressions,
-                :($(val / symmetry(t)) *
-                  $dt^$(order(t) - reduce_order_by) *
-                  $(elementary_differential)))
+          val_symmetry = val / symmetry(t)
+          reduced_order = order(t) - reduce_order_by
+          if isone(val_symmetry)
+            if iszero(reduced_order)
+              push!(expressions,
+                    :($(elementary_differential)))
+            elseif isone(reduced_order)
+              push!(expressions,
+                    :($dt *
+                      $(elementary_differential)))
+            else
+              push!(expressions,
+                    :($dt^$(reduced_order) *
+                      $(elementary_differential)))
+            end
+          else
+            push!(expressions,
+                  :($(val / symmetry(t)) *
+                    $dt^$(order(t) - reduce_order_by) *
+                    $(elementary_differential)))
+          end
         else
           # assume that we can do arithmetic with dt
           push!(expressions,
