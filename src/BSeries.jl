@@ -118,6 +118,8 @@ Base.getindex(::ExactSolution{V}, t::RootedTree) where {V} = inv(convert(V, γ(t
 # general interface methods of iterators for `ExactSolution`
 Base.IteratorSize(::Type{<:ExactSolution}) = Base.SizeUnknown()
 Base.eltype(::Type{ExactSolution{V}}) where {V} = V
+Base.valtype(exact::ExactSolution) = valtype(typeof(exact))
+Base.valtype(::Type{ExactSolution{V}}) where {V} = V
 
 function Base.iterate(exact::ExactSolution)
   iterator = RootedTreeIterator(1)
@@ -182,6 +184,7 @@ function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
   V = promote_type(eltype(A), eltype(b), eltype(c))
   series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
 
+  # series[rootedtree(Int[])] = one(V)
   for o in 1:order
     for t in RootedTreeIterator(o)
       series[copy(t)] = elementary_weight(t, A, b, c)
