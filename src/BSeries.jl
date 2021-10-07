@@ -752,9 +752,16 @@ function __init__()
           end
         else
           # assume that we can do arithmetic with dt
-          push!(expressions,
-                :($(val / symmetry(t) * dt^(order(t) - reduce_order_by)) *
-                  $(elementary_differential)))
+          factor = val / symmetry(t) * dt^(order(t) - reduce_order_by)
+          iszero(factor) && continue
+          if isone(factor)
+            push!(expressions,
+                  :($(elementary_differential)))
+          else
+            push!(expressions,
+                  :($(factor) *
+                    $(elementary_differential)))
+          end
         end
       end
       result = expressions[1]
