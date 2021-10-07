@@ -1,7 +1,10 @@
 using Test
 using BSeries
 
+using Latexify: latexify
+
 using StaticArrays: @SArray
+
 using SymEngine: SymEngine
 using SymPy: SymPy
 using Symbolics: Symbolics
@@ -14,6 +17,16 @@ using Symbolics: Symbolics
   exact = BSeries.ExactSolution{Rational{Int}}()
   terms = collect(Iterators.take(exact, 4))
   @test terms == [1//1, 1//2, 1//6, 1//3]
+end
+
+@testset "latexify" begin
+  # explicit midpoint method
+  A = @SArray [0 0; 1//2 0]; b = @SArray [0, 1//1]; c = @SArray [0, 1//2];
+
+  series_integrator = bseries(A, b, c, 2)
+  @test_nowarn latexify(series_integrator)
+  @test_nowarn latexify(series_integrator, cdot=false)
+  @test_nowarn latexify(series_integrator, dt=SymEngine.symbols("h"))
 end
 
 

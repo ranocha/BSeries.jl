@@ -630,6 +630,53 @@ function __init__()
       Symbolics.expand_derivatives(Symbolics.Differential(variable)(expression))
     end
   end
+
+
+  @require Latexify="23fbe1c1-3f47-55db-b15f-69d7ec21a316" begin
+    using .Latexify: Latexify, LaTeXString, latexraw
+
+    struct LatexifyElementaryDifferential{T<:RootedTree}
+      t::T
+      f::String
+    end
+
+    function Latexify._latexraw(led::LatexifyElementaryDifferential; kwargs...)
+      LaTeXString("F_{" * led.f * "}(" * latexraw(led.t) * ")")
+    end
+
+    function Latexify.apply_recipe(series::TruncatedBSeries; kwargs...)
+      kwargs = merge(Dict{Symbol, Any}(
+        :f => :f, :reduce_order_by => 0, :dt => :h), kwargs)
+
+      f = string(kwargs[:f])
+      dt = kwargs[:dt]
+      reduce_order_by = kwargs[:reduce_order_by]
+
+      expressions = []
+      for (t, val) in series
+        elementary_differential = LatexifyElementaryDifferential(t, f)
+        if dt isa Symbol || dt isa AbstractString
+          # insert the symbol of dt
+          push!(expressions,
+                :($(val / symmetry(t)) *
+                  $dt^$(order(t) - reduce_order_by) *
+                  $(elementary_differential)))
+        else
+          # assume that we can do arithmetic with dt
+          push!(expressions,
+                :($(val / symmetry(t) * dt^(order(t) - reduce_order_by)) *
+                  $(elementary_differential)))
+        end
+      end
+      result = expressions[1]
+      for i in 2:length(expressions)
+        result = :($result + $(expressions[i]))
+      end
+
+      # return ((Latexify.LaTeXString(result),), kwargs)
+      return ((result,), kwargs)
+    end
+  end
 end
 
 function elementary_differential(f, t, differentials, derivatives)

@@ -18,6 +18,7 @@ RootedTrees = "2.1"
 julia = "1"
 
 [extras]
+Latexify = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
 SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
@@ -25,4 +26,4 @@ Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["StaticArrays", "SymEngine", "SymPy", "Symbolics", "Test"]
+test = ["Latexify", "StaticArrays", "SymEngine", "SymPy", "Symbolics", "Test"]
