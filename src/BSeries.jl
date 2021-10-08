@@ -712,7 +712,8 @@ function __init__()
     end
 
     function Latexify._latexraw(led::LatexifyElementaryDifferential; kwargs...)
-      LaTeXString("F_{" * led.f * "}(" * latexraw(led.t) * ")")
+      LaTeXString("F_{" * led.f * "}\\mathopen{}\\left( " *
+                  latexraw(led.t) * " \\right)\\mathclose{}")
     end
 
     function Latexify.apply_recipe(series::TruncatedBSeries; kwargs...)
@@ -769,7 +770,6 @@ function __init__()
         result = :($result + $(expressions[i]))
       end
 
-      # return ((Latexify.LaTeXString(result),), kwargs)
       return ((result,), kwargs)
     end
   end
