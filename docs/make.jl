@@ -55,6 +55,7 @@ makedocs(
     "Tutorials" => [
       "tutorials/modified_equations.md",
       "tutorials/modifying_integrators.md",
+      "tutorials/symbolic_computations.md",
     ],
     # "Applications & references" => "applications.md",
     "Benchmarks" => "benchmarks.md",

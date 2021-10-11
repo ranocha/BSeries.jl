@@ -1,4 +1,4 @@
-# Modified equations
+# [Modified equations](@id tutorial-modified-equation)
 
 This tutorial describes the API of
 [BSeries.jl](https://github.com/ranocha/BSeries.jl)

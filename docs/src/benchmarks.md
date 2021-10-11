@@ -1,4 +1,4 @@
-# Benchmarks
+# [Benchmarks](@id benchmarks)
 
 Here, we collect some simple benchmarks of
 [BSeries.jl](https://github.com/ranocha/BSeries.jl).
@@ -7,7 +7,7 @@ cloud to generate the documentation automatically. You can of course also
 copy the code and run the benchmarks locally yourself.
 
 
-## Comparing different symbolic packages
+## [Comparing different symbolic packages](@id benchmarks-symbolic-computations)
 
 Symbolic computations of [`modified_equation`](@ref)s and
 [`modifying_integrator`](@ref)s in

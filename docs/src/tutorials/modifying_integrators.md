@@ -1,4 +1,4 @@
-# Modifying integrators
+# [Modifying integrators](@id tutorial-modifying-integrator)
 
 This tutorial describes the API of
 [BSeries.jl](https://github.com/ranocha/BSeries.jl)
