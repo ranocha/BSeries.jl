@@ -78,7 +78,7 @@ Thus, we only show the first step here for now.
 ```@example modified-equation-sympy
 using BSeries, SymPy
 
-α = SymPy.symbols("α")
+α = SymPy.symbols("α", real=true)
 A = [0 0; 1/(2α) 0]
 b = [1-α, α]
 c = [0, 1/(2α)]
