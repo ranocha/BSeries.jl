@@ -37,7 +37,7 @@ something like `@benchmark` from
 However, this simple and cheap version suffices to compare the orders of
 magnitude.
 
-```@example nonlinear-oscillator
+```@example benchmark-nonlinear-oscillator
 using BSeries, StaticArrays
 
 function benchmark(u, dt, subs, order)
@@ -69,11 +69,11 @@ end
 
 Next, we load the symbolic packages and run the benchmarks.
 
-```@setup nonlinear-oscillator
+```@setup benchmark-nonlinear-oscillator
 using SymPy # generates annoying output online when conda installs sympy
 ```
 
-```@example nonlinear-oscillator
+```@example benchmark-nonlinear-oscillator
 using SymEngine: SymEngine
 using SymPy: SymPy
 using Symbolics: Symbolics
@@ -107,6 +107,109 @@ using Pkg
 Pkg.status(["SymEngine", "SymPy", "Symbolics"])
 nothing # hide
 ```
+
+
+## [Comparison with other packages](@id benchmarks-other-packages)
+
+There are also other open source packages for B-series. Currently, we are aware
+of the Python packages
+
+- [`BSeries`](https://github.com/ketch/BSeries)
+- [`pybs`](https://github.com/henriksu/pybs)
+
+If you know about similar open source packages out there, please inform us, e.g.,
+by [creating an issue](https://github.com/ranocha/BSeries.jl/issues/new/choose)
+on GitHub.
+
+The packages listed above and [BSeries.jl](https://github.com/ranocha/BSeries.jl)
+all use different approaches and have different features. Thus, comparisons
+must be restricted to their common subset of features. Here, we present some
+simple performance comparisons. Again, we just use `@time` twice to get an idea
+of the performance after compilation, allowing us to compare orders of magnitude.
+
+First, we start with the Python package
+[`BSeries`](https://github.com/ketch/BSeries).
+```@example benchmark-Python-BSeries
+using PyCall
+
+py"""
+import BSeries.bs as bs
+import nodepy.runge_kutta_method as rk
+
+midpoint_method = rk.loadRKM("Mid22")
+up_to_order = 9
+"""
+
+@time py"""
+series = bs.modified_equation(None, None,
+                              midpoint_method.A, midpoint_method.b,
+                              up_to_order, True)
+print(sum(series.values()))
+"""
+
+@time py"""
+series = bs.modified_equation(None, None,
+                              midpoint_method.A, midpoint_method.b,
+                              up_to_order, True)
+print(sum(series.values()))
+"""
+```
+
+
+Next, we look at the Python package [`pybs`](https://github.com/henriksu/pybs).
+```@example benchmark-Python-pybs
+using PyCall
+
+py"""
+import pybs as pybs
+from pybs.rungekutta import methods as rk_methods
+
+midpoint_method = rk_methods.RKmidpoint
+up_to_order = 9
+number_of_terms = pybs.unordered_tree.number_of_trees_up_to_order(up_to_order+1)
+
+from itertools import islice
+def first_values(f, n):
+  return (f(tree) for tree in islice(pybs.unordered_tree.tree_generator(), 0, n))
+
+"""
+
+@time py"""
+midpoint_series = midpoint_method.phi()
+series = pybs.series.modified_equation(midpoint_series)
+print(sum(first_values(series, number_of_terms)))
+"""
+
+@time py"""
+midpoint_series = midpoint_method.phi()
+series = pybs.series.modified_equation(midpoint_series)
+print(sum(first_values(series, number_of_terms)))
+"""
+```
+
+
+Finally, we perform the same task using
+[BSeries.jl](https://github.com/ranocha/BSeries.jl).
+```@example
+using BSeries, StaticArrays
+
+A = @SArray [0 0; 1//2 0]
+b = @SArray [0, 1//1]
+c = @SArray [0, 1//2]
+up_to_order = 9
+
+@time begin
+  series = modified_equation(A, b, c, up_to_order)
+  println(sum(values(series)))
+end
+
+@time begin
+  series = modified_equation(A, b, c, up_to_order)
+  println(sum(values(series)))
+end
+```
+
+
 
 
 ## References

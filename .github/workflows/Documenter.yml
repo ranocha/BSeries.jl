@@ -55,6 +55,20 @@ jobs:
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         env:
           PYTHON: ""
+      - name: Install Python dependencies
+        shell: julia --color=yes --project=. {0}
+        run: |
+          using Pkg
+          Pkg.add("Conda")
+          using Conda
+          Conda.pip_interop(true)
+          # install known versions of other packages working with B-series
+          Conda.pip("install",
+            "git+https://github.com/ketch/BSeries.git@f0bfd9c74f155c9e4a7bc748255c5f6cc2948e9b")
+          Conda.pip("install",
+            "git+https://github.com/henriksu/pybs.git@832f037cc342f5c3808c8f50a869b7b9ffb9b170")
+          # nodepy is used for examples using BSeries in Python
+          Conda.pip("install", "nodepy")
       - name: Build and deploy documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
