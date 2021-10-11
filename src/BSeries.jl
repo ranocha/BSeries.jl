@@ -115,7 +115,7 @@ differential equation using coefficients of type at least as representative as
 """
 struct ExactSolution{V} end
 
-Base.getindex(::ExactSolution{V}, t::RootedTree) where {V} = inv(convert(V, γ(t)))
+Base.getindex(::ExactSolution{V}, t::RootedTree) where {V} = convert(V, 1//1) / γ(t)
 
 # general interface methods of iterators for `ExactSolution`
 Base.IteratorSize(::Type{<:ExactSolution}) = Base.SizeUnknown()
@@ -554,7 +554,7 @@ end
     modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                          order)
 
-Compute the B-series of the [`modifying_integrator](@ref`) equation of the
+Compute the B-series of the [`modifying_integrator`](@ref) equation of the
 Runge-Kutta method with Butcher coefficients `A, b, c` up to the prescribed
 `order`.
 
@@ -577,7 +577,7 @@ end
                          A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                          order)
 
-Compute the B-series of the [`modifying_integrator](@ref`) equation of the
+Compute the B-series of the [`modifying_integrator`](@ref) equation of the
 Runge-Kutta method with Butcher coefficients `A, b, c` up to the prescribed
 `order` with respect to the ordinary differential equation ``u'(t) = f(u(t))``
 with vector field `f` and dependent variables `u` for a time step size `dt`.
