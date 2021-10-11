@@ -9,6 +9,8 @@ using RootedTrees: RootedTree
 
 using Requires: @require
 
+using Latexify: Latexify, LaTeXString
+
 
 export TruncatedBSeries, ExactSolution
 
@@ -701,78 +703,6 @@ function __init__()
       Symbolics.expand_derivatives(Symbolics.Differential(variable)(expression))
     end
   end
-
-
-  @require Latexify="23fbe1c1-3f47-55db-b15f-69d7ec21a316" begin
-    using .Latexify: Latexify, LaTeXString, latexraw
-
-    struct LatexifyElementaryDifferential{T<:RootedTree}
-      t::T
-      f::String
-    end
-
-    function Latexify._latexraw(led::LatexifyElementaryDifferential; kwargs...)
-      LaTeXString("F_{" * led.f * "}\\mathopen{}\\left( " *
-                  latexraw(led.t) * " \\right)\\mathclose{}")
-    end
-
-    function Latexify.apply_recipe(series::TruncatedBSeries; kwargs...)
-      kwargs = merge(Dict{Symbol, Any}(
-        :f => :f, :reduce_order_by => 0, :dt => :h), kwargs)
-
-      f = string(kwargs[:f])
-      dt = kwargs[:dt]
-      reduce_order_by = kwargs[:reduce_order_by]
-
-      expressions = []
-      for (t, val) in series
-        iszero(val) && continue
-        elementary_differential = LatexifyElementaryDifferential(t, f)
-        if dt isa Symbol || dt isa AbstractString
-          # insert the symbol of dt
-          val_symmetry = val / symmetry(t)
-          reduced_order = order(t) - reduce_order_by
-          if isone(val_symmetry)
-            if iszero(reduced_order)
-              push!(expressions,
-                    :($(elementary_differential)))
-            elseif isone(reduced_order)
-              push!(expressions,
-                    :($dt *
-                      $(elementary_differential)))
-            else
-              push!(expressions,
-                    :($dt^$(reduced_order) *
-                      $(elementary_differential)))
-            end
-          else
-            push!(expressions,
-                  :($(val / symmetry(t)) *
-                    $dt^$(order(t) - reduce_order_by) *
-                    $(elementary_differential)))
-          end
-        else
-          # assume that we can do arithmetic with dt
-          factor = val / symmetry(t) * dt^(order(t) - reduce_order_by)
-          iszero(factor) && continue
-          if isone(factor)
-            push!(expressions,
-                  :($(elementary_differential)))
-          else
-            push!(expressions,
-                  :($(factor) *
-                    $(elementary_differential)))
-          end
-        end
-      end
-      result = expressions[1]
-      for i in 2:length(expressions)
-        result = :($result + $(expressions[i]))
-      end
-
-      return ((result,), kwargs)
-    end
-  end
 end
 
 function elementary_differential(f, t, differentials, derivatives)
@@ -813,6 +743,9 @@ end
     end
   end
 end
+
+
+include("latexify.jl")
 
 
 end # module

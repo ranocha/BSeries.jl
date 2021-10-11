@@ -1,7 +1,7 @@
 using Test
 using BSeries
 
-using Latexify: latexify
+using BSeries.Latexify: latexify
 
 using StaticArrays: @SArray
 
