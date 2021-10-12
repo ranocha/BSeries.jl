@@ -56,11 +56,9 @@ jobs:
         env:
           PYTHON: ""
       - name: Install Python dependencies
-        shell: julia --color=yes --project=. {0}
+        shell: julia --color=yes --project=docs/ {0}
         run: |
-          using Pkg
-          Pkg.add("Conda")
-          using Conda
+          using PyCall.Conda
           Conda.pip_interop(true)
           # install known versions of other packages working with B-series
           Conda.pip("install",
@@ -70,11 +68,15 @@ jobs:
           # nodepy is used for examples using BSeries in Python
           Conda.pip("install", "nodepy")
           Conda.list()
+          using PyCall
+          PyCall.python_cmd(`-v -m pybs`) |> run
+          PyCall.python_cmd(`-c "import pybs"`) |> run
       - name: Build and deploy documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # For authentication with SSH deploy key
           DOCUMENTER_DEBUG: true
+          PYTHONVERBOSE: 2
           GKSwstype: "100" # https://discourse.julialang.org/t/generation-of-documentation-fails-qt-qpa-xcb-could-not-connect-to-display/60988
           PYTHON: ""
         run: julia --project=docs --color=yes docs/make.jl
