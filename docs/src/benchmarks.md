@@ -104,7 +104,7 @@ using InteractiveUtils
 versioninfo()
 
 using Pkg
-Pkg.status(["SymEngine", "SymPy", "Symbolics"])
+Pkg.status(["BSeries", "SymEngine", "SymPy", "Symbolics"])
 nothing # hide
 ```
 
@@ -124,8 +124,10 @@ on GitHub.
 The packages listed above and [BSeries.jl](https://github.com/ranocha/BSeries.jl)
 all use different approaches and have different features. Thus, comparisons
 must be restricted to their common subset of features. Here, we present some
-simple performance comparisons. Again, we just use `@time` twice to get an idea
-of the performance after compilation, allowing us to compare orders of magnitude.
+simple performance comparisons. Again, we just use (the equivalent of) `@time`
+twice to get an idea of the performance after compilation, allowing us to
+compare orders of magnitude.
+
 
 First, we start with the Python package
 [`BSeries`](https://github.com/ketch/BSeries).
@@ -207,7 +209,9 @@ print("", end_time - start_time, "seconds")
 
 
 Finally, we perform the same task using
-[BSeries.jl](https://github.com/ranocha/BSeries.jl).
+[BSeries.jl](https://github.com/ranocha/BSeries.jl)
+in Julia.
+
 ```@example
 using BSeries, StaticArrays
 
@@ -226,7 +230,6 @@ end
   println(sum(values(series)))
 end
 ```
-
 
 
 
