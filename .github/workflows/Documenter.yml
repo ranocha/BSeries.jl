@@ -70,6 +70,7 @@ jobs:
           Conda.list()
           using PyCall
           # PyCall.python_cmd(`-v -m pybs`) |> run
+          rm("/home/runner/.julia/conda/3/lib/python3.9/site-packages/pybs/__init__.py", force=true)
           PyCall.python_cmd(`-c "import pybs"`) |> run
       - name: Build and deploy documentation
         env:
