@@ -172,6 +172,18 @@ PyCall.Conda.list()
 
 ```@example
 using PyCall
+PyCall.python_cmd(`-v -m pybs`) |> run
+```
+
+
+```@example
+using PyCall
+PyCall.python_cmd(`-c "import pybs"`) |> run
+```
+
+
+```@example
+using PyCall
 PyCall.python_cmd(`-c "import pybs; print(pybs.__path__)"`) |> run
 ```
 
