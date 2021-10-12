@@ -56,7 +56,7 @@ jobs:
         env:
           PYTHON: ""
       - name: Install Python dependencies
-        shell: julia --color=yes --project=docs/ {0}
+        shell: julia --project=. --color=yes {0}
         run: |
           using PyCall.Conda
           Conda.pip_interop(true)
@@ -82,7 +82,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # For authentication with SSH deploy key
           DOCUMENTER_DEBUG: true
-          PYTHONVERBOSE: 2
+          PYTHONVERBOSE: 1
           GKSwstype: "100" # https://discourse.julialang.org/t/generation-of-documentation-fails-qt-qpa-xcb-could-not-connect-to-display/60988
           PYTHON: ""
         run: julia --project=docs --color=yes docs/make.jl
