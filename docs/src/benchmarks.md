@@ -109,7 +109,7 @@ nothing # hide
 ```
 
 
-## [Comparison with other packages](@id benchmarks-other-packages)
+## [Comparison with other packages for B-series](@id benchmarks-other-packages)
 
 There are also other open source packages for B-series. Currently, we are aware
 of the Python packages
@@ -161,7 +161,7 @@ Next, we look at the Python package [`pybs`](https://github.com/henriksu/pybs).
 using PyCall
 
 py"""
-import pybs as pybs
+import pybs
 from pybs.rungekutta import methods as rk_methods
 
 midpoint_method = rk_methods.RKmidpoint
