@@ -69,7 +69,7 @@ jobs:
           Conda.pip("install", "nodepy")
           Conda.list()
           using PyCall
-          PyCall.python_cmd(`-v -m pybs`) |> run
+          # PyCall.python_cmd(`-v -m pybs`) |> run
           PyCall.python_cmd(`-c "import pybs"`) |> run
       - name: Build and deploy documentation
         env:
