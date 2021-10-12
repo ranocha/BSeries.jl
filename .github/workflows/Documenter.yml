@@ -69,6 +69,7 @@ jobs:
             "git+https://github.com/henriksu/pybs.git@832f037cc342f5c3808c8f50a869b7b9ffb9b170")
           # nodepy is used for examples using BSeries in Python
           Conda.pip("install", "nodepy")
+          Conda.list()
       - name: Build and deploy documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
