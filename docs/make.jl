@@ -52,11 +52,11 @@ makedocs(
   pages = [
     "Home" => "index.md",
     # "Introduction" => "introduction.md",
-    "Tutorials" => [
-      "tutorials/modified_equations.md",
-      "tutorials/modifying_integrators.md",
-      "tutorials/symbolic_computations.md",
-    ],
+    # "Tutorials" => [
+    #   "tutorials/modified_equations.md",
+    #   "tutorials/modifying_integrators.md",
+    #   "tutorials/symbolic_computations.md",
+    # ],
     # "Applications & references" => "applications.md",
     "Benchmarks" => "benchmarks.md",
     "API reference" => "api_reference.md",
