@@ -46,7 +46,8 @@ makedocs(
   sitename="BSeries.jl",
   format = Documenter.HTML(
     prettyurls = get(ENV, "CI", nothing) == "true",
-    canonical = "https://ranocha.github.io/BSeries.jl/stable"
+    canonical = "https://ranocha.github.io/BSeries.jl/stable",
+    ansicolor = true
   ),
   # Explicitly specify documentation structure
   pages = [
