@@ -173,7 +173,23 @@ def first_values(f, n):
   return (f(tree) for tree in islice(pybs.unordered_tree.tree_generator(), 0, n))
 
 """
+```
 
+```@example benchmark-Python-pybs
+@time py"""
+midpoint_series = midpoint_method.phi()
+# series = pybs.series.modified_equation(midpoint_series)
+# print(sum(first_values(series, number_of_terms)))
+"""
+
+```@example benchmark-Python-pybs
+@time py"""
+midpoint_series = midpoint_method.phi()
+series = pybs.series.modified_equation(midpoint_series)
+# print(sum(first_values(series, number_of_terms)))
+"""
+
+```@example benchmark-Python-pybs
 @time py"""
 midpoint_series = midpoint_method.phi()
 series = pybs.series.modified_equation(midpoint_series)
