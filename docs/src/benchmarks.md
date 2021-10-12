@@ -162,15 +162,6 @@ using PyCall
 println(PyCall.python)
 ```
 
-```@example benchmark-Python-pybs
-using PyCall
-
-py"""
-import pybs
-print(pybs.__path__)
-"""
-```
-
 
 
 Finally, we perform the same task using
