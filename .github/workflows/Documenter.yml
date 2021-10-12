@@ -70,20 +70,22 @@ jobs:
           # nodepy is used for examples using BSeries in Python
           Conda.pip("install", "nodepy")
           Conda.list()
+          # Next, we need to fix pybs due to CI failures, see
+          # https://github.com/ranocha/BSeries.jl/pull/32
           using PyCall
           @show PyCall.pyversion
           @show PyCall.libpython
           @show PyCall.pyprogramname
           @show PyCall.Conda.PYTHONDIR
+          @show PyCall.Conda.LIBDIR
           # PyCall.python_cmd(`-v -m pybs`) |> run
-          rm("/home/runner/.julia/conda/3/lib/python3.9/site-packages/pybs/__init__.py", force=true)
+          rm(joinpath(PyCall.Conda.LIBDIR, "/python3.9/site-packages/pybs/__init__.py"), force=true)
           PyCall.python_cmd(`-c "import pybs"`) |> run |> println
           PyCall.python_cmd(`-c "import pybs; print(pybs.__path__)"`) |> run
       - name: Build and deploy documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # For authentication with SSH deploy key
-          PYTHONVERBOSE: 0
           GKSwstype: "100" # https://discourse.julialang.org/t/generation-of-documentation-fails-qt-qpa-xcb-could-not-connect-to-display/60988
           PYTHON: ""
         run: julia --project=docs --color=yes docs/make.jl

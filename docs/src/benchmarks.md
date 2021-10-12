@@ -129,60 +129,53 @@ of the performance after compilation, allowing us to compare orders of magnitude
 
 First, we start with the Python package
 [`BSeries`](https://github.com/ketch/BSeries).
-```@example benchmark-Python-BSeries
+To make sure that we do not measure any overhead of changing between Python and
+Julia, we use pure Python code called from Julia.
+
+```@example
 using PyCall
 
-py"""
+PyCall.python_cmd(`-c '
+import time
 import BSeries.bs as bs
 import nodepy.runge_kutta_method as rk
 
 midpoint_method = rk.loadRKM("Mid22")
 up_to_order = 9
-"""
 
-@time py"""
+start_time = time.time()
 series = bs.modified_equation(None, None,
                               midpoint_method.A, midpoint_method.b,
                               up_to_order, True)
 print(sum(series.values()))
-"""
+end_time = time.time()
+print("", end_time - start_time, "seconds")
 
-@time py"""
+start_time = time.time()
 series = bs.modified_equation(None, None,
                               midpoint_method.A, midpoint_method.b,
                               up_to_order, True)
 print(sum(series.values()))
-"""
+end_time = time.time()
+print("", end_time - start_time, "seconds")
+'`) |> run
 ```
 
 
 Next, we look at the Python package [`pybs`](https://github.com/henriksu/pybs).
-```@example
-using PyCall
-println(PyCall.python)
-
-py"""
-import sys
-print(sys.version_info)
-"""
-
-PyCall.Conda.list()
-```
 
 ```@example
 using PyCall
-PyCall.python_cmd(`-c "import pybs"`) |> run
-```
 
+# install known versions of other packages working with B-series
+PyCall.Conda.pip_interop(true)
+PyCall.Conda.pip("install",
+  "git+https://github.com/henriksu/pybs.git@832f037cc342f5c3808c8f50a869b7b9ffb9b170")
+# Next, we need to fix pybs due to CI failures, see
+# https://github.com/ranocha/BSeries.jl/pull/32
+rm(joinpath(PyCall.Conda.LIBDIR, "python3.9", "site-packages", "pybs", "__init__.py"),
+   force=true)
 
-```@example
-using PyCall
-PyCall.python_cmd(`-c "import pybs; print(pybs.__path__)"`) |> run
-```
-
-
-```@example
-using PyCall
 PyCall.python_cmd(`-c '
 import time
 import pybs
