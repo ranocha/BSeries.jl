@@ -169,6 +169,13 @@ print(sys.version_info)
 PyCall.Conda.list()
 ```
 
+
+```@example
+using PyCall
+PyCall.python_cmd(`-c "import pybs; print(pybs.__path__)"`) |> run
+```
+
+
 ```@example benchmark-Python-pybs
 using PyCall
 
