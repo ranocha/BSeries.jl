@@ -58,6 +58,8 @@ jobs:
       - name: Install Python dependencies
         shell: julia --project=. --color=yes {0}
         run: |
+          using Pkg
+          Pkg.add("PyCall")
           using PyCall.Conda
           Conda.pip_interop(true)
           # install known versions of other packages working with B-series
