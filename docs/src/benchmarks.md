@@ -169,13 +169,6 @@ print(sys.version_info)
 PyCall.Conda.list()
 ```
 
-
-```@example
-using PyCall
-PyCall.python_cmd(`-v -m pybs`) |> run
-```
-
-
 ```@example
 using PyCall
 PyCall.python_cmd(`-c "import pybs"`) |> run
@@ -188,27 +181,10 @@ PyCall.python_cmd(`-c "import pybs; print(pybs.__path__)"`) |> run
 ```
 
 
-```@example benchmark-Python-pybs
+```@example
 using PyCall
-
-py"""
-import pybs
-"""
-```
-
-```@example benchmark-Python-pybs
-using PyCall
-
-py"""
-import pybs
-print(pybs.__path__)
-"""
-```
-
-```@example benchmark-Python-pybs
-using PyCall
-
-py"""
+PyCall.python_cmd(`-c '
+import time
 import pybs
 from pybs.rungekutta import methods as rk_methods
 
@@ -220,35 +196,20 @@ from itertools import islice
 def first_values(f, n):
   return (f(tree) for tree in islice(pybs.unordered_tree.tree_generator(), 0, n))
 
-"""
-```
-
-```@example benchmark-Python-pybs
-@time py"""
-midpoint_series = midpoint_method.phi()
-# series = pybs.series.modified_equation(midpoint_series)
-# print(sum(first_values(series, number_of_terms)))
-"""
-
-```@example benchmark-Python-pybs
-@time py"""
-midpoint_series = midpoint_method.phi()
-series = pybs.series.modified_equation(midpoint_series)
-# print(sum(first_values(series, number_of_terms)))
-"""
-
-```@example benchmark-Python-pybs
-@time py"""
+start_time = time.time()
 midpoint_series = midpoint_method.phi()
 series = pybs.series.modified_equation(midpoint_series)
 print(sum(first_values(series, number_of_terms)))
-"""
+end_time = time.time()
+print("", end_time - start_time, "seconds")
 
-@time py"""
+start_time = time.time()
 midpoint_series = midpoint_method.phi()
 series = pybs.series.modified_equation(midpoint_series)
 print(sum(first_values(series, number_of_terms)))
-"""
+end_time = time.time()
+print("", end_time - start_time, "seconds")
+'`) |> run
 ```
 
 
