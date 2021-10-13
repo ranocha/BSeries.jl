@@ -20,6 +20,10 @@ from itertools import islice
 def first_values(f, n):
   return (f(tree) for tree in islice(pybs.unordered_tree.tree_generator(), 0, n))
 
+
+with open(io_file, 'a') as io:
+  print("\nModified equation", file=io)
+
 start_time = time.time()
 midpoint_series = midpoint_method.phi()
 series = pybs.series.modified_equation(midpoint_series)
