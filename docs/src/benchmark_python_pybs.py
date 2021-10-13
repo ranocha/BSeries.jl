@@ -2,6 +2,11 @@ import os
 directory = os.path.dirname(os.path.abspath(__file__))
 io_file = os.path.join(directory, "benchmark_python_pybs.txt")
 
+import sys
+print(sys.version, file=io)
+from importlib.metadata import version
+print(version('pybs'), file=io)
+
 import time
 import pybs
 from pybs.rungekutta import methods as rk_methods

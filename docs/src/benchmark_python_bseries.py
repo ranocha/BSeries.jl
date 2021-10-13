@@ -2,6 +2,11 @@ import os
 directory = os.path.dirname(os.path.abspath(__file__))
 io_file = os.path.join(directory, "benchmark_python_bseries.txt")
 
+import sys
+print(sys.version, file=io)
+from importlib.metadata import version
+print(version('BSeries'), file=io)
+
 import time
 import BSeries.bs as bs
 import nodepy.runge_kutta_method as rk
