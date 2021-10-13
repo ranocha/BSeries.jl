@@ -3,9 +3,10 @@ directory = os.path.dirname(os.path.abspath(__file__))
 io_file = os.path.join(directory, "benchmark_python_pybs.txt")
 
 import sys
-print(sys.version, file=io)
 from importlib.metadata import version
-print(version('pybs'), file=io)
+with open(io_file, 'w') as io:
+  print(sys.version, file=io)
+  print(version('pybs'), file=io)
 
 import time
 import pybs
@@ -24,7 +25,7 @@ midpoint_series = midpoint_method.phi()
 series = pybs.series.modified_equation(midpoint_series)
 result = sum(first_values(series, number_of_terms))
 end_time = time.time()
-with open(io_file, 'w') as io:
+with open(io_file, 'a') as io:
   print(result, file=io)
   print("", end_time - start_time, "seconds", file=io)
 
@@ -33,6 +34,6 @@ midpoint_series = midpoint_method.phi()
 series = pybs.series.modified_equation(midpoint_series)
 result = sum(first_values(series, number_of_terms))
 end_time = time.time()
-with open(io_file, 'w') as io:
+with open(io_file, 'a') as io:
   print(result, file=io)
   print("", end_time - start_time, "seconds", file=io)

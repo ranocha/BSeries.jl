@@ -3,9 +3,10 @@ directory = os.path.dirname(os.path.abspath(__file__))
 io_file = os.path.join(directory, "benchmark_python_bseries.txt")
 
 import sys
-print(sys.version, file=io)
 from importlib.metadata import version
-print(version('BSeries'), file=io)
+with open(io_file, 'w') as io:
+  print(sys.version, file=io)
+  print(version('pybs'), file=io)
 
 import time
 import BSeries.bs as bs
@@ -20,7 +21,7 @@ series = bs.modified_equation(None, None,
                               up_to_order, True)
 result = sum(series.values())
 end_time = time.time()
-with open(io_file, 'w') as io:
+with open(io_file, 'a') as io:
   print(result, file=io)
   print("", end_time - start_time, "seconds", file=io)
 
@@ -30,6 +31,6 @@ series = bs.modified_equation(None, None,
                               up_to_order, True)
 result = sum(series.values())
 end_time = time.time()
-with open(io_file, 'w') as io:
+with open(io_file, 'a') as io:
   print(result, file=io)
   print("", end_time - start_time, "seconds", file=io)
