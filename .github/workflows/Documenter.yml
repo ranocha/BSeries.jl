@@ -61,7 +61,7 @@ jobs:
           # https://github.com/ranocha/BSeries.jl/pull/32
           ls -R
           rm pybs/__init__.py
-          pip install .
+          pip install -e .
           cd ..
           pip list
           python --version
