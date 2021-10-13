@@ -63,6 +63,8 @@ jobs:
           rm pybs/__init__.py
           pip install --user .
           cd ..
+          pip list
+          python --version
           python docs/src/benchmark_python_pybs.py
           # Install BSeries & noedpy and run benchmark
           git clone https://github.com/ketch/BSeries.git python_bseries
@@ -70,6 +72,8 @@ jobs:
           pip install --user .
           pip install --user nodepy
           cd ..
+          pip list
+          python --version
           python docs/src/benchmark_python_bseries.py
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
