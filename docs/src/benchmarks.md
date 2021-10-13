@@ -134,7 +134,7 @@ First, we start with the Python package
 and the following benchmark script.
 
 ```@example
-using Markdown                                                            # hide
+using BSeries, Markdown                                                   # hide
 filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
   "benchmark_python_bseries.py")                                          # hide
 script = "```python\n"                                                    # hide
@@ -146,7 +146,7 @@ Markdown.parse(script)                                                    # hide
 ```
 
 ```@example
-using Markdown                                                            # hide
+using BSeries, Markdown                                                   # hide
 filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
   "benchmark_python_bseries.txt")                                         # hide
 results = "```\n" * read(filename, String) * "```\n"                      # hide
@@ -159,7 +159,7 @@ Next, we look at the Python package
 and the following benchmark script.
 
 ```@example
-using Markdown                                                            # hide
+using BSeries, Markdown                                                   # hide
 filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
   "benchmark_python_pybs.py")                                             # hide
 script = "```python\n"                                                    # hide
@@ -171,7 +171,7 @@ Markdown.parse(script)                                                    # hide
 ```
 
 ```@example
-using Markdown                                                            # hide
+using BSeries, Markdown                                                   # hide
 filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
   "benchmark_python_pybs.txt")                                            # hide
 results = "```\n" * read(filename, String) * "```\n"                      # hide
