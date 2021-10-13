@@ -59,6 +59,8 @@ jobs:
           git checkout 832f037cc342f5c3808c8f50a869b7b9ffb9b170
           # We need to fix pybs due to CI failures, see
           # https://github.com/ranocha/BSeries.jl/pull/32
+          # 1. We need to remove `pybs/__init__.py` due to circular dependencies
+          # 2. We need to install pybs using the `-e` switch
           ls -R
           rm pybs/__init__.py
           pip install -e .
@@ -66,6 +68,7 @@ jobs:
           pip list
           python --version
           python docs/src/benchmark_python_pybs.py
+          #
           # Install BSeries & noedpy and run benchmark
           git clone https://github.com/ketch/BSeries.git python_bseries
           cd python_bseries
@@ -79,36 +82,6 @@ jobs:
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         env:
           PYTHON: ""
-      - name: Install Python dependencies
-        shell: julia --project=. --color=yes {0}
-        run: |
-          using Pkg
-          Pkg.add("PyCall")
-          using PyCall.Conda
-          Conda.pip_interop(true)
-          # install known versions of other packages working with B-series
-          Conda.pip("install",
-            "git+https://github.com/ketch/BSeries.git@f0bfd9c74f155c9e4a7bc748255c5f6cc2948e9b")
-          Conda.pip("install",
-            "git+https://github.com/henriksu/pybs.git@832f037cc342f5c3808c8f50a869b7b9ffb9b170")
-          # nodepy is used for examples using BSeries in Python
-          Conda.pip("install", "nodepy")
-          Conda.list()
-          # Next, we need to fix pybs due to CI failures, see
-          # https://github.com/ranocha/BSeries.jl/pull/32
-          using PyCall
-          @show PyCall.pyversion
-          @show PyCall.libpython
-          @show PyCall.pyprogramname
-          @show PyCall.Conda.PYTHONDIR
-          @show PyCall.Conda.LIBDIR
-          # PyCall.python_cmd(`-v -m pybs`) |> run
-          rm(joinpath(PyCall.Conda.LIBDIR, "python3.9", "site-packages", "pybs", "__init__.py"),
-             force=true)
-          PyCall.python_cmd(`-c "import pybs"`) |> run |> println
-          PyCall.python_cmd(`-c "import pybs; print(pybs.__path__)"`) |> run
-          run(`ls -R $(joinpath(PyCall.Conda.LIBDIR, "python3.9", "site-packages", "pybs"))`)
-          PyCall.python_cmd(`docs/src/benchmark_python_pybs.py`) |> run
       - name: Build and deploy documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token

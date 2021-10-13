@@ -130,81 +130,52 @@ compare orders of magnitude.
 
 
 First, we start with the Python package
-[`BSeries`](https://github.com/ketch/BSeries).
-To make sure that we do not measure any overhead of changing between Python and
-Julia, we use pure Python code called from Julia.
+[`BSeries`](https://github.com/ketch/BSeries)
+and the following benchmark script.
 
 ```@example
-using PyCall
+using Markdown                                                            # hide
+filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
+  "benchmark_python_bseries.py")                                          # hide
+script = "```python\n"                                                    # hide
+for line in Iterators.drop(readlines(filename), 4)                        # hide
+  script = script * replace(line, ", file=io" => "") * "\n"               # hide
+end                                                                       # hide
+script = script * "```\n"                                                 # hide
+Markdown.parse(script)                                                    # hide
+```
 
-PyCall.python_cmd(`-c '
-import time
-import BSeries.bs as bs
-import nodepy.runge_kutta_method as rk
-
-midpoint_method = rk.loadRKM("Mid22")
-up_to_order = 9
-
-start_time = time.time()
-series = bs.modified_equation(None, None,
-                              midpoint_method.A, midpoint_method.b,
-                              up_to_order, True)
-print(sum(series.values()))
-end_time = time.time()
-print("", end_time - start_time, "seconds")
-
-start_time = time.time()
-series = bs.modified_equation(None, None,
-                              midpoint_method.A, midpoint_method.b,
-                              up_to_order, True)
-print(sum(series.values()))
-end_time = time.time()
-print("", end_time - start_time, "seconds")
-'`) |> run
+```@example
+using Markdown                                                            # hide
+filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
+  "benchmark_python_bseries.txt")                                         # hide
+results = "```\n" * read(filename, String) * "```\n"                      # hide
+Markdown.parse(results)                                                   # hide
 ```
 
 
-Next, we look at the Python package [`pybs`](https://github.com/henriksu/pybs).
+Next, we look at the Python package
+[`pybs`](https://github.com/henriksu/pybs)
+and the following benchmark script.
 
 ```@example
-using PyCall
+using Markdown                                                            # hide
+filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
+  "benchmark_python_pybs.py")                                             # hide
+script = "```python\n"                                                    # hide
+for line in Iterators.drop(readlines(filename), 4)                        # hide
+  script = script * replace(line, ", file=io" => "") * "\n"               # hide
+end                                                                       # hide
+script = script * "```\n"                                                 # hide
+Markdown.parse(script)                                                    # hide
+```
 
-# install known versions of other packages working with B-series
-PyCall.Conda.pip_interop(true)
-PyCall.Conda.pip("install",
-  "git+https://github.com/henriksu/pybs.git@832f037cc342f5c3808c8f50a869b7b9ffb9b170")
-# Next, we need to fix pybs due to CI failures, see
-# https://github.com/ranocha/BSeries.jl/pull/32
-rm(joinpath(PyCall.Conda.LIBDIR, "python3.9", "site-packages", "pybs", "__init__.py"),
-   force=true)
-
-PyCall.python_cmd(`-c '
-import time
-import pybs
-from pybs.rungekutta import methods as rk_methods
-
-midpoint_method = rk_methods.RKmidpoint
-up_to_order = 9
-number_of_terms = pybs.unordered_tree.number_of_trees_up_to_order(up_to_order+1)
-
-from itertools import islice
-def first_values(f, n):
-  return (f(tree) for tree in islice(pybs.unordered_tree.tree_generator(), 0, n))
-
-start_time = time.time()
-midpoint_series = midpoint_method.phi()
-series = pybs.series.modified_equation(midpoint_series)
-print(sum(first_values(series, number_of_terms)))
-end_time = time.time()
-print("", end_time - start_time, "seconds")
-
-start_time = time.time()
-midpoint_series = midpoint_method.phi()
-series = pybs.series.modified_equation(midpoint_series)
-print(sum(first_values(series, number_of_terms)))
-end_time = time.time()
-print("", end_time - start_time, "seconds")
-'`) |> run
+```@example
+using Markdown                                                            # hide
+filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
+  "benchmark_python_pybs.txt")                                            # hide
+results = "```\n" * read(filename, String) * "```\n"                      # hide
+Markdown.parse(results)                                                   # hide
 ```
 
 
