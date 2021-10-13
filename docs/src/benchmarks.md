@@ -133,7 +133,7 @@ First, we start with the Python package
 [`BSeries`](https://github.com/ketch/BSeries)
 and the following benchmark script.
 
-```@example
+````@example
 using BSeries, Markdown                                                   # hide
 filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
   "benchmark_python_bseries.py")                                          # hide
@@ -141,26 +141,27 @@ script = "```python\n"                                                    # hide
 for line in Iterators.drop(readlines(filename), 4)                        # hide
   startswith(line, "with") && continue                                    # hide
   line = replace(line, "  print" => "print")                              # hide
+  global script                                                           # hide
   script = script * replace(line, ", file=io" => "") * "\n"               # hide
 end                                                                       # hide
 script = script * "```\n"                                                 # hide
 Markdown.parse(script)                                                    # hide
-```
+````
 
-```@example
+````@example
 using BSeries, Markdown                                                   # hide
 filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
   "benchmark_python_bseries.txt")                                         # hide
 results = "```\n" * read(filename, String) * "```\n"                      # hide
 Markdown.parse(results)                                                   # hide
-```
+````
 
 
 Next, we look at the Python package
 [`pybs`](https://github.com/henriksu/pybs)
 and the following benchmark script.
 
-```@example
+````@example
 using BSeries, Markdown                                                   # hide
 filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
   "benchmark_python_pybs.py")                                             # hide
@@ -168,19 +169,20 @@ script = "```python\n"                                                    # hide
 for line in Iterators.drop(readlines(filename), 4)                        # hide
   startswith(line, "with") && continue                                    # hide
   line = replace(line, "  print" => "print")                              # hide
+  global script                                                           # hide
   script = script * replace(line, ", file=io" => "") * "\n"               # hide
 end                                                                       # hide
 script = script * "```\n"                                                 # hide
 Markdown.parse(script)                                                    # hide
-```
+````
 
-```@example
+````@example
 using BSeries, Markdown                                                   # hide
 filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
   "benchmark_python_pybs.txt")                                            # hide
 results = "```\n" * read(filename, String) * "```\n"                      # hide
 Markdown.parse(results)                                                   # hide
-```
+````
 
 
 Finally, we perform the same task using
