@@ -148,6 +148,8 @@ script = script * "```\n"                                                 # hide
 Markdown.parse(script)                                                    # hide
 ````
 
+The results are as follows.
+
 ````@example
 using BSeries, Markdown                                                   # hide
 filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
@@ -175,6 +177,8 @@ end                                                                       # hide
 script = script * "```\n"                                                 # hide
 Markdown.parse(script)                                                    # hide
 ````
+
+The results are as follows.
 
 ````@example
 using BSeries, Markdown                                                   # hide
