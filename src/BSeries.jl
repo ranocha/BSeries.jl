@@ -236,6 +236,7 @@ function substitute(b, a, t::RootedTree)
 
   for (forest, skeleton) in PartitionIterator(t)
     update = a[skeleton]
+    iszero(update) && continue
     for tree in forest
       update *= b[tree]
     end
@@ -266,6 +267,7 @@ function compose(b, a, t::RootedTree)
 
   for (forest, subtree) in SplittingIterator(t)
     update = a[subtree]
+    iszero(update) && continue
     for tree in forest
       update *= b[tree]
     end
