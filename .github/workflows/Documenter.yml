@@ -61,7 +61,7 @@ jobs:
           # https://github.com/ranocha/BSeries.jl/pull/32
           ls -R
           rm pybs/__init__.py
-          pip install --user .
+          pip install .
           cd ..
           pip list
           python --version
@@ -69,8 +69,8 @@ jobs:
           # Install BSeries & noedpy and run benchmark
           git clone https://github.com/ketch/BSeries.git python_bseries
           cd python_bseries
-          pip install --user .
-          pip install --user nodepy
+          pip install .
+          pip install nodepy
           cd ..
           pip list
           python --version
