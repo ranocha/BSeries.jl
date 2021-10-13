@@ -1,7 +1,7 @@
 # BSeries
 
-[![Docs-stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://ranocha.github.io/BSeries.jl/stable)
-[![Docs-dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://ranocha.github.io/BSeries.jl/dev)
+[![Docs-stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://ranocha.de/BSeries.jl/stable)
+[![Docs-dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://ranocha.de/BSeries.jl/dev)
 [![Build Status](https://github.com/ranocha/BSeries.jl/workflows/CI/badge.svg)](https://github.com/ranocha/BSeries.jl/actions?query=workflow%3ACI)
 [![Coveralls](https://coveralls.io/repos/github/ranocha/BSeries.jl/badge.svg?branch=main)](https://coveralls.io/github/ranocha/BSeries.jl?branch=main)
 [![Codecov](https://codecov.io/gh/ranocha/BSeries.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ranocha/BSeries.jl)
