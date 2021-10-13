@@ -161,7 +161,8 @@ Markdown.parse(results)                                                   # hide
 
 Next, we look at the Python package
 [`pybs`](https://github.com/henriksu/pybs)
-and the following benchmark script.
+and the following benchmark script. Note that this package does not provide
+functionality for modifying integrators.
 
 ````@example
 using BSeries, Markdown                                                   # hide
@@ -201,6 +202,8 @@ b = @SArray [0, 1//1]
 c = @SArray [0, 1//2]
 up_to_order = 9
 
+
+println("Modified equation")
 @time begin
   series = modified_equation(A, b, c, up_to_order)
   println(sum(values(series)))
@@ -208,6 +211,18 @@ end
 
 @time begin
   series = modified_equation(A, b, c, up_to_order)
+  println(sum(values(series)))
+end
+
+
+println("\nModifying integrator")
+@time begin
+  series = modifying_integrator(A, b, c, up_to_order)
+  println(sum(values(series)))
+end
+
+@time begin
+  series = modifying_integrator(A, b, c, up_to_order)
   println(sum(values(series)))
 end
 ```

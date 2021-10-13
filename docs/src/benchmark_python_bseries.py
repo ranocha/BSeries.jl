@@ -15,6 +15,10 @@ import nodepy.runge_kutta_method as rk
 midpoint_method = rk.loadRKM("Mid22")
 up_to_order = 9
 
+
+with open(io_file, 'a') as io:
+  print("\nModified equation", file=io)
+
 start_time = time.time()
 series = bs.modified_equation(None, None,
                               midpoint_method.A, midpoint_method.b,
@@ -29,6 +33,30 @@ start_time = time.time()
 series = bs.modified_equation(None, None,
                               midpoint_method.A, midpoint_method.b,
                               up_to_order, True)
+result = sum(series.values())
+end_time = time.time()
+with open(io_file, 'a') as io:
+  print(result, file=io)
+  print("", end_time - start_time, "seconds", file=io)
+
+
+with open(io_file, 'a') as io:
+  print("\nModifying integrator", file=io)
+
+start_time = time.time()
+series = bs.modifying_integrator(None, None,
+                                 midpoint_method.A, midpoint_method.b,
+                                 up_to_order, True)
+result = sum(series.values())
+end_time = time.time()
+with open(io_file, 'a') as io:
+  print(result, file=io)
+  print("", end_time - start_time, "seconds", file=io)
+
+start_time = time.time()
+series = bs.modifying_integrator(None, None,
+                                 midpoint_method.A, midpoint_method.b,
+                                 up_to_order, True)
 result = sum(series.values())
 end_time = time.time()
 with open(io_file, 'a') as io:
