@@ -51,6 +51,33 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: ""
+      - name: Run Python benchmarks
+        run: |
+          # Install pybs and run benchmark
+          git clone https://github.com/henriksu/pybs.git python_pybs
+          cd python_pybs
+          git checkout 832f037cc342f5c3808c8f50a869b7b9ffb9b170
+          # We need to fix pybs due to CI failures, see
+          # https://github.com/ranocha/BSeries.jl/pull/32
+          # 1. We need to remove `pybs/__init__.py` due to circular dependencies
+          # 2. We need to install pybs using the `-e` switch
+          ls -R
+          rm pybs/__init__.py
+          pip install -e .
+          cd ..
+          pip list
+          python --version
+          python docs/src/benchmark_python_pybs.py
+          #
+          # Install BSeries & noedpy and run benchmark
+          git clone https://github.com/ketch/BSeries.git python_bseries
+          cd python_bseries
+          pip install .
+          pip install nodepy
+          cd ..
+          pip list
+          python --version
+          python docs/src/benchmark_python_bseries.py
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         env:

@@ -37,7 +37,7 @@ something like `@benchmark` from
 However, this simple and cheap version suffices to compare the orders of
 magnitude.
 
-```@example nonlinear-oscillator
+```@example benchmark-nonlinear-oscillator
 using BSeries, StaticArrays
 
 function benchmark(u, dt, subs, order)
@@ -69,11 +69,11 @@ end
 
 Next, we load the symbolic packages and run the benchmarks.
 
-```@setup nonlinear-oscillator
+```@setup benchmark-nonlinear-oscillator
 using SymPy # generates annoying output online when conda installs sympy
 ```
 
-```@example nonlinear-oscillator
+```@example benchmark-nonlinear-oscillator
 using SymEngine: SymEngine
 using SymPy: SymPy
 using Symbolics: Symbolics
@@ -104,9 +104,114 @@ using InteractiveUtils
 versioninfo()
 
 using Pkg
-Pkg.status(["SymEngine", "SymPy", "Symbolics"])
+Pkg.status(["BSeries", "SymEngine", "SymPy", "Symbolics"])
 nothing # hide
 ```
+
+
+## [Comparison with other packages](@id benchmarks-other-packages)
+
+There are also other open source packages for B-series. Currently, we are aware
+of the Python packages
+
+- [`BSeries`](https://github.com/ketch/BSeries)
+- [`pybs`](https://github.com/henriksu/pybs)
+
+If you know about similar open source packages out there, please inform us, e.g.,
+by [creating an issue](https://github.com/ranocha/BSeries.jl/issues/new/choose)
+on GitHub.
+
+The packages listed above and [BSeries.jl](https://github.com/ranocha/BSeries.jl)
+all use different approaches and have different features. Thus, comparisons
+must be restricted to their common subset of features. Here, we present some
+simple performance comparisons. Again, we just use (the equivalent of) `@time`
+twice to get an idea of the performance after compilation, allowing us to
+compare orders of magnitude.
+
+
+First, we start with the Python package
+[`BSeries`](https://github.com/ketch/BSeries)
+and the following benchmark script.
+
+````@example
+using BSeries, Markdown                                                   # hide
+filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
+  "benchmark_python_bseries.py")                                          # hide
+script = "```python\n"                                                    # hide
+for line in Iterators.drop(readlines(filename), 4)                        # hide
+  startswith(line, "with") && continue                                    # hide
+  line = replace(line, "  print" => "print")                              # hide
+  global script                                                           # hide
+  script = script * replace(line, ", file=io" => "") * "\n"               # hide
+end                                                                       # hide
+script = script * "```\n"                                                 # hide
+Markdown.parse(script)                                                    # hide
+````
+
+The results are as follows.
+
+````@example
+using BSeries, Markdown                                                   # hide
+filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
+  "benchmark_python_bseries.txt")                                         # hide
+results = "```\n" * read(filename, String) * "```\n"                      # hide
+Markdown.parse(results)                                                   # hide
+````
+
+
+Next, we look at the Python package
+[`pybs`](https://github.com/henriksu/pybs)
+and the following benchmark script.
+
+````@example
+using BSeries, Markdown                                                   # hide
+filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
+  "benchmark_python_pybs.py")                                             # hide
+script = "```python\n"                                                    # hide
+for line in Iterators.drop(readlines(filename), 4)                        # hide
+  startswith(line, "with") && continue                                    # hide
+  line = replace(line, "  print" => "print")                              # hide
+  global script                                                           # hide
+  script = script * replace(line, ", file=io" => "") * "\n"               # hide
+end                                                                       # hide
+script = script * "```\n"                                                 # hide
+Markdown.parse(script)                                                    # hide
+````
+
+The results are as follows.
+
+````@example
+using BSeries, Markdown                                                   # hide
+filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
+  "benchmark_python_pybs.txt")                                            # hide
+results = "```\n" * read(filename, String) * "```\n"                      # hide
+Markdown.parse(results)                                                   # hide
+````
+
+
+Finally, we perform the same task using
+[BSeries.jl](https://github.com/ranocha/BSeries.jl)
+in Julia.
+
+```@example
+using BSeries, StaticArrays
+
+A = @SArray [0 0; 1//2 0]
+b = @SArray [0, 1//1]
+c = @SArray [0, 1//2]
+up_to_order = 9
+
+@time begin
+  series = modified_equation(A, b, c, up_to_order)
+  println(sum(values(series)))
+end
+
+@time begin
+  series = modified_equation(A, b, c, up_to_order)
+  println(sum(values(series)))
+end
+```
+
 
 
 ## References
