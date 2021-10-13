@@ -104,7 +104,7 @@ using InteractiveUtils
 versioninfo()
 
 using Pkg
-Pkg.status(["BSeries", "SymEngine", "SymPy", "Symbolics"])
+Pkg.status(["BSeries", "RootedTrees", "SymEngine", "SymPy", "Symbolics"])
 nothing # hide
 ```
 
