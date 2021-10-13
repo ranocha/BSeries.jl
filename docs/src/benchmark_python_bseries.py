@@ -5,8 +5,8 @@ io_file = os.path.join(directory, "benchmark_python_bseries.txt")
 import sys
 from importlib.metadata import version
 with open(io_file, 'w') as io:
-  print(sys.version, file=io)
-  print(version('pybs'), file=io)
+  print("Python version", sys.version, file=io)
+  print("Package version", version('pybs'), file=io)
 
 import time
 import BSeries.bs as bs

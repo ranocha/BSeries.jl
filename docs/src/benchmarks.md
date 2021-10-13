@@ -140,7 +140,7 @@ filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
 script = "```python\n"                                                    # hide
 for line in Iterators.drop(readlines(filename), 4)                        # hide
   startswith(line, "with") && continue                                    # hide
-  line = replace(line, "  print" => "print"                               # hide
+  line = replace(line, "  print" => "print")                              # hide
   script = script * replace(line, ", file=io" => "") * "\n"               # hide
 end                                                                       # hide
 script = script * "```\n"                                                 # hide
@@ -167,7 +167,7 @@ filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
 script = "```python\n"                                                    # hide
 for line in Iterators.drop(readlines(filename), 4)                        # hide
   startswith(line, "with") && continue                                    # hide
-  line = replace(line, "  print" => "print"                               # hide
+  line = replace(line, "  print" => "print")                              # hide
   script = script * replace(line, ", file=io" => "") * "\n"               # hide
 end                                                                       # hide
 script = script * "```\n"                                                 # hide
