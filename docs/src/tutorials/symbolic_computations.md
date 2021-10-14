@@ -71,9 +71,7 @@ latexify(series, reduce_order_by=1, dt=SymEngine.symbols("h"), cdot=false) |> pr
 
 
 We can also use other packages for the symbolic computations, of course.
-SymPy.jl often provides very clean expressions. However, integration with
-Latexify.jl requires [PR #439](https://github.com/JuliaPy/SymPy.jl/pull/439).
-Thus, we only show the first step here for now.
+SymPy.jl often provides very clean expressions.
 
 ```@example modified-equation-sympy
 using BSeries, SymPy
@@ -84,6 +82,14 @@ b = [1-α, α]
 c = [0, 1/(2α)]
 
 series = modified_equation(A, b, c, 3)
+```
+
+We can also generate LaTeX code as follows, using the same approach as for
+SymEngine.jl.
+
+```@example modified-equation-sympy
+using Latexify
+latexify(series, reduce_order_by=1, dt=SymPy.symbols("h"), cdot=false) |> println
 ```
 
 
