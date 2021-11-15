@@ -137,6 +137,43 @@ end
   t = rootedtree([1, 2, 3])
   @inferred compose(b, a, t)
   @test isequal(compose(b, a, t), a0 * b32 + a1 * b2 + a2 * b1 + a32)
+
+  @testset "Composing RK4 with itself" begin
+    # classical fourth-order Runge-Kutta method
+    A = @SArray [0 0 0 0;
+                 1//2 0 0 0;
+                 0 1//2 0 0;
+                 0 0 1 0]
+    b = @SArray [1//6, 1//3, 1//3, 1//6]
+    c = @SArray [0, 1//2, 1//2, 1]
+
+    series_rk4 = bseries(A, b, c, 8)
+    series_rk4_composed = @inferred compose(series_rk4, series_rk4,
+                                            normalize_stepsize=true)
+
+    # Butcher coefficients of the composition (with normalized step size)
+    A = @SArray [0     0     0     0     0     0     0     0;
+                 1//4  0     0     0     0     0     0     0;
+                 0     1//4  0     0     0     0     0     0;
+                 0     0     1//2  0     0     0     0     0;
+                 1//12 1//6  1//6  1//12 0     0     0     0;
+                 1//12 1//6  1//6  1//12 1//4  0     0     0;
+                 1//12 1//6  1//6  1//12 0     1//4  0     0;
+                 1//12 1//6  1//6  1//12 0     0     1//2  0]
+    b = @SArray [1//12, 1//6, 1//6, 1//12, 1//12, 1//6, 1//6, 1//12]
+    c = @SArray [0, 1//4, 1//4, 1//2, 1//2, 3//4, 3//4, 1//1]
+
+    series_2rk4 = bseries(A, b, c, order(series_rk4))
+
+    @test series_rk4_composed == series_2rk4
+
+    # Ensure that the normalization uses the correct factor
+    unnormalized_series = @inferred compose(series_rk4, series_rk4,
+                                            normalize_stepsize=false)
+    for t in keys(unnormalized_series)
+      @test unnormalized_series[t] == series_rk4_composed[t] * 2^order(t)
+    end
+  end
 end
 
 
