@@ -23,7 +23,7 @@ export elementary_differentials
 
 
 # Types used for traits
-# These traits may decide bewteen different algorithms based on the
+# These traits may decide between different algorithms based on the
 # corresponding complexity etc.
 abstract type AbstractEvaluation end
 struct LazyEvaluation     <: AbstractEvaluation end # lazy evaluation up to arbitrary order
@@ -275,6 +275,41 @@ function compose(b, a, t::RootedTree)
   end
 
   return result
+end
+
+
+"""
+    compose(b, a; normalize_stepsize=false)
+
+Compose the B-series `a` with the B-series `b`. It is assumed that the B-series
+`b` has the coefficient unity of the empty tree.
+
+If `normalize_stepsize = true`, the coefficients of the returned B-series will
+are divied by `2^order(t)` for each rooted tree `t`. This normalizes the step
+size so that the resulting numerical integrator B-series uses the same step size
+as the input series.
+
+# References
+
+Section 3.1 of
+- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
+  Algebraic Structures of B-series.
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+"""
+function compose(b, a; normalize_stepsize=false)
+  series_keys = keys(b)
+  series = empty(b)
+
+  for t in series_keys
+    coefficient = compose(b, a, t)
+    if normalize_stepsize
+      coefficient /= 2^order(t)
+    end
+    series[t] = coefficient
+  end
+
+  return series
 end
 
 
