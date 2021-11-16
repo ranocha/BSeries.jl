@@ -723,6 +723,8 @@ function __init__()
     function compute_derivative(expression::SymEngine.Basic, variable::SymEngine.Basic)
       SymEngine.diff(expression, variable)
     end
+
+    latexify_default_dt(::Type{SymEngine.Basic}) = SymEngine.symbols("h")
   end
 
   @require SymPy="24249f21-da20-56a4-8eb1-6a02cf4ae2e6" begin
@@ -731,6 +733,8 @@ function __init__()
     function compute_derivative(expression::SymPy.Sym, variable::SymPy.Sym)
       SymPy.diff(expression, variable)
     end
+
+    latexify_default_dt(::Type{SymPy.Sym}) = SymPy.symbols("h", real=true)
   end
 
   @require Symbolics="0c5d862f-8b57-4792-8d23-62f2024744c7" begin
@@ -739,6 +743,9 @@ function __init__()
     function compute_derivative(expression::Symbolics.Num, variable::Symbolics.Num)
       Symbolics.expand_derivatives(Symbolics.Differential(variable)(expression))
     end
+
+    # nested macro calls do not work so we need to define this part in another file
+    include("latexify_symbolics.jl")
   end
 end
 
