@@ -9,8 +9,18 @@ Latexify.@latexrecipe function _(led::LatexifyElementaryDifferential)
                      Latexify.latexify(led.t) * " \\right)\\mathclose{}")
 end
 
+latexify_default_dt(type) = "h"
+
 Latexify.@latexrecipe function _(series::TruncatedBSeries;
-                                 f="f", dt="h", reduce_order_by=0)
+                                 f="f", dt="no sensible default value",
+                                 reduce_order_by=0)
+
+  # `@latexrecipe` turns many assignments to keyword arguments into expressions,
+  # which doesn't work at all. Hence, we need to use a recognized type and
+  # set sensible default values here.
+  if dt == "no sensible default value"
+    dt = latexify_default_dt(valtype(series))
+  end
 
   expressions = []
   for (t, val) in series

@@ -29,6 +29,27 @@ end
   @test_nowarn latexify(series_integrator)
   @test_nowarn latexify(series_integrator, cdot=false)
   @test_nowarn latexify(series_integrator, dt=SymEngine.symbols("h"))
+
+  @testset "SymEngine.jl" begin
+    α = SymEngine.symbols("α")
+    A = [0 0; 1/(2*α) 0]; b = [1-α, α]; c = [0, 1/(2*α)]
+    series_integrator = bseries(A, b, c, 3)
+    @test_nowarn latexify(series_integrator)
+  end
+
+  @testset "SymPy.jl" begin
+    α = SymPy.symbols("α", real=true)
+    A = [0 0; 1/(2*α) 0]; b = [1-α, α]; c = [0, 1/(2*α)]
+    series_integrator = bseries(A, b, c, 3)
+    @test_nowarn latexify(series_integrator)
+  end
+
+  @testset "Symbolics.jl" begin
+    Symbolics.@variables α
+    A = [0 0; 1/(2*α) 0]; b = [1-α, α]; c = [0, 1/(2*α)]
+    series_integrator = bseries(A, b, c, 3)
+    @test_nowarn latexify(series_integrator)
+  end
 end
 
 
