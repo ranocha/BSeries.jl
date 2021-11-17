@@ -1,5 +1,8 @@
 module BSeries
 
+@doc read(joinpath(dirname(@__DIR__), "README.md"), String) BSeries
+
+
 using Reexport: @reexport
 
 @reexport using RootedTrees
@@ -246,6 +249,35 @@ function substitute(b, a, t::RootedTree)
   return result
 end
 
+"""
+    substitute(b, a)
+
+Substitute the B-series `b` into the B-series `a`. It is assumed that the
+B-series `b` has the coefficient zero of the empty tree.
+
+In the notation of Chartier, Hairer and Vilmart (2010), we have
+`substitute(b, a) = b ★ a`.
+
+# References
+
+Section 3.2 of
+- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
+  Algebraic Structures of B-series.
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+"""
+function substitute(b, a)
+  series_keys = keys(b)
+  series = empty(b)
+
+  for t in series_keys
+    coefficient = substitute(b, a, t)
+    series[t] = coefficient
+  end
+
+  return series
+end
+
 
 """
     compose(b, a, t::RootedTree)
@@ -277,17 +309,19 @@ function compose(b, a, t::RootedTree)
   return result
 end
 
-
 """
     compose(b, a; normalize_stepsize=false)
 
 Compose the B-series `a` with the B-series `b`. It is assumed that the B-series
 `b` has the coefficient unity of the empty tree.
 
+In the notation of Chartier, Hairer and Vilmart (2010), we have
+`compose(b, a) = b ⋅ a`.
+
 If `normalize_stepsize = true`, the coefficients of the returned B-series will
 are divied by `2^order(t)` for each rooted tree `t`. This normalizes the step
 size so that the resulting numerical integrator B-series uses the same step size
-as the input series.
+as the input series (instead of a doubled step size).
 
 # References
 
