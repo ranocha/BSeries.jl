@@ -1,5 +1,8 @@
 module BSeries
 
+@doc read(joinpath(dirname(@__DIR__), "README.md"), String) BSeries
+
+
 using Reexport: @reexport
 
 @reexport using RootedTrees
@@ -43,7 +46,7 @@ evaluation_type(::AbstractDict) = EagerEvaluation() # dictionaries store results
 """
     TruncatedBSeries
 
-An struct that can describe B-series of both numerical integration methods
+A struct that can describe B-series of both numerical integration methods
 (where the coefficient of the empty tree is unity) and right-hand sides of an
 ordinary differential equation and perturbations thereof (where the coefficient
 of the empty tree is zero) up to a prescribed [`order`](@ref).
@@ -246,6 +249,39 @@ function substitute(b, a, t::RootedTree)
   return result
 end
 
+"""
+    substitute(b, a)
+
+Substitute the B-series `b` into the B-series `a`. It is assumed that the
+B-series `b` has the coefficient zero of the empty tree.
+
+In the notation of Chartier, Hairer and Vilmart (2010), we have
+`substitute(b, a) = b ★ a`.
+
+# References
+
+Section 3.2 of
+- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
+  Algebraic Structures of B-series.
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+"""
+function substitute(b, a)
+  series_keys = keys(b)
+  series = empty(b)
+
+  t = first(series_keys)
+  @assert isempty(t)
+  series[t] = a[t]
+
+  for t in Iterators.drop(series_keys, 1)
+    coefficient = substitute(b, a, t)
+    series[t] = coefficient
+  end
+
+  return series
+end
+
 
 """
     compose(b, a, t::RootedTree)
@@ -277,17 +313,19 @@ function compose(b, a, t::RootedTree)
   return result
 end
 
-
 """
     compose(b, a; normalize_stepsize=false)
 
 Compose the B-series `a` with the B-series `b`. It is assumed that the B-series
 `b` has the coefficient unity of the empty tree.
 
+In the notation of Chartier, Hairer and Vilmart (2010), we have
+`compose(b, a) = b ⋅ a`.
+
 If `normalize_stepsize = true`, the coefficients of the returned B-series will
 are divied by `2^order(t)` for each rooted tree `t`. This normalizes the step
 size so that the resulting numerical integrator B-series uses the same step size
-as the input series.
+as the input series (instead of a doubled step size).
 
 # References
 
@@ -331,7 +369,7 @@ from
 
 are supported.
 
-The powers of `dt` can be controled by `reduce_order_by` to make them different
+The powers of `dt` can be controlled by `reduce_order_by` to make them different
 from the usual `order(t)` for a rooted tree `t`. This can be useful in the
 context of [`modified_equation`](@ref)s or [`modifying_integrator`](@ref)s,
 where the B-series coeffcients are those of ``h fₕ``, i.e., they contain an
@@ -477,6 +515,32 @@ function modified_equation(A::AbstractMatrix, b::AbstractVector,
   modified_equation(series)
 end
 
+
+"""
+    modified_equation(f, u, dt, series_integrator)
+
+Compute the B-series of the [`modified_equation`](@ref) of the time integration
+method with B-series `series_integrator` with respect to the ordinary
+differential equation ``u'(t) = f(u(t))`` with vector field `f` and dependent
+variables `u` for a time step size `dt`.
+
+Here, `u` is assumed to be a vector of symbolic variables and `f` is assumed
+to be a vector of expressions in these variables. Currently, symbolic variables
+from
+
+- [SymEngine.jl](https://github.com/symengine/SymEngine.jl),
+- [SymPy.jl](https://github.com/JuliaPy/SymPy.jl), and
+- [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
+
+are supported.
+"""
+function modified_equation(f, u, dt, series_integrator)
+  series = modified_equation(series_integrator)
+  reduce_order_by = 1 # reduce the powers of `dt` by one since dt*f is given
+                      # by recursively solving `substitute`
+  evaluate(f, u, dt, series, reduce_order_by)
+end
+
 """
     modified_equation(f, u, dt,
                       A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
@@ -500,12 +564,9 @@ are supported.
 function modified_equation(f, u, dt,
                            A::AbstractMatrix, b::AbstractVector,
                            c::AbstractVector, order)
-  series = modified_equation(A, b, c, order)
-  reduce_order_by = 1 # reduce the powers of `dt` by one since dt*f is given
-                      # by recursively solving `substitute`
-  evaluate(f, u, dt, series, reduce_order_by)
+  series_integrator = bseries(A, b, c, order)
+  modified_equation(f, u, dt, series_integrator)
 end
-
 
 
 
@@ -609,6 +670,32 @@ function modifying_integrator(A::AbstractMatrix, b::AbstractVector,
   modifying_integrator(series)
 end
 
+
+"""
+    modifying_integrator(f, u, dt, series_integrator)
+
+Compute the B-series of the [`modifying_integrator`](@ref) equation of the
+time integration method with B-series `series_integrator` with respect to the
+ordinary differential equation ``u'(t) = f(u(t))`` with vector field `f` and
+dependent variables `u` for a time step size `dt`.
+
+Here, `u` is assumed to be a vector of symbolic variables and `f` is assumed
+to be a vector of expressions in these variables. Currently, symbolic variables
+from
+
+- [SymEngine.jl](https://github.com/symengine/SymEngine.jl),
+- [SymPy.jl](https://github.com/JuliaPy/SymPy.jl), and
+- [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
+
+are supported.
+"""
+function modifying_integrator(f, u, dt, series_integrator)
+  series = modifying_integrator(series_integrator)
+  reduce_order_by = 1 # reduce the powers of `dt` by one since dt*f is given
+                      # by recursively solving `substitute`
+  evaluate(f, u, dt, series, reduce_order_by)
+end
+
 """
     modifying_integrator(f, u, dt,
                          A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
@@ -632,10 +719,8 @@ are supported.
 function modifying_integrator(f, u, dt,
                               A::AbstractMatrix, b::AbstractVector,
                               c::AbstractVector, order)
-  series = modifying_integrator(A, b, c, order)
-  reduce_order_by = 1 # reduce the powers of `dt` by one since dt*f is given
-                      # by recursively solving `substitute`
-  evaluate(f, u, dt, series, reduce_order_by)
+  series_integrator = bseries(A, b, c, order)
+  modifying_integrator(f, u, dt, series_integrator)
 end
 
 
