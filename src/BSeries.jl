@@ -270,7 +270,11 @@ function substitute(b, a)
   series_keys = keys(b)
   series = empty(b)
 
-  for t in series_keys
+  t = first(series_keys)
+  @assert isempty(t)
+  series[t] = a[t]
+
+  for t in Iterators.drop(series_keys, 1)
     coefficient = substitute(b, a, t)
     series[t] = coefficient
   end
