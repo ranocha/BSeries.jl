@@ -41,3 +41,28 @@ The main API of BSeries.jl consists of the following components.
   `modifying_integrator`s.
 
 Please consult the documentation or the docstrings for further information.
+
+
+## Referencing
+
+If you use
+[BSeries.jl](https://github.com/ranocha/BSeries.jl)
+for your research, please cite it using the bibtex entry
+```bibtex
+@misc{ranocha2021bseries,
+  title={{BSeries.jl}: {C}omputing with {B}-series in {J}ulia},
+  author={Ranocha, Hendrik and Ketcheson, David I},
+  year={2021},
+  month={09},
+  howpublished={\url{https://github.com/ranocha/BSeries.jl}},
+  doi={10.5281/zenodo.5534602}
+}
+```
+
+
+## License and contributing
+
+This project is licensed under the MIT license (see [LICENSE.md](LICENSE.md)).
+Since it is an open-source project, we are very happy to accept contributions
+from the community. Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for more
+details.
