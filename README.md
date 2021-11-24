@@ -49,6 +49,18 @@ If you use
 [BSeries.jl](https://github.com/ranocha/BSeries.jl)
 for your research, please cite it using the bibtex entry
 ```bibtex
+@online{ketcheson2021computing,
+  title={Computing with {B}-series},
+  author={Ketcheson, David I and Ranocha, Hendrik},
+  year={2021},
+  month={11},
+  eprint={2111.11680},
+  eprinttype={arXiv},
+  eprintclass={math.NA}
+}
+```
+In addition, you can also refer to BSeries.jl directly as
+```bibtex
 @misc{ranocha2021bseries,
   title={{BSeries.jl}: {C}omputing with {B}-series in {J}ulia},
   author={Ranocha, Hendrik and Ketcheson, David I},
