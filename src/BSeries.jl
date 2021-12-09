@@ -201,7 +201,15 @@ Compute the B-series of the Runge-Kutta method with Butcher coefficients
 """
 function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                  order)
-  V = promote_type(eltype(A), eltype(b), eltype(c))
+  V_tmp = promote_type(eltype(A), eltype(b), eltype(c))
+  if V_tmp <: Integer
+    # If people use integer coefficients, they will likely want to have results
+    # as exact as possible. However, general terms are not integers. Thus, we
+    # use rationals instead.
+    V = Rational{V_tmp}
+  else
+    V = V_tmp
+  end
   series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
 
   series[rootedtree(Int[])] = one(V)

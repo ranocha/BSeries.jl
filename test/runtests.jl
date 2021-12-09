@@ -724,4 +724,12 @@ end
   end
 end
 
+
+@testset "integer coefficients" begin
+  # reported by David Ketcheson on 2021-12-09
+  A = reshape([1], 1, 1); b = [1]; c = [1]
+  @inferred modified_equation(A, b, c, 4)
+end
+
+
 end # @testset "BSeries"
