@@ -187,9 +187,10 @@ end
 
 
 """
+    bseries(rk::RungeKuttaMethod, order)
     bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
 
-Compute the B-series of the Runge-Kutta method with Butcher coefficients
+Compute the B-series of the Runge-Kutta method `rk` with Butcher coefficients
 `A, b, c` up to a prescribed integer `order`.
 
 !!! note "Normalization by elementary differentials"
@@ -199,9 +200,8 @@ Compute the B-series of the Runge-Kutta method with Butcher coefficients
     of the input vector field ``f``.
     See also [`evaluate`](@ref).
 """
-function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
-                 order)
-  V_tmp = promote_type(eltype(A), eltype(b), eltype(c))
+function bseries(rk::RungeKuttaMethod, order)
+  V_tmp = eltype(rk)
   if V_tmp <: Integer
     # If people use integer coefficients, they will likely want to have results
     # as exact as possible. However, general terms are not integers. Thus, we
@@ -215,14 +215,63 @@ function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
   series[rootedtree(Int[])] = one(V)
   for o in 1:order
     for t in RootedTreeIterator(o)
-      series[copy(t)] = elementary_weight(t, A, b, c)
+      series[copy(t)] = elementary_weight(t, rk)
     end
   end
 
   return series
 end
 
-# TODO: bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector)
+function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                 order)
+  rk = RungeKuttaMethod(A, b, c)
+  bseries(rk, order)
+end
+
+# TODO: bseries(rk::RungeKuttaMethod)
+# should create a lazy version, optionally a memoized one
+
+
+"""
+    bseries(ark::AdditiveRungeKuttaMethod, order)
+
+Compute the B-series of the additive Runge-Kutta method `ark` up to a prescribed
+integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    colored rooted tree and multiplied by the corresponding elementary
+    differential of the input vector fields ``f^\\nu``.
+    See also [`evaluate`](@ref).
+"""
+function bseries(ark::AdditiveRungeKuttaMethod, order)
+  if length(ark.rks) != 2
+    throw(ArgumentError("Only AdditiveRungeKuttaMethod with a dual splitting are supported. Got an ARK with $(length(ark.rks)) methods."))
+  end
+
+  V_tmp = eltype(ark)
+  if V_tmp <: Integer
+    # If people use integer coefficients, they will likely want to have results
+    # as exact as possible. However, general terms are not integers. Thus, we
+    # use rationals instead.
+    V = Rational{V_tmp}
+  else
+    V = V_tmp
+  end
+  series = TruncatedBSeries{BicoloredRootedTree{Int, Vector{Int}, Vector{Bool}}, V}()
+
+  series[rootedtree(Int[], Bool[])] = one(V)
+  for o in 1:order
+    for t in BicoloredRootedTreeIterator(o)
+      series[copy(t)] = elementary_weight(t, rk)
+    end
+  end
+
+  return series
+end
+
+# TODO: bseries(ark::AdditiveRungeKuttaMethod)
 # should create a lazy version, optionally a memoized one
 
 
@@ -503,11 +552,12 @@ function modified_equation(series_integrator, ::EagerEvaluation)
 end
 
 """
+    modified_equation(rk::RungeKuttaMethod, order)
     modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                       order)
 
 Compute the B-series of the [`modified_equation`](@ref) of the Runge-Kutta
-method with Butcher coefficients `A, b, c` up to the prescribed `order`.
+method `rk` with Butcher coefficients `A, b, c` up to the prescribed `order`.
 
 !!! note "Normalization by elementary differentials"
     The coefficients of the B-series returned by this method need to be
@@ -516,11 +566,16 @@ method with Butcher coefficients `A, b, c` up to the prescribed `order`.
     of the input vector field ``f``.
     See also [`evaluate`](@ref).
 """
+function modified_equation(rk::RungeKuttaMethod, order)
+  # B-series of the Runge-Kutta method
+  series = bseries(rk, order)
+  modified_equation(series)
+end
+
 function modified_equation(A::AbstractMatrix, b::AbstractVector,
                            c::AbstractVector, order)
-  # B-series of the Runge-Kutta method
-  series = bseries(A, b, c, order)
-  modified_equation(series)
+  rk = RungeKuttaMethod(A, b, c)
+  modified_equation(rk, order)
 end
 
 
@@ -550,12 +605,13 @@ function modified_equation(f, u, dt, series_integrator)
 end
 
 """
+    modified_equation(f, u, dt, rk::RungeKuttaMethod, order)
     modified_equation(f, u, dt,
                       A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                       order)
 
 Compute the B-series of the [`modified_equation`](@ref) of the Runge-Kutta
-method with Butcher coefficients `A, b, c` up to the prescribed `order` with
+method `rk` with Butcher coefficients `A, b, c` up to the prescribed `order` with
 respect to the ordinary differential equation ``u'(t) = f(u(t))`` with vector
 field `f` and dependent variables `u` for a time step size `dt`.
 
@@ -569,11 +625,16 @@ from
 
 are supported.
 """
+function modified_equation(f, u, dt, rk::RungeKuttaMethod, order)
+  series_integrator = bseries(rk, order)
+  modified_equation(f, u, dt, series_integrator)
+end
+
 function modified_equation(f, u, dt,
                            A::AbstractMatrix, b::AbstractVector,
                            c::AbstractVector, order)
-  series_integrator = bseries(A, b, c, order)
-  modified_equation(f, u, dt, series_integrator)
+  rk = RungeKuttaMethod(A, b, c)
+  modified_equation(f, u, dt, rk, order)
 end
 
 
@@ -657,6 +718,7 @@ function modifying_integrator(series_integrator, ::EagerEvaluation)
 end
 
 """
+    modifying_integrator(rk::RungeKuttaMethod, order)
     modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                          order)
 
@@ -671,11 +733,16 @@ Runge-Kutta method with Butcher coefficients `A, b, c` up to the prescribed
     of the input vector field ``f``.
     See also [`evaluate`](@ref).
 """
+function modifying_integrator(rk::RungeKuttaMethod, order)
+  # B-series of the Runge-Kutta method
+  series = bseries(rk, order)
+  modifying_integrator(series)
+end
+
 function modifying_integrator(A::AbstractMatrix, b::AbstractVector,
                               c::AbstractVector, order)
-  # B-series of the Runge-Kutta method
-  series = bseries(A, b, c, order)
-  modifying_integrator(series)
+  rk = RungeKuttaMethod(A, b, c)
+  modifying_integrator(rk, order)
 end
 
 
@@ -705,6 +772,7 @@ function modifying_integrator(f, u, dt, series_integrator)
 end
 
 """
+    modifying_integrator(f, u, dt, rk::RungeKuttaMethod, order)
     modifying_integrator(f, u, dt,
                          A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                          order)
@@ -724,11 +792,16 @@ from
 
 are supported.
 """
+function modifying_integrator(f, u, dt, rk::RungeKuttaMethod, order)
+  series_integrator = bseries(rk, order)
+  modifying_integrator(f, u, dt, series_integrator)
+end
+
 function modifying_integrator(f, u, dt,
                               A::AbstractMatrix, b::AbstractVector,
                               c::AbstractVector, order)
-  series_integrator = bseries(A, b, c, order)
-  modifying_integrator(f, u, dt, series_integrator)
+  rk = RungeKuttaMethod(A, b, c)
+  modifying_integrator(f, u, dt, rk, order)
 end
 
 
