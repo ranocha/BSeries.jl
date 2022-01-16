@@ -6,13 +6,15 @@ module BSeries
 using Reexport: @reexport
 
 @reexport using RootedTrees
-using RootedTrees: RootedTree
+using RootedTrees: AbstractRootedTree
 
 @reexport using OrderedCollections: OrderedDict
 
 using Requires: @require
 
 using Latexify: Latexify, LaTeXString
+
+using Polynomials: Polynomials, Polynomial
 
 
 export TruncatedBSeries, ExactSolution
@@ -55,7 +57,7 @@ Generally, this kind of `struct` should be constructed via [`bseries`](@ref)
 or one of the other functions returning a B-series, e.g.,
 [`modified_equation`](@ref) or [`modifying_integrator`](@ref).
 """
-struct TruncatedBSeries{T<:RootedTree, V} <: AbstractDict{T, V}
+struct TruncatedBSeries{T<:AbstractRootedTree, V} <: AbstractDict{T, V}
   coef::OrderedDict{T, V}
 end
 
@@ -72,18 +74,18 @@ TruncatedBSeries{T, V}() where {T, V} = TruncatedBSeries{T, V}(OrderedDict{T, V}
 
 @inline Base.length(series::TruncatedBSeries) = length(series.coef)
 
-@inline Base.getindex(series::TruncatedBSeries, t::RootedTree) = getindex(series.coef, t)
-@inline Base.setindex!(series::TruncatedBSeries, val, t::RootedTree) = setindex!(series.coef, val, t)
+@inline Base.getindex(series::TruncatedBSeries, t::AbstractRootedTree) = getindex(series.coef, t)
+@inline Base.setindex!(series::TruncatedBSeries, val, t::AbstractRootedTree) = setindex!(series.coef, val, t)
 
-@inline Base.get(series::TruncatedBSeries, t::RootedTree, default) = get(series.coef, t, default)
-@inline Base.get(f::F, series::TruncatedBSeries, t::RootedTree) where {F<:Function} = get(f, series.coef, t)
+@inline Base.get(series::TruncatedBSeries, t::AbstractRootedTree, default) = get(series.coef, t, default)
+@inline Base.get(f::F, series::TruncatedBSeries, t::AbstractRootedTree) where {F<:Function} = get(f, series.coef, t)
 
-@inline Base.getkey(series::TruncatedBSeries, t::RootedTree, default) = getkey(series.coef, t, default)
+@inline Base.getkey(series::TruncatedBSeries, t::AbstractRootedTree, default) = getkey(series.coef, t, default)
 
-@inline Base.delete!(series::TruncatedBSeries, t::RootedTree) = (delete!(series.coef, t); series)
+@inline Base.delete!(series::TruncatedBSeries, t::AbstractRootedTree) = (delete!(series.coef, t); series)
 
-@inline Base.pop!(series::TruncatedBSeries, t::RootedTree) = pop!(series.coef, t)
-@inline Base.pop!(series::TruncatedBSeries, t::RootedTree, default) = pop!(series.coef, t, default)
+@inline Base.pop!(series::TruncatedBSeries, t::AbstractRootedTree) = pop!(series.coef, t)
+@inline Base.pop!(series::TruncatedBSeries, t::AbstractRootedTree, default) = pop!(series.coef, t, default)
 
 @inline Base.sizehint!(series::TruncatedBSeries, n) = sizehint!(series.coef, n)
 
@@ -118,7 +120,7 @@ differential equation using coefficients of type at least as representative as
 """
 struct ExactSolution{V} end
 
-Base.getindex(::ExactSolution{V}, t::RootedTree) where {V} = convert(V, 1//1) / γ(t)
+Base.getindex(::ExactSolution{V}, t::AbstractRootedTree) where {V} = convert(V, 1//1) / γ(t)
 
 # general interface methods of iterators for `ExactSolution`
 Base.IteratorSize(::Type{<:ExactSolution}) = Base.SizeUnknown()
@@ -272,6 +274,125 @@ function bseries(ark::AdditiveRungeKuttaMethod, order)
 end
 
 # TODO: bseries(ark::AdditiveRungeKuttaMethod)
+# should create a lazy version, optionally a memoized one
+
+
+# TODO: Documentation, Base.show, export etc.
+"""
+    MultirateInfinitesimalSplitMethod(A, D, G, c)
+
+# References
+
+- Knoth, Oswald, and Joerg Wensch.
+  "Generalized split-explicit Runge-Kutta methods for the
+  compressible Euler equations".
+  Monthly Weather Review 142, no. 5 (2014): 2067-2081.
+  [DOI: 10.1175/MWR-D-13-00068.1](https://doi.org/10.1175/MWR-D-13-00068.1)
+
+!!! warning "Experimental code"
+    This code is considered to be experimental at the moment
+    and can change any time.
+"""
+struct MultirateInfinitesimalSplitMethod{T, PolyMatT<:AbstractMatrix{<:Polynomial{T}}, MatT<:AbstractMatrix{T}, VecT<:AbstractVector{T}} <: RootedTrees.AbstractTimeIntegrationMethod
+  A::PolyMatT
+  D::MatT
+  G::MatT
+  c::VecT
+end
+
+function MultirateInfinitesimalSplitMethod(A, D, G, c)
+  T = promote_type(eltype(eltype(A)), eltype(D), eltype(G), eltype(c))
+  PolyT = typeof(zero(first(A)) + zero(T))
+  _A = PolyT.(A)
+  _D = T.(D)
+  _G = T.(G)
+  _c = T.(c)
+  return MultirateInfinitesimalSplitMethod(_A, _D, _G, _c)
+end
+
+Base.eltype(mis::MultirateInfinitesimalSplitMethod{T}) where {T} = T
+
+"""
+    bseries(mis::MultirateInfinitesimalSplitMethod, order)
+
+Compute the B-series of the multirate infinitesimal split method `mis`
+up to a prescribed integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    colored rooted tree and multiplied by the corresponding elementary
+    differential of the input vector fields ``f^\\nu``.
+    See also [`evaluate`](@ref).
+"""
+function bseries(mis::MultirateInfinitesimalSplitMethod, order)
+  V_tmp = eltype(mis)
+  if V_tmp <: Integer
+    # If people use integer coefficients, they will likely want to have results
+    # as exact as possible. However, general terms are not integers. Thus, we
+    # use rationals instead.
+    V = Rational{V_tmp}
+  else
+    V = V_tmp
+  end
+
+  prototype_scalar = TruncatedBSeries{BicoloredRootedTree{Int, Vector{Int}, Vector{Bool}}, V}()
+  prototype_scalar[rootedtree(Int[], Bool[])] = one(V)
+
+  PolyV = typeof(Polynomial([zero(V)]))
+  prototype_polynomial = TruncatedBSeries{BicoloredRootedTree{Int, Vector{Int}, Vector{Bool}}, PolyV}()
+  prototype_polynomial[rootedtree(Int[], Bool[])] = one(PolyV)
+
+  A = mis.A
+  D = mis.D
+  G = mis.G
+  ns = size(A, 2)
+  Z = Vector{typeof(prototype_polynomial)}(undef, ns + 1)
+  η = Vector{typeof(prototype_scalar)}(undef, ns + 1)
+  for i in 1:ns+1
+    Z[i] = copy(prototype_polynomial)
+    η[i] = copy(prototype_scalar)
+  end
+
+  for o in 1:order
+    for t_ in BicoloredRootedTreeIterator(o)
+      t = copy(t_)
+      for i in 1:ns+1
+        phi = Polynomial([zero(V)])
+        for j in 1:i-1
+          r = Polynomial([one(V)])
+          for subtree in RootedTrees.SubtreeIterator(t)
+            if subtree.color_sequence[1]
+              r = r * Z[i][subtree]
+            else
+              r = r * η[j][subtree]
+            end
+          end
+          v = [one(V)]
+          for k in 0:length(A[i, j])-1
+             phi = phi + Polynomial(v) * A[i, j][k] * r
+             v = [0; v]
+          end
+        end
+        for j in 1:i-1
+          phi = phi + G[i,j] * (η[j][t] - η[1][t])
+        end
+        phi = Polynomials.integrate(phi)
+        phi[0] = 0
+        for j in 1:i-1
+          phi[0] = phi[0] + D[i,j] * (η[j][t] - η[1][t])
+        end
+        Z[i][t] = phi
+        η[i][t] = phi(1)
+      end
+    end
+  end
+
+  series = η[end]
+  return series
+end
+
+# TODO: bseries(mis::MultirateInfinitesimalSplitMethod)
 # should create a lazy version, optionally a memoized one
 
 
