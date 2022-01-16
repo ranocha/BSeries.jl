@@ -339,9 +339,10 @@ function bseries(mis::MultirateInfinitesimalSplitMethod, order)
   prototype_scalar = TruncatedBSeries{BicoloredRootedTree{Int, Vector{Int}, Vector{Bool}}, V}()
   prototype_scalar[rootedtree(Int[], Bool[])] = one(V)
 
-  PolyV = typeof(Polynomial([zero(V)]))
-  prototype_polynomial = TruncatedBSeries{BicoloredRootedTree{Int, Vector{Int}, Vector{Bool}}, PolyV}()
-  prototype_polynomial[rootedtree(Int[], Bool[])] = one(PolyV)
+  poly_one = Polynomial{V, :x}([one(V)])
+  poly_zero = zero(poly_one)
+  prototype_polynomial = TruncatedBSeries{BicoloredRootedTree{Int, Vector{Int}, Vector{Bool}}, typeof(poly_one)}()
+  prototype_polynomial[rootedtree(Int[], Bool[])] = poly_one
 
   A = mis.A
   D = mis.D
@@ -358,9 +359,9 @@ function bseries(mis::MultirateInfinitesimalSplitMethod, order)
     for t_ in BicoloredRootedTreeIterator(o)
       t = copy(t_)
       for i in 1:ns+1
-        phi = Polynomial([zero(V)])
+        phi = poly_zero
         for j in 1:i-1
-          r = Polynomial([one(V)])
+          r = poly_one
           for subtree in RootedTrees.SubtreeIterator(t)
             if subtree.color_sequence[1]
               r = r * Z[i][subtree]
