@@ -369,20 +369,24 @@ function bseries(mis::MultirateInfinitesimalSplitMethod, order)
               r = r * η[j][subtree]
             end
           end
+
           v = [one(V)]
           for k in 0:length(A[i, j])-1
-             phi = phi + Polynomial(v) * A[i, j][k] * r
+             phi = phi + Polynomial{V, :x}(v) * A[i, j][k] * r
              v = [0; v]
           end
         end
+
         for j in 1:i-1
           phi = phi + G[i,j] * (η[j][t] - η[1][t])
         end
+
         phi = Polynomials.integrate(phi)
         phi[0] = 0
         for j in 1:i-1
           phi[0] = phi[0] + D[i,j] * (η[j][t] - η[1][t])
         end
+
         Z[i][t] = phi
         η[i][t] = phi(1)
       end
