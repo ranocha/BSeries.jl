@@ -17,64 +17,22 @@ jobs:
         with:
           version: 1
       - uses: julia-actions/cache@v1
-      - name: Debug Conda.jl/PyCall.jl/SymPy.jl build error
+      - name: Fix weird Conda.jl/PyCall.jl/SymPy.jl build error
         env:
           PYTHON: ""
         shell: julia --color=yes {0}
         run: |
           using Pkg
+          Pkg.activate("test")
+          println("Try instantiating the test environment")
           try
-            Pkg.add("Conda")
-            import Conda
+            Pkg.instantiate()
+            println("Successfully instantiated the test environment")
           catch e
             display(e)
           end
-          run(`ls -la /home/runner`)
-          run(`ls -la /home/runner/.julia`)
-          #for (root, dirs, files) in walkdir("/home/runner/.julia")
-          #  println("Directories")
-          #  for dir in dirs
-          #    println(joinpath(root, dir))
-          #  end
-          #  println("Files")
-          #  for file in files
-          #    println(joinpath(root, file))
-          #  end
-          #end
+          println("Try building SymPy")
           try
-            Pkg.build("Conda")
-            import Conda
-            println("Successfully built Conda")
-          catch e
-            display(e)
-          end
-          run(`ls -la /home/runner`)
-          run(`ls -la /home/runner/.julia`)
-          #for (root, dirs, files) in walkdir("/home/runner/.julia")
-          #  root != "/home/runner/.julia" && continue
-          #  println("Directories")
-          #  for dir in dirs
-          #    println(joinpath(root, dir))
-          #  end
-          #  println("Files")
-          #  for file in files
-          #    println(joinpath(root, file))
-          #  end
-          #end
-          try
-            Pkg.add("PyCall")
-            import PyCall
-          catch e
-            display(e)
-          end
-          try
-            Pkg.add("SymPy")
-            import SymPy
-          catch e
-            display(e)
-          end
-          try
-            println("Try building SymPy")
             Pkg.build("SymPy")
             import SymPy
             println("Successfully built SymPy")
