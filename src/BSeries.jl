@@ -302,6 +302,7 @@ struct MultirateInfinitesimalSplitMethod{T, PolyMatT<:AbstractMatrix{<:Polynomia
   c::VecT
 end
 
+# TODO: Deduce `c` from other parameters?
 function MultirateInfinitesimalSplitMethod(A::AbstractMatrix{<:Polynomial},
                                            D::AbstractMatrix,
                                            G::AbstractMatrix,
