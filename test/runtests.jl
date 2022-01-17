@@ -754,28 +754,50 @@ end
 
 
 @testset "additive Runge-Kutta methods interface" begin
-  # Hairer, Lubich, Wanner (2002)
-  # Geometric numerical integration
-  # Table II.2.1
-  As = [
-    [0 0; 1//2 1//2],
-    [1//2 0; 1//2 0]
-  ]
-  bs = [
-    [1//2, 1//2],
-    [1//2, 1//2]
-  ]
-  ark = AdditiveRungeKuttaMethod(As, bs)
+  @testset "IMEX Euler" begin
+    ex_euler = RungeKuttaMethod(
+      @SMatrix([0]), @SVector [1]
+    )
+    im_euler = RungeKuttaMethod(
+      @SMatrix([1]), @SVector [1]
+    )
+    ark = AdditiveRungeKuttaMethod([ex_euler, im_euler])
 
-  # second-order accurate
-  series_integrator = @inferred bseries(ark, 2)
-  series_exact = @inferred ExactSolution(series_integrator)
-  @test mapreduce(==, &, values(series_integrator), values(series_exact))
+    # first-order accurate
+    series_integrator = @inferred bseries(ark, 1)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(==, &, values(series_integrator), values(series_exact))
 
-  # not third-order accurate
-  series_integrator = @inferred bseries(ark, 3)
-  series_exact = @inferred ExactSolution(series_integrator)
-  @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+    # not second-order accurate
+    series_integrator = @inferred bseries(ark, 2)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+  end
+
+  @testset "Störmer-Verlet" begin
+    # Hairer, Lubich, Wanner (2002)
+    # Geometric numerical integration
+    # Table II.2.1
+    As = [
+      [0 0; 1//2 1//2],
+      [1//2 0; 1//2 0]
+    ]
+    bs = [
+      [1//2, 1//2],
+      [1//2, 1//2]
+    ]
+    ark = AdditiveRungeKuttaMethod(As, bs)
+
+    # second-order accurate
+    series_integrator = @inferred bseries(ark, 2)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(==, &, values(series_integrator), values(series_exact))
+
+    # not third-order accurate
+    series_integrator = @inferred bseries(ark, 3)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+  end
 end
 
 
@@ -788,28 +810,28 @@ end
     # Applied Numerical Mathematics, Volume 28, (1998) Issue 2-4
     # https://doi.org/10.1016/S0168-9274(98)00051-8
     ns = 4
-    A = zeros(Polynomial{Float64, :x}, ns+1, ns)
-    D = zeros(ns+1, ns)
-    G = zeros(ns+1, ns)
-    c = zeros(ns+1)
-    dts = zeros(ns+1)
+    A = zeros(Polynomial{Rational{Int}, :x}, ns+1, ns)
+    D = zeros(Int, ns+1, ns)
+    G = zeros(Rational{Int}, ns+1, ns)
+    c = zeros(Rational{Int}, ns+1)
+    dts = zeros(Rational{Int}, ns+1)
 
-    A[2, 1] = 1 / 2
-    A[3, 1] = -1 / 6
-    A[3, 2] = 2 / 3
-    A[4, 1] = 1 / 3
-    A[4, 2] = -1 / 3
+    A[2, 1] = 1 // 2
+    A[3, 1] = -1 // 6
+    A[3, 2] = 2 // 3
+    A[4, 1] = 1 // 3
+    A[4, 2] = -1 // 3
     A[4, 3] = 1
-    A[5, 1] = 1 / 6
-    A[5, 2] = 1 / 3
-    A[5, 3] = 1 / 3
-    A[5, 4] = 1 / 6
+    A[5, 1] = 1 // 6
+    A[5, 2] = 1 // 3
+    A[5, 3] = 1 // 3
+    A[5, 4] = 1 // 6
     A[5, :] = A[5, :] - A[4, :]
     A[4, :] = A[4, :] - A[3, :]
     A[3, :] = A[3, :] - A[2, :]
 
-    c[2] = 1 / 2
-    c[3] = 1 / 2
+    c[2] = 1 // 2
+    c[3] = 1 // 2
     c[4] = 1
     c[5] = 1
 
@@ -819,9 +841,9 @@ end
     D[5,4] = 1
 
     dts[1] = 0
-    dts[2] = 0.5
+    dts[2] = 1 // 2
     dts[3] = 0
-    dts[4] = 0.5
+    dts[4] = 1 // 2
     dts[5] = 0
 
     mis = @inferred MultirateInfinitesimalSplitMethod(A, D, G, c)
@@ -829,12 +851,12 @@ end
     # third-order accurate
     series_integrator = @inferred bseries(mis, 3)
     series_exact = @inferred ExactSolution(series_integrator)
-    @test mapreduce(≈, &, values(series_integrator), values(series_exact))
+    @test mapreduce(==, &, values(series_integrator), values(series_exact))
 
     # not fourth-order accurate
     series_integrator = @inferred bseries(mis, 4)
     series_exact = @inferred ExactSolution(series_integrator)
-    @test mapreduce(≈, &, values(series_integrator), values(series_exact)) == false
+    @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
   end
 
   @testset "MRI-GARK-ERK33" begin
