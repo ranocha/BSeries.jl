@@ -20,6 +20,28 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: ""
+      - name: Fix weird Conda.jl/PyCall.jl/SymPy.jl build error
+        env:
+          PYTHON: ""
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          Pkg.activate("test")
+          println("Try instantiating the test environment")
+          try
+            Pkg.instantiate()
+            println("Successfully instantiated the test environment")
+          catch e
+            display(e)
+          end
+          println("Try building SymPy")
+          try
+            Pkg.build("SymPy")
+            import SymPy
+            println("Successfully built SymPy")
+          catch e
+            display(e)
+          end
       - uses: julia-actions/julia-runtest@v1
         env:
           PYTHON: ""
