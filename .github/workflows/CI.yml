@@ -73,6 +73,14 @@ jobs:
           catch e
             display(e)
           end
+          try
+            println("Try building SymPy")
+            Pkg.build("SymPy")
+            import SymPy
+            println("Successfully built SymPy")
+          catch e
+            display(e)
+          end
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: ""
