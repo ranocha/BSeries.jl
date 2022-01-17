@@ -3,7 +3,7 @@ using BSeries
 
 using BSeries.Latexify: latexify
 
-using StaticArrays: @SArray, @SMatrix
+using StaticArrays: @SArray, @SMatrix, @SVector
 
 using SymEngine: SymEngine
 using SymPy: SymPy
