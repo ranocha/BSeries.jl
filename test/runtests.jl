@@ -768,12 +768,12 @@ end
   ark = AdditiveRungeKuttaMethod(As, bs)
 
   # second-order accurate
-  series_integrator = @inferred bseries(rk, 4)
+  series_integrator = @inferred bseries(ark, 4)
   series_exact = @inferred ExactSolution(series_integrator)
   @test mapreduce(==, &, values(series_integrator), values(series_exact))
 
   # not third-order accurate
-  series_integrator = @inferred bseries(rk, 5)
+  series_integrator = @inferred bseries(ark, 5)
   series_exact = @inferred ExactSolution(series_integrator)
   @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
 end
