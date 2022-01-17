@@ -23,12 +23,34 @@ jobs:
         shell: julia --color=yes {0}
         run: |
           using Pkg
-          Pkg.add("Conda")
-          import Conda
-          Pkg.add("PyCall")
-          import PyCall
-          Pkg.add("SymPy")
-          import SymPy
+          try
+            Pkg.add("Conda")
+            import Conda
+          catch e
+            display(e)
+          end
+          for (root, dirs, files) in walkdir("~/.julia")
+            println("Directories")
+            for dir in dirs
+              println(joinpath(root, dir))
+            end
+            println("Files")
+            for file in files
+              println(joinpath(root, file))
+            end
+          end
+          try
+            Pkg.add("PyCall")
+            import PyCall
+          catch e
+            display(e)
+          end
+          try
+            Pkg.add("SymPy")
+            import SymPy
+          catch e
+            display(e)
+          end
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: ""
