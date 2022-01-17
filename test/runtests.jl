@@ -779,4 +779,348 @@ end
 end
 
 
+@testset "multirate infinitesimal split methods interface" begin
+  # NOTE: This is still considered experimental and might change at any time!
+
+  @testset "KW43" begin
+    # Oswald Knoth, Ralf Wolke
+    # Implicit-explicit Runge-Kutta methods for computing atmospheric reactive flows
+    # Applied Numerical Mathematics, Volume 28, (1998) Issue 2-4
+    # https://doi.org/10.1016/S0168-9274(98)00051-8
+    ns = 4
+    A = zeros(Polynomial{Float64, :x}, ns+1, ns)
+    D = zeros(ns+1, ns)
+    G = zeros(ns+1, ns)
+    c = zeros(ns+1)
+    dts = zeros(ns+1)
+
+    A[2, 1] = 1 / 2
+    A[3, 1] = -1 / 6
+    A[3, 2] = 2 / 3
+    A[4, 1] = 1 / 3
+    A[4, 2] = -1 / 3
+    A[4, 3] = 1
+    A[5, 1] = 1 / 6
+    A[5, 2] = 1 / 3
+    A[5, 3] = 1 / 3
+    A[5, 4] = 1 / 6
+    A[5, :] = A[5, :] - A[4, :]
+    A[4, :] = A[4, :] - A[3, :]
+    A[3, :] = A[3, :] - A[2, :]
+
+    c[2] = 1 / 2
+    c[3] = 1 / 2
+    c[4] = 1
+    c[5] = 1
+
+    D[2,1] = 1
+    D[3,2] = 1
+    D[4,3] = 1
+    D[5,4] = 1
+
+    dts[1] = 0
+    dts[2] = 0.5
+    dts[3] = 0
+    dts[4] = 0.5
+    dts[5] = 0
+
+    mis = @inferred MultirateInfinitesimalSplitMethod(A, D, G, c)
+
+    # third-order accurate
+    series_integrator = @inferred bseries(mis, 3)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(≈, &, values(series_integrator), values(series_exact))
+
+    # not fourth-order accurate
+    series_integrator = @inferred bseries(mis, 4)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(≈, &, values(series_integrator), values(series_exact)) == false
+  end
+
+  @testset "MRI-GARK-ERK33" begin
+    # Sandu, Adrian.
+    # "A class of multirate infinitesimal GARK methods".
+    # SIAM Journal on Numerical Analysis 57, no. 5 (2019): 2300-2327.
+    # https://doi.org/10.1137/18M1205492
+    ns = 3
+    A = zeros(Polynomial{Float64, :x}, ns+1, ns)
+    D = zeros(ns+1, ns)
+    G = zeros(ns+1, ns)
+    c = zeros(ns+1)
+    dts = zeros(ns+1)
+
+    delta = -0.5
+
+    # Γ^i in Sandu (2019) is the i-th term
+    A[2, 1] = Polynomial([1 / 3])
+    A[3, 1] = Polynomial([(-6 * delta - 7) / 12, (2 * delta + 1) / 2])
+    A[3, 2] = Polynomial([(6 * delta + 11) / 12, -(2 * delta + 1) / 2])
+    A[4, 1] = Polynomial([0.0, 0.5])
+    A[4, 2] = Polynomial([(6 * delta - 5) / 12, -(2 * delta + 1) / 2])
+    A[4, 3] = Polynomial([(3 - 2 * delta) / 4, delta])
+
+    # These should be the usual `c` coefficients → c[3] = 2 / 3?
+    c[2] = 1 / 3
+    c[3] = 2 / 3
+    c[4] = 1
+
+    # All one???
+    D[2, 1] = 1
+    D[3, 2] = 1
+    D[4, 3] = 1
+
+    # Differences of `c`s?
+    dts[1] = 0
+    dts[2] = 1 / 3
+    dts[3] = 1 / 3
+    dts[4] = 1 / 3
+
+    mis = @inferred MultirateInfinitesimalSplitMethod(A, D, G, c)
+
+    # third-order accurate
+    series_integrator = @inferred bseries(mis, 3)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(≈, &, values(series_integrator), values(series_exact))
+
+    # not fourth-order accurate
+    series_integrator = @inferred bseries(mis, 4)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(≈, &, values(series_integrator), values(series_exact)) == false
+  end
+
+  @testset "MRI-GARK-ERK45a" begin
+    # Sandu, Adrian.
+    # "A class of multirate infinitesimal GARK methods".
+    # SIAM Journal on Numerical Analysis 57, no. 5 (2019): 2300-2327.
+    # https://doi.org/10.1137/18M1205492
+    ns = 5
+    A = zeros(Polynomial{Float64, :x}, ns+1, ns)
+    D = zeros(ns+1, ns)
+    G = zeros(ns+1, ns)
+    c = zeros(ns+1)
+    dts = zeros(ns+1)
+
+    # Γ^i in Sandu (2019) is the i-th term
+    A[2,1] = Polynomial([1 / 5])
+
+    A[3,1] = Polynomial([-53 / 16, 503 / 80])
+    A[3,2] = Polynomial([281 / 80, -503 / 80])
+
+    A[4,1] = Polynomial([-36562993.0/71394880.0, -1365537.0/35697440.0])
+    A[4,2] = Polynomial([34903117.0/17848720.0, 4963773.0/7139488.0])
+    A[4,3] = Polynomial([-88770499.0/71394880.0, -1465833.0/2231090.0])
+
+    A[5,1] = Polynomial([-7631593.0/71394880.0, 66974357.0/35697440.0])
+    A[5,2] = Polynomial([-166232021.0/35697440.0, 21445367.0/7139488.0])
+    A[5,3] = Polynomial([6068517.0/1519040.0, -3.0])
+    A[5,4] = Polynomial([8644289.0/8924360.0, -8388609.0/4462180.0])
+
+    A[6,1] = Polynomial([277061.0/303808.0, -18227.0/7520.0])
+    A[6,2] = Polynomial([-209323.0/1139280.0, 2.0])
+    A[6,3] = Polynomial([-1360217.0/1139280.0, 1.0])
+    A[6,4] = Polynomial([-148789.0/56964.0, 5.0])
+    A[6,5] = Polynomial([147889.0/45120.0, -41933.0/7520.0])
+
+    # These should be the usual `c` coefficients
+    c[2] = 1 / 5
+    c[3] = 2 / 5
+    c[4] = 3 / 5
+    c[5] = 4 / 5
+    c[6] = 1
+
+    D[2,1] = 0
+    D[3,2] = 1
+    D[4,3] = 1
+    D[5,4] = 1
+    D[6,5] = 1
+
+    # Differences of `c`s?
+    dts[1] = 0.0
+    dts[2] = 1 / 5
+    dts[3] = 1 / 5
+    dts[4] = 1 / 5
+    dts[5] = 1 / 5
+    dts[6] = 1 / 5
+
+    mis = @inferred MultirateInfinitesimalSplitMethod(A, D, G, c)
+
+    # fourth-order accurate
+    series_integrator = @inferred bseries(mis, 4)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(≈, &, values(series_integrator), values(series_exact))
+
+    # not fifth-order accurate
+    series_integrator = @inferred bseries(mis, 5)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(≈, &, values(series_integrator), values(series_exact)) == false
+  end
+
+  @testset "EB4" begin
+    # Krogstad, Stein
+    # "Generalized integrating factor methods for stiff PDEs".
+    # Journal of Computational Physics 203, no. 1 (2005): 72-88.
+    # https://doi.org/10.1016/j.jcp.2004.08.006
+    ns = 4
+    A = zeros(Polynomial{Float64, :x}, ns+1, ns)
+    D = zeros(ns+1, ns)
+    G = zeros(ns+1, ns)
+    c = zeros(ns+1)
+    dts = zeros(ns+1)
+
+    fac1 = 1.0
+    fac2 = 2.0
+
+    A[2,1] = Polynomial([0.5])
+
+    A[3,1] = Polynomial([0.5, -1 / fac1])
+    A[3,2] = Polynomial([0.0, 1 / fac1])
+
+    A[4,1] = Polynomial([1.0, -2 / fac1])
+    A[4,3] = Polynomial([0.0, 2 / fac1])
+
+    A[5,1] = Polynomial([1.0, -3 / fac1, 4 / fac2])
+    A[5,2] = Polynomial([0.0, 2 / fac1, -4 / fac2])
+    A[5,3] = Polynomial([0.0, 2 / fac1, -4 / fac2])
+    A[5,4] = Polynomial([0.0, -1 / fac1, 4 / fac2])
+
+    c[1] = 0
+    c[2] = 0.5
+    c[3] = 0.5
+    c[4] = 1
+    c[5] = 1
+
+    mis = @inferred MultirateInfinitesimalSplitMethod(A, D, G, c)
+
+    # fourth-order accurate
+    series_integrator = @inferred bseries(mis, 4)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(≈, &, values(series_integrator), values(series_exact))
+
+    # not fifth-order accurate
+    series_integrator = @inferred bseries(mis, 5)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(≈, &, values(series_integrator), values(series_exact)) == false
+  end
+
+  @testset "OwrenRK4" begin
+    # Owren, Brynjulf.
+    # "Order conditions for commutator-free Lie group methods".
+    # Journal of Physics A: Mathematical and General 39, no. 19 (2006): 5585.
+    # https://doi.org/10.1088/0305-4470/39/19/S15
+    ns = 5
+    A = zeros(Polynomial{Float64, :x}, ns+1, ns)
+    D = zeros(ns+1, ns)
+    G = zeros(ns+1, ns)
+    c = zeros(ns+1)
+    dts = zeros(ns+1)
+
+    A[2,1] = Polynomial([1 / 2])
+
+    A[3,2] = Polynomial([1 / 2])
+
+    A[4,1] = Polynomial([-1 / 2])
+    A[4,3] = Polynomial([1.0])
+
+    A[5,1] = Polynomial([1 / 4])
+    A[5,2] = Polynomial([1 / 6])
+    A[5,3] = Polynomial([1 / 6])
+    A[5,4] = Polynomial([-1 / 12])
+
+    A[6,1] = Polynomial([-1 / 12])
+    A[6,2] = Polynomial([1 / 6])
+    A[6,3] = Polynomial([1 / 6])
+    A[6,4] = Polynomial([1 / 4])
+
+    D[4,2] = 1
+    D[6,5] = 1
+
+    dts[1] = 0
+    dts[2] = 1 / 2
+    dts[3] = 1 / 2
+    dts[4] = 1 / 2
+    dts[5] = 1 / 2
+    dts[6] = 1 / 2
+
+    mis = @inferred MultirateInfinitesimalSplitMethod(A, D, G, c)
+
+    # fourth-order accurate
+    series_integrator = @inferred bseries(mis, 4)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(≈, &, values(series_integrator), values(series_exact))
+
+    # not fifth-order accurate
+    series_integrator = @inferred bseries(mis, 5)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(≈, &, values(series_integrator), values(series_exact)) == false
+  end
+
+  @testset "MISBI4_4" begin
+    # Knoth, Oswald, and Joerg Wensch.
+    # "Generalized split-explicit Runge–Kutta methods for the compressible Euler equations".
+    # Monthly Weather Review 142, no. 5 (2014): 2067-2081.
+    # https://doi.org/10.1175/MWR-D-13-00068.1
+    # Table 4, method MIS4a
+    ns = 4
+    A = zeros(Polynomial{Float64, :x}, ns+1, ns)
+    D = zeros(ns+1, ns)
+    G = zeros(ns+1, ns)
+    c = zeros(ns+1)
+    dts = zeros(ns+1)
+
+    # β in Knoth, Wensch (2014)
+    A[2,1] = Polynomial([1 / 2])
+    A[2,1] = Polynomial([0.38758444641450318])
+    A[3,1] = Polynomial([-2.5318448354142823e-002])
+    A[3,2] = Polynomial([0.38668943087310403])
+    A[4,1] = Polynomial([0.20899983523553325])
+    A[4,2] = Polynomial([-0.45856648476371231])
+    A[4,3] = Polynomial([0.43423187573425748])
+    A[5,1] = Polynomial([-0.10048822195663100])
+    A[5,2] = Polynomial([-0.46186171956333327])
+    A[5,3] = Polynomial([0.83045062122462809])
+    A[5,4] = Polynomial([0.27014914900250392])
+
+    # seems to be unused?
+    c[2] = 0.38758444641450318
+    c[3] = 0.61521685655017821
+    c[4] = 0.23254717315441453
+    c[5] = 1.0000000000000002
+
+    # α in Knoth, Wensch (2014)
+    D[3,2] =  0.52349249922385610
+    D[4,2] =  1.1683374366893629
+    D[4,3] = -0.75762080241712637
+    D[5,2] = -3.6477233846797109e-002
+    D[5,3] =  0.56936148730740477
+    D[5,4] =  0.47746263002599681
+
+    # γ in Knoth, Wensch (2014)
+    G[3,2] =  0.13145089796226542
+    G[4,2] = -0.36855857648747881
+    G[4,3] =  0.33159232636600550
+    G[5,2] = -6.5767130537473045e-002
+    G[5,3] =  4.0591093109036858e-002
+    G[5,4] =  6.4902111640806712e-002
+
+    for i in 1:ns+1
+      for j in 1:i-1
+        dts[i] = dts[i] + A[i,j][0]
+      end
+    end
+
+    mis = @inferred MultirateInfinitesimalSplitMethod(A, D, G, c)
+
+    # third-order accurate
+    series_integrator = @inferred bseries(mis, 3)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test_broken mapreduce(≈, &, values(series_integrator), values(series_exact))
+
+    # not fourth-order accurate
+    series_integrator = @inferred bseries(mis, 4)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(≈, &, values(series_integrator), values(series_exact)) == false
+  end
+end
+
+
 end # @testset "BSeries"

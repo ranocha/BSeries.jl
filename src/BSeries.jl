@@ -25,6 +25,8 @@ export modified_equation, modifying_integrator
 
 export elementary_differentials
 
+export MultirateInfinitesimalSplitMethod
+
 
 
 # Types used for traits
