@@ -44,6 +44,7 @@ jobs:
           try
             Pkg.build("Conda")
             import Conda
+            println("Successfully built Conda")
           catch e
             display(e)
           end
