@@ -17,6 +17,18 @@ jobs:
         with:
           version: 1
       - uses: julia-actions/cache@v1
+      - name: Debug Conda.jl/PyCall.jl/SymPy.jl build error
+        env:
+          PYTHON: ""
+        shell: julia --color=yes {0}
+        run: |
+          using Pkg
+          Pkg.add("Conda")
+          import Conda
+          Pkg.add("PyCall")
+          import PyCall
+          Pkg.add("SymPy")
+          import SymPy
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: ""
