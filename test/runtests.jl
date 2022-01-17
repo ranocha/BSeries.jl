@@ -1,6 +1,6 @@
 using Test
 using BSeries
-
+ 
 using BSeries.Latexify: latexify
 
 using StaticArrays: @SArray
