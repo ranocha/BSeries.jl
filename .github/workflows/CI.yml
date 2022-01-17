@@ -29,33 +29,37 @@ jobs:
           catch e
             display(e)
           end
-          for (root, dirs, files) in walkdir("/home/runner/.julia")
-            println("Directories")
-            for dir in dirs
-              println(joinpath(root, dir))
-            end
-            println("Files")
-            for file in files
-              println(joinpath(root, file))
-            end
-          end
+          run(`ls -la /home/runner`)
+          run(`ls -la /home/runner/.julia`)
+          #for (root, dirs, files) in walkdir("/home/runner/.julia")
+          #  println("Directories")
+          #  for dir in dirs
+          #    println(joinpath(root, dir))
+          #  end
+          #  println("Files")
+          #  for file in files
+          #    println(joinpath(root, file))
+          #  end
+          #end
           try
             Pkg.build("Conda")
             import Conda
           catch e
             display(e)
           end
-          for (root, dirs, files) in walkdir("/home/runner/.julia")
-            root != "/home/runner/.julia" && continue
-            println("Directories")
-            for dir in dirs
-              println(joinpath(root, dir))
-            end
-            println("Files")
-            for file in files
-              println(joinpath(root, file))
-            end
-          end
+          run(`ls -la /home/runner`)
+          run(`ls -la /home/runner/.julia`)
+          #for (root, dirs, files) in walkdir("/home/runner/.julia")
+          #  root != "/home/runner/.julia" && continue
+          #  println("Directories")
+          #  for dir in dirs
+          #    println(joinpath(root, dir))
+          #  end
+          #  println("Files")
+          #  for file in files
+          #    println(joinpath(root, file))
+          #  end
+          #end
           try
             Pkg.add("PyCall")
             import PyCall
