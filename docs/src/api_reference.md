@@ -1,4 +1,6 @@
-# BSeries.jl API
+# API reference
+
+## BSeries.jl API
 
 ```@meta
 CurrentModule = BSeries
@@ -8,3 +10,12 @@ CurrentModule = BSeries
 Modules = [BSeries]
 ```
 
+## RootedTrees.jl API
+
+```@meta
+CurrentModule = RootedTrees
+```
+
+```@autodocs
+Modules = [RootedTrees]
+```

@@ -6,13 +6,15 @@ module BSeries
 using Reexport: @reexport
 
 @reexport using RootedTrees
-using RootedTrees: RootedTree
+using RootedTrees: AbstractRootedTree
 
 @reexport using OrderedCollections: OrderedDict
 
 using Requires: @require
 
 using Latexify: Latexify, LaTeXString
+
+@reexport using Polynomials: Polynomials, Polynomial
 
 
 export TruncatedBSeries, ExactSolution
@@ -22,6 +24,8 @@ export bseries, substitute, compose, evaluate
 export modified_equation, modifying_integrator
 
 export elementary_differentials
+
+export MultirateInfinitesimalSplitMethod
 
 
 
@@ -55,7 +59,7 @@ Generally, this kind of `struct` should be constructed via [`bseries`](@ref)
 or one of the other functions returning a B-series, e.g.,
 [`modified_equation`](@ref) or [`modifying_integrator`](@ref).
 """
-struct TruncatedBSeries{T<:RootedTree, V} <: AbstractDict{T, V}
+struct TruncatedBSeries{T<:AbstractRootedTree, V} <: AbstractDict{T, V}
   coef::OrderedDict{T, V}
 end
 
@@ -72,18 +76,18 @@ TruncatedBSeries{T, V}() where {T, V} = TruncatedBSeries{T, V}(OrderedDict{T, V}
 
 @inline Base.length(series::TruncatedBSeries) = length(series.coef)
 
-@inline Base.getindex(series::TruncatedBSeries, t::RootedTree) = getindex(series.coef, t)
-@inline Base.setindex!(series::TruncatedBSeries, val, t::RootedTree) = setindex!(series.coef, val, t)
+@inline Base.getindex(series::TruncatedBSeries, t::AbstractRootedTree) = getindex(series.coef, t)
+@inline Base.setindex!(series::TruncatedBSeries, val, t::AbstractRootedTree) = setindex!(series.coef, val, t)
 
-@inline Base.get(series::TruncatedBSeries, t::RootedTree, default) = get(series.coef, t, default)
-@inline Base.get(f::F, series::TruncatedBSeries, t::RootedTree) where {F<:Function} = get(f, series.coef, t)
+@inline Base.get(series::TruncatedBSeries, t::AbstractRootedTree, default) = get(series.coef, t, default)
+@inline Base.get(f::F, series::TruncatedBSeries, t::AbstractRootedTree) where {F<:Function} = get(f, series.coef, t)
 
-@inline Base.getkey(series::TruncatedBSeries, t::RootedTree, default) = getkey(series.coef, t, default)
+@inline Base.getkey(series::TruncatedBSeries, t::AbstractRootedTree, default) = getkey(series.coef, t, default)
 
-@inline Base.delete!(series::TruncatedBSeries, t::RootedTree) = (delete!(series.coef, t); series)
+@inline Base.delete!(series::TruncatedBSeries, t::AbstractRootedTree) = (delete!(series.coef, t); series)
 
-@inline Base.pop!(series::TruncatedBSeries, t::RootedTree) = pop!(series.coef, t)
-@inline Base.pop!(series::TruncatedBSeries, t::RootedTree, default) = pop!(series.coef, t, default)
+@inline Base.pop!(series::TruncatedBSeries, t::AbstractRootedTree) = pop!(series.coef, t)
+@inline Base.pop!(series::TruncatedBSeries, t::AbstractRootedTree, default) = pop!(series.coef, t, default)
 
 @inline Base.sizehint!(series::TruncatedBSeries, n) = sizehint!(series.coef, n)
 
@@ -118,7 +122,7 @@ differential equation using coefficients of type at least as representative as
 """
 struct ExactSolution{V} end
 
-Base.getindex(::ExactSolution{V}, t::RootedTree) where {V} = convert(V, 1//1) / γ(t)
+Base.getindex(::ExactSolution{V}, t::AbstractRootedTree) where {V} = convert(V, 1//1) / γ(t)
 
 # general interface methods of iterators for `ExactSolution`
 Base.IteratorSize(::Type{<:ExactSolution}) = Base.SizeUnknown()
@@ -187,9 +191,10 @@ end
 
 
 """
+    bseries(rk::RungeKuttaMethod, order)
     bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector, order)
 
-Compute the B-series of the Runge-Kutta method with Butcher coefficients
+Compute the B-series of the Runge-Kutta method `rk` with Butcher coefficients
 `A, b, c` up to a prescribed integer `order`.
 
 !!! note "Normalization by elementary differentials"
@@ -199,9 +204,8 @@ Compute the B-series of the Runge-Kutta method with Butcher coefficients
     of the input vector field ``f``.
     See also [`evaluate`](@ref).
 """
-function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
-                 order)
-  V_tmp = promote_type(eltype(A), eltype(b), eltype(c))
+function bseries(rk::RungeKuttaMethod, order)
+  V_tmp = eltype(rk)
   if V_tmp <: Integer
     # If people use integer coefficients, they will likely want to have results
     # as exact as possible. However, general terms are not integers. Thus, we
@@ -215,14 +219,191 @@ function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
   series[rootedtree(Int[])] = one(V)
   for o in 1:order
     for t in RootedTreeIterator(o)
-      series[copy(t)] = elementary_weight(t, A, b, c)
+      series[copy(t)] = elementary_weight(t, rk)
     end
   end
 
   return series
 end
 
-# TODO: bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector)
+function bseries(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
+                 order)
+  rk = RungeKuttaMethod(A, b, c)
+  bseries(rk, order)
+end
+
+# TODO: bseries(rk::RungeKuttaMethod)
+# should create a lazy version, optionally a memoized one
+
+
+"""
+    bseries(ark::AdditiveRungeKuttaMethod, order)
+
+Compute the B-series of the additive Runge-Kutta method `ark` up to a prescribed
+integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    colored rooted tree and multiplied by the corresponding elementary
+    differential of the input vector fields ``f^\\nu``.
+    See also [`evaluate`](@ref).
+"""
+function bseries(ark::AdditiveRungeKuttaMethod, order)
+  if length(ark.rks) != 2
+    throw(ArgumentError("Only AdditiveRungeKuttaMethod with a dual splitting are supported. Got an ARK with $(length(ark.rks)) methods."))
+  end
+
+  V_tmp = eltype(ark)
+  if V_tmp <: Integer
+    # If people use integer coefficients, they will likely want to have results
+    # as exact as possible. However, general terms are not integers. Thus, we
+    # use rationals instead.
+    V = Rational{V_tmp}
+  else
+    V = V_tmp
+  end
+  series = TruncatedBSeries{BicoloredRootedTree{Int, Vector{Int}, Vector{Bool}}, V}()
+
+  series[rootedtree(Int[], Bool[])] = one(V)
+  for o in 1:order
+    for t in BicoloredRootedTreeIterator(o)
+      series[copy(t)] = elementary_weight(t, ark)
+    end
+  end
+
+  return series
+end
+
+# TODO: bseries(ark::AdditiveRungeKuttaMethod)
+# should create a lazy version, optionally a memoized one
+
+
+# TODO: Documentation, Base.show, export etc.
+"""
+    MultirateInfinitesimalSplitMethod(A, D, G, c)
+
+# References
+
+- Knoth, Oswald, and Joerg Wensch.
+  "Generalized split-explicit Runge-Kutta methods for the
+  compressible Euler equations".
+  Monthly Weather Review 142, no. 5 (2014): 2067-2081.
+  [DOI: 10.1175/MWR-D-13-00068.1](https://doi.org/10.1175/MWR-D-13-00068.1)
+
+!!! warning "Experimental code"
+    This code is considered to be experimental at the moment
+    and can change any time.
+"""
+struct MultirateInfinitesimalSplitMethod{T, PolyMatT<:AbstractMatrix{<:Polynomial{T}}, MatT<:AbstractMatrix{T}, VecT<:AbstractVector{T}} <: RootedTrees.AbstractTimeIntegrationMethod
+  A::PolyMatT
+  D::MatT
+  G::MatT
+  c::VecT
+end
+
+# TODO: Deduce `c` from other parameters?
+function MultirateInfinitesimalSplitMethod(A::AbstractMatrix{<:Polynomial},
+                                           D::AbstractMatrix,
+                                           G::AbstractMatrix,
+                                           c::AbstractVector)
+  T = promote_type(eltype(eltype(A)), eltype(D), eltype(G), eltype(c))
+  PolyT = typeof(zero(first(A)) + zero(T))
+  _A = PolyT.(A)
+  _D = T.(D)
+  _G = T.(G)
+  _c = T.(c)
+  return MultirateInfinitesimalSplitMethod(_A, _D, _G, _c)
+end
+
+Base.eltype(mis::MultirateInfinitesimalSplitMethod{T}) where {T} = T
+
+"""
+    bseries(mis::MultirateInfinitesimalSplitMethod, order)
+
+Compute the B-series of the multirate infinitesimal split method `mis`
+up to a prescribed integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    colored rooted tree and multiplied by the corresponding elementary
+    differential of the input vector fields ``f^\\nu``.
+    See also [`evaluate`](@ref).
+"""
+function bseries(mis::MultirateInfinitesimalSplitMethod, order)
+  V_tmp = eltype(mis)
+  if V_tmp <: Integer
+    # If people use integer coefficients, they will likely want to have results
+    # as exact as possible. However, general terms are not integers. Thus, we
+    # use rationals instead.
+    V = Rational{V_tmp}
+  else
+    V = V_tmp
+  end
+
+  prototype_scalar = TruncatedBSeries{BicoloredRootedTree{Int, Vector{Int}, Vector{Bool}}, V}()
+  prototype_scalar[rootedtree(Int[], Bool[])] = one(V)
+
+  poly_one = Polynomial{V, :x}([one(V)])
+  poly_zero = zero(poly_one)
+  prototype_polynomial = TruncatedBSeries{BicoloredRootedTree{Int, Vector{Int}, Vector{Bool}}, typeof(poly_one)}()
+  prototype_polynomial[rootedtree(Int[], Bool[])] = poly_one
+
+  A = mis.A
+  D = mis.D
+  G = mis.G
+  ns = size(A, 2)
+  Z = Vector{typeof(prototype_polynomial)}(undef, ns + 1)
+  η = Vector{typeof(prototype_scalar)}(undef, ns + 1)
+  for i in 1:ns+1
+    Z[i] = copy(prototype_polynomial)
+    η[i] = copy(prototype_scalar)
+  end
+
+  for o in 1:order
+    for t_ in BicoloredRootedTreeIterator(o)
+      t = copy(t_)
+      for i in 1:ns+1
+        phi = poly_zero
+        for j in 1:i-1
+          r = poly_one
+          for subtree in RootedTrees.SubtreeIterator(t)
+            if subtree.color_sequence[1]
+              r = r * Z[i][subtree]
+            else
+              r = r * η[j][subtree]
+            end
+          end
+
+          v = [one(V)]
+          for k in 0:length(A[i, j])-1
+             phi = phi + Polynomial{V, :x}(v) * A[i, j][k] * r
+             v = [0; v]
+          end
+        end
+
+        for j in 1:i-1
+          phi = phi + G[i,j] * (η[j][t] - η[1][t])
+        end
+
+        phi = Polynomials.integrate(phi)
+        phi[0] = 0
+        for j in 1:i-1
+          phi[0] = phi[0] + D[i,j] * (η[j][t] - η[1][t])
+        end
+
+        Z[i][t] = phi
+        η[i][t] = phi(1)
+      end
+    end
+  end
+
+  series = η[end]
+  return series
+end
+
+# TODO: bseries(mis::MultirateInfinitesimalSplitMethod)
 # should create a lazy version, optionally a memoized one
 
 
@@ -503,11 +684,12 @@ function modified_equation(series_integrator, ::EagerEvaluation)
 end
 
 """
+    modified_equation(rk::RungeKuttaMethod, order)
     modified_equation(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                       order)
 
 Compute the B-series of the [`modified_equation`](@ref) of the Runge-Kutta
-method with Butcher coefficients `A, b, c` up to the prescribed `order`.
+method `rk` with Butcher coefficients `A, b, c` up to the prescribed `order`.
 
 !!! note "Normalization by elementary differentials"
     The coefficients of the B-series returned by this method need to be
@@ -516,11 +698,16 @@ method with Butcher coefficients `A, b, c` up to the prescribed `order`.
     of the input vector field ``f``.
     See also [`evaluate`](@ref).
 """
+function modified_equation(rk::RungeKuttaMethod, order)
+  # B-series of the Runge-Kutta method
+  series = bseries(rk, order)
+  modified_equation(series)
+end
+
 function modified_equation(A::AbstractMatrix, b::AbstractVector,
                            c::AbstractVector, order)
-  # B-series of the Runge-Kutta method
-  series = bseries(A, b, c, order)
-  modified_equation(series)
+  rk = RungeKuttaMethod(A, b, c)
+  modified_equation(rk, order)
 end
 
 
@@ -550,12 +737,13 @@ function modified_equation(f, u, dt, series_integrator)
 end
 
 """
+    modified_equation(f, u, dt, rk::RungeKuttaMethod, order)
     modified_equation(f, u, dt,
                       A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                       order)
 
 Compute the B-series of the [`modified_equation`](@ref) of the Runge-Kutta
-method with Butcher coefficients `A, b, c` up to the prescribed `order` with
+method `rk` with Butcher coefficients `A, b, c` up to the prescribed `order` with
 respect to the ordinary differential equation ``u'(t) = f(u(t))`` with vector
 field `f` and dependent variables `u` for a time step size `dt`.
 
@@ -569,11 +757,16 @@ from
 
 are supported.
 """
+function modified_equation(f, u, dt, rk::RungeKuttaMethod, order)
+  series_integrator = bseries(rk, order)
+  modified_equation(f, u, dt, series_integrator)
+end
+
 function modified_equation(f, u, dt,
                            A::AbstractMatrix, b::AbstractVector,
                            c::AbstractVector, order)
-  series_integrator = bseries(A, b, c, order)
-  modified_equation(f, u, dt, series_integrator)
+  rk = RungeKuttaMethod(A, b, c)
+  modified_equation(f, u, dt, rk, order)
 end
 
 
@@ -657,6 +850,7 @@ function modifying_integrator(series_integrator, ::EagerEvaluation)
 end
 
 """
+    modifying_integrator(rk::RungeKuttaMethod, order)
     modifying_integrator(A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                          order)
 
@@ -671,11 +865,16 @@ Runge-Kutta method with Butcher coefficients `A, b, c` up to the prescribed
     of the input vector field ``f``.
     See also [`evaluate`](@ref).
 """
+function modifying_integrator(rk::RungeKuttaMethod, order)
+  # B-series of the Runge-Kutta method
+  series = bseries(rk, order)
+  modifying_integrator(series)
+end
+
 function modifying_integrator(A::AbstractMatrix, b::AbstractVector,
                               c::AbstractVector, order)
-  # B-series of the Runge-Kutta method
-  series = bseries(A, b, c, order)
-  modifying_integrator(series)
+  rk = RungeKuttaMethod(A, b, c)
+  modifying_integrator(rk, order)
 end
 
 
@@ -705,6 +904,7 @@ function modifying_integrator(f, u, dt, series_integrator)
 end
 
 """
+    modifying_integrator(f, u, dt, rk::RungeKuttaMethod, order)
     modifying_integrator(f, u, dt,
                          A::AbstractMatrix, b::AbstractVector, c::AbstractVector,
                          order)
@@ -724,11 +924,16 @@ from
 
 are supported.
 """
+function modifying_integrator(f, u, dt, rk::RungeKuttaMethod, order)
+  series_integrator = bseries(rk, order)
+  modifying_integrator(f, u, dt, series_integrator)
+end
+
 function modifying_integrator(f, u, dt,
                               A::AbstractMatrix, b::AbstractVector,
                               c::AbstractVector, order)
-  series_integrator = bseries(A, b, c, order)
-  modifying_integrator(f, u, dt, series_integrator)
+  rk = RungeKuttaMethod(A, b, c)
+  modifying_integrator(f, u, dt, rk, order)
 end
 
 
