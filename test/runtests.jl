@@ -732,4 +732,51 @@ end
 end
 
 
+@testset "Runge-Kutta methods interface" begin
+  # classical RK4
+  A = [0 0 0 0
+       1//2 0 0 0
+       0 1//2 0 0
+       0 0 1 0]
+  b = [1//6, 1//3, 1//3, 1//6]
+  rk = RungeKuttaMethod(A, b)
+
+  # fourth-order accurate
+  series_integrator = @inferred bseries(rk, 4)
+  series_exact = @inferred ExactSolution(series_integrator)
+  @test mapreduce(==, &, values(series_integrator), values(series_exact))
+
+  # not fifth-order accurate
+  series_integrator = @inferred bseries(rk, 5)
+  series_exact = @inferred ExactSolution(series_integrator)
+  @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+end
+
+
+@testset "additive Runge-Kutta methods interface" begin
+  # Hairer, Lubich, Wanner (2002)
+  # Geometric numerical integration
+  # Table II.2.1
+  As = [
+    [0 0; 1//2 1//2],
+    [1//2 0; 1//2 0]
+  ]
+  bs = [
+    [1//2, 1//2],
+    [1//2, 1//2]
+  ]
+  ark = AdditiveRungeKuttaMethod(As, bs)
+
+  # second-order accurate
+  series_integrator = @inferred bseries(rk, 4)
+  series_exact = @inferred ExactSolution(series_integrator)
+  @test mapreduce(==, &, values(series_integrator), values(series_exact))
+
+  # not third-order accurate
+  series_integrator = @inferred bseries(rk, 5)
+  series_exact = @inferred ExactSolution(series_integrator)
+  @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+end
+
+
 end # @testset "BSeries"

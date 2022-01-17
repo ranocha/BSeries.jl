@@ -14,7 +14,7 @@ using Requires: @require
 
 using Latexify: Latexify, LaTeXString
 
-using Polynomials: Polynomials, Polynomial
+@reexport using Polynomials: Polynomials, Polynomial
 
 
 export TruncatedBSeries, ExactSolution
@@ -266,7 +266,7 @@ function bseries(ark::AdditiveRungeKuttaMethod, order)
   series[rootedtree(Int[], Bool[])] = one(V)
   for o in 1:order
     for t in BicoloredRootedTreeIterator(o)
-      series[copy(t)] = elementary_weight(t, rk)
+      series[copy(t)] = elementary_weight(t, ark)
     end
   end
 
@@ -300,7 +300,10 @@ struct MultirateInfinitesimalSplitMethod{T, PolyMatT<:AbstractMatrix{<:Polynomia
   c::VecT
 end
 
-function MultirateInfinitesimalSplitMethod(A, D, G, c)
+function MultirateInfinitesimalSplitMethod(A::AbstractMatrix{<:Polynomial},
+                                           D::AbstractMatrix,
+                                           G::AbstractMatrix,
+                                           c::AbstractVector)
   T = promote_type(eltype(eltype(A)), eltype(D), eltype(G), eltype(c))
   PolyT = typeof(zero(first(A)) + zero(T))
   _A = PolyT.(A)
