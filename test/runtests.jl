@@ -818,7 +818,7 @@ end
     @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
 
     # modified equations and modifying integrators
-    let series_rk = bseries(rk, 4)
+    let series_rk = bseries(rk, 5)
       series_ark = bseries(ark, order(series_rk))
 
       for colored_tree in keys(series_ark)
@@ -826,11 +826,22 @@ end
         @test series_rk[tree] == series_ark[colored_tree]
       end
 
-      mod_eq_rk  = modified_equation(series_rk)
-      mod_eq_ark = modified_equation(series_ark)
-      for colored_tree in keys(mod_eq_ark)
-        tree = rootedtree(colored_tree.level_sequence)
-        @test mod_eq_rk[tree] == mod_eq_ark[colored_tree]
+      @testset "modified_equation" begin
+        mod_eq_rk  = modified_equation(series_rk)
+        mod_eq_ark = modified_equation(series_ark)
+        for colored_tree in keys(mod_eq_ark)
+          tree = rootedtree(colored_tree.level_sequence)
+          @test mod_eq_rk[tree] == mod_eq_ark[colored_tree]
+        end
+      end
+
+      @testset "modifying_integrator" begin
+        mod_int_rk  = modifying_integrator(series_rk)
+        mod_int_ark = modifying_integrator(series_ark)
+        for colored_tree in keys(mod_int_ark)
+          tree = rootedtree(colored_tree.level_sequence)
+          @test mod_int_rk[tree] == mod_int_ark[colored_tree]
+        end
       end
     end
   end
