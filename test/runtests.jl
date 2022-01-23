@@ -754,7 +754,7 @@ end
 
 
 @testset "additive Runge-Kutta methods interface" begin
-  @testset "IMEX Euler" begin
+  @testset "IMEX Euler (partitioned Euler, symplectic Euler)" begin
     ex_euler = RungeKuttaMethod(
       @SMatrix([0]), @SVector [1]
     )
@@ -772,6 +772,47 @@ end
     series_integrator = @inferred bseries(ark, 2)
     series_exact = @inferred ExactSolution(series_integrator)
     @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+
+    # modified equations and modifying integrators
+    let series_integrator = @inferred bseries(ark, 3)
+      @testset "modified_equation" begin
+        # Hairer, Lubich, Wanner (2006) Geometric numerical integration
+        # Table IX.10.1, p. 383
+        # Black nodes are `1`, white nodes are `0`
+        mod_eq = @inferred modified_equation(series_integrator)
+
+        mod_eq_reference = Dict(
+          rootedtree(Int[], Bool[])            => 0//1,
+          rootedtree([1], Bool[0])             => 1//1,
+          rootedtree([1], Bool[1])             => 1//1,
+          rootedtree([1, 2], Bool[0, 0])       => -1//2,
+          rootedtree([1, 2], Bool[1, 0])       => -1//2,
+          rootedtree([1, 2], Bool[0, 1])       => 1//2,
+          rootedtree([1, 2], Bool[1, 1])       => 1//2,
+          rootedtree([1, 2, 3], Bool[0, 0, 0]) => 1//3,
+          rootedtree([1, 2, 3], Bool[1, 0, 0]) => 1//3,
+          rootedtree([1, 2, 3], Bool[0, 1, 0]) => -1//6,
+          rootedtree([1, 2, 3], Bool[1, 1, 0]) => -1//6,
+          rootedtree([1, 2, 3], Bool[0, 0, 1]) => -1//6,
+          rootedtree([1, 2, 3], Bool[1, 0, 1]) => -1//6,
+          rootedtree([1, 2, 3], Bool[0, 1, 1]) => 1//3,
+          rootedtree([1, 2, 3], Bool[1, 1, 1]) => 1//3,
+          rootedtree([1, 2, 2], Bool[0, 0, 0]) => 1//6,
+          rootedtree([1, 2, 2], Bool[1, 0, 0]) => 1//6,
+          rootedtree([1, 2, 2], Bool[0, 1, 0]) => -1//3,
+          rootedtree([1, 2, 2], Bool[1, 1, 0]) => -1//3,
+          rootedtree([1, 2, 2], Bool[0, 1, 1]) => 1//6,
+          rootedtree([1, 2, 2], Bool[1, 1, 1]) => 1//6,
+        )
+        for (key, val) in mod_eq
+          @test val == mod_eq_reference[key]
+        end
+      end
+
+      @testset "modifying_integrator" begin
+        mod_int = @inferred modifying_integrator(series_integrator)
+      end
+    end
   end
 
   @testset "Störmer-Verlet" begin
