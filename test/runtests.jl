@@ -828,19 +828,9 @@ end
 
       mod_eq_rk  = modified_equation(series_rk)
       mod_eq_ark = modified_equation(series_ark)
-      # TODO: Some trees are different - need to figure out why and whether
-      #       they should be different or not...
-      broken_trees = [ColoredRootedTree([1, 2, 3, 3], Bool[0, 0, 0, 1], true),
-                      ColoredRootedTree([1, 2, 3, 3], Bool[1, 0, 0, 1], true),
-                      ColoredRootedTree([1, 2, 3, 3], Bool[0, 1, 0, 1], true),
-                      ColoredRootedTree([1, 2, 3, 3], Bool[1, 1, 0, 1], true),]
       for colored_tree in keys(mod_eq_ark)
         tree = rootedtree(colored_tree.level_sequence)
-        if colored_tree in broken_trees
-          @test_broken mod_eq_rk[tree] == mod_eq_ark[colored_tree]
-        else
-          @test mod_eq_rk[tree] == mod_eq_ark[colored_tree]
-        end
+        @test mod_eq_rk[tree] == mod_eq_ark[colored_tree]
       end
     end
   end
