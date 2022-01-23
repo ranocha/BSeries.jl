@@ -761,7 +761,7 @@ end
     im_euler = RungeKuttaMethod(
       @SMatrix([1]), @SVector [1]
     )
-    ark = AdditiveRungeKuttaMethod([ex_euler, im_euler])
+    ark = AdditiveRungeKuttaMethod([im_euler, ex_euler])
 
     # first-order accurate
     series_integrator = @inferred bseries(ark, 1)
@@ -780,15 +780,15 @@ end
 
         # Hairer, Lubich, Wanner (2006) Geometric numerical integration
         # Table IX.10.1, p. 383
-        # Black nodes are `1`, white nodes are `0`
+        # Black nodes are `0`, white nodes are `1`
         mod_eq_reference = Dict(
           rootedtree(Int[], Bool[])            => 0//1,
           rootedtree([1], Bool[0])             => 1//1,
           rootedtree([1], Bool[1])             => 1//1,
-          rootedtree([1, 2], Bool[0, 0])       => -1//2,
-          rootedtree([1, 2], Bool[1, 0])       => -1//2,
-          rootedtree([1, 2], Bool[0, 1])       => 1//2,
-          rootedtree([1, 2], Bool[1, 1])       => 1//2,
+          rootedtree([1, 2], Bool[0, 0])       => 1//2,
+          rootedtree([1, 2], Bool[1, 0])       => 1//2,
+          rootedtree([1, 2], Bool[0, 1])       => -1//2,
+          rootedtree([1, 2], Bool[1, 1])       => -1//2,
           rootedtree([1, 2, 3], Bool[0, 0, 0]) => 1//3,
           rootedtree([1, 2, 3], Bool[1, 0, 0]) => 1//3,
           rootedtree([1, 2, 3], Bool[0, 1, 0]) => -1//6,
@@ -851,7 +851,7 @@ end
 
         # # Hairer, Lubich, Wanner (2006) Geometric numerical integration
         # # Table IX.10.2, p. 386
-        # # Black nodes are `1`, white nodes are `0`
+        # # Black nodes are `0`, white nodes are `1`
         series_reference = Dict(
           rootedtree(Int[], Bool[])            => 1//1,
           rootedtree([1], Bool[0])             => 1//1,
@@ -862,48 +862,48 @@ end
           rootedtree([1, 2], Bool[1, 1])       => 1//2,
           rootedtree([1, 2, 3], Bool[0, 0, 0]) => 1//4,
           rootedtree([1, 2, 3], Bool[1, 0, 0]) => 1//4,
-          rootedtree([1, 2, 3], Bool[0, 1, 0]) => 1//4,
-          rootedtree([1, 2, 3], Bool[1, 1, 0]) => 1//4,
-          rootedtree([1, 2, 3], Bool[0, 0, 1]) => 0//1,
-          rootedtree([1, 2, 3], Bool[1, 0, 1]) => 0//1,
+          rootedtree([1, 2, 3], Bool[0, 1, 0]) => 0//1,
+          rootedtree([1, 2, 3], Bool[1, 1, 0]) => 0//1,
+          rootedtree([1, 2, 3], Bool[0, 0, 1]) => 1//4,
+          rootedtree([1, 2, 3], Bool[1, 0, 1]) => 1//4,
           rootedtree([1, 2, 3], Bool[0, 1, 1]) => 1//4,
           rootedtree([1, 2, 3], Bool[1, 1, 1]) => 1//4,
-          rootedtree([1, 2, 2], Bool[0, 0, 0]) => 1//4,
-          rootedtree([1, 2, 2], Bool[1, 0, 0]) => 1//4,
+          rootedtree([1, 2, 2], Bool[0, 0, 0]) => 1//2,
+          rootedtree([1, 2, 2], Bool[1, 0, 0]) => 1//2,
           rootedtree([1, 2, 2], Bool[0, 1, 0]) => 1//4,
           rootedtree([1, 2, 2], Bool[1, 1, 0]) => 1//4,
-          rootedtree([1, 2, 2], Bool[0, 1, 1]) => 1//2,
-          rootedtree([1, 2, 2], Bool[1, 1, 1]) => 1//2,
+          rootedtree([1, 2, 2], Bool[0, 1, 1]) => 1//4,
+          rootedtree([1, 2, 2], Bool[1, 1, 1]) => 1//4,
         )
         for t in keys(series_reference)
           @test series_reference[t] == series_integrator[t]
         end
-        # mod_eq_reference = Dict(
-        #   rootedtree(Int[], Bool[])            => 0//0,
-        #   rootedtree([1], Bool[0])             => 1//1,
-        #   rootedtree([1], Bool[1])             => 1//1,
-        #   rootedtree([1, 2], Bool[0, 0])       => ,
-        #   rootedtree([1, 2], Bool[1, 0])       => ,
-        #   rootedtree([1, 2], Bool[0, 1])       => ,
-        #   rootedtree([1, 2], Bool[1, 1])       => ,
-        #   rootedtree([1, 2, 3], Bool[0, 0, 0]) => ,
-        #   rootedtree([1, 2, 3], Bool[1, 0, 0]) => ,
-        #   rootedtree([1, 2, 3], Bool[0, 1, 0]) => ,
-        #   rootedtree([1, 2, 3], Bool[1, 1, 0]) => ,
-        #   rootedtree([1, 2, 3], Bool[0, 0, 1]) => ,
-        #   rootedtree([1, 2, 3], Bool[1, 0, 1]) => ,
-        #   rootedtree([1, 2, 3], Bool[0, 1, 1]) => ,
-        #   rootedtree([1, 2, 3], Bool[1, 1, 1]) => ,
-        #   rootedtree([1, 2, 2], Bool[0, 0, 0]) => ,
-        #   rootedtree([1, 2, 2], Bool[1, 0, 0]) => ,
-        #   rootedtree([1, 2, 2], Bool[0, 1, 0]) => ,
-        #   rootedtree([1, 2, 2], Bool[1, 1, 0]) => ,
-        #   rootedtree([1, 2, 2], Bool[0, 1, 1]) => ,
-        #   rootedtree([1, 2, 2], Bool[1, 1, 1]) => ,
-        # )
-        # for t in keys(mod_eq_reference)
-        #   @test mod_eq_reference[t] == mod_eq[t]
-        # end
+        mod_eq_reference = Dict(
+          rootedtree(Int[], Bool[])            => 0//1,
+          rootedtree([1], Bool[0])             => 1//1,
+          rootedtree([1], Bool[1])             => 1//1,
+          rootedtree([1, 2], Bool[0, 0])       => 0//1,
+          rootedtree([1, 2], Bool[1, 0])       => 0//1,
+          rootedtree([1, 2], Bool[0, 1])       => 0//1,
+          rootedtree([1, 2], Bool[1, 1])       => 0//1,
+          rootedtree([1, 2, 3], Bool[0, 0, 0]) => 1//12,
+          rootedtree([1, 2, 3], Bool[1, 0, 0]) => 1//12,
+          rootedtree([1, 2, 3], Bool[0, 1, 0]) => -1//6,
+          rootedtree([1, 2, 3], Bool[1, 1, 0]) => -1//6,
+          rootedtree([1, 2, 3], Bool[0, 0, 1]) => 1//12,
+          rootedtree([1, 2, 3], Bool[1, 0, 1]) => 1//12,
+          rootedtree([1, 2, 3], Bool[0, 1, 1]) => 1//12,
+          rootedtree([1, 2, 3], Bool[1, 1, 1]) => 1//12,
+          rootedtree([1, 2, 2], Bool[0, 0, 0]) => 1//6,
+          rootedtree([1, 2, 2], Bool[1, 0, 0]) => 1//6,
+          rootedtree([1, 2, 2], Bool[0, 1, 0]) => -1//12,
+          rootedtree([1, 2, 2], Bool[1, 1, 0]) => -1//12,
+          rootedtree([1, 2, 2], Bool[0, 1, 1]) => -1//12,
+          rootedtree([1, 2, 2], Bool[1, 1, 1]) => -1//12,
+        )
+        for t in keys(mod_eq_reference)
+          @test mod_eq_reference[t] == mod_eq[t]
+        end
       end
 
       @testset "modifying_integrator" begin
