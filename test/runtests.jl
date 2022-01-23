@@ -797,6 +797,26 @@ end
     series_integrator = @inferred bseries(ark, 3)
     series_exact = @inferred ExactSolution(series_integrator)
     @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+
+    # modified equations and modifying integrators
+    let series_integrator = @inferred bseries(ark, 4)
+      @testset "modified_equation" begin
+        mod_eq = @inferred modified_equation(series_integrator)
+
+        # second-order accurate
+        for t in BicoloredRootedTreeIterator(2)
+          @test iszero(mod_eq[t])
+        end
+      end
+
+      @testset "modifying_integrator" begin
+        mod_int = @inferred modifying_integrator(series_integrator)
+
+        for t in BicoloredRootedTreeIterator(2)
+          @test iszero(mod_int[t])
+        end
+      end
+    end
   end
 
   @testset "SSPRK33 two times" begin
