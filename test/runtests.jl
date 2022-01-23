@@ -754,14 +754,14 @@ end
 
 
 @testset "additive Runge-Kutta methods interface" begin
-  @testset "IMEX Euler" begin
+  @testset "IMEX Euler (partitioned Euler, symplectic Euler)" begin
     ex_euler = RungeKuttaMethod(
       @SMatrix([0]), @SVector [1]
     )
     im_euler = RungeKuttaMethod(
       @SMatrix([1]), @SVector [1]
     )
-    ark = AdditiveRungeKuttaMethod([ex_euler, im_euler])
+    ark = AdditiveRungeKuttaMethod([im_euler, ex_euler])
 
     # first-order accurate
     series_integrator = @inferred bseries(ark, 1)
@@ -772,6 +772,47 @@ end
     series_integrator = @inferred bseries(ark, 2)
     series_exact = @inferred ExactSolution(series_integrator)
     @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+
+    # modified equations and modifying integrators
+    let series_integrator = @inferred bseries(ark, 3)
+      @testset "modified_equation" begin
+        mod_eq = @inferred modified_equation(series_integrator)
+
+        # Hairer, Lubich, Wanner (2006) Geometric numerical integration
+        # Table IX.10.1, p. 383
+        # Black nodes are `0`, white nodes are `1`
+        mod_eq_reference = Dict(
+          rootedtree(Int[], Bool[])            => 0//1,
+          rootedtree([1], Bool[0])             => 1//1,
+          rootedtree([1], Bool[1])             => 1//1,
+          rootedtree([1, 2], Bool[0, 0])       => 1//2,
+          rootedtree([1, 2], Bool[1, 0])       => 1//2,
+          rootedtree([1, 2], Bool[0, 1])       => -1//2,
+          rootedtree([1, 2], Bool[1, 1])       => -1//2,
+          rootedtree([1, 2, 3], Bool[0, 0, 0]) => 1//3,
+          rootedtree([1, 2, 3], Bool[1, 0, 0]) => 1//3,
+          rootedtree([1, 2, 3], Bool[0, 1, 0]) => -1//6,
+          rootedtree([1, 2, 3], Bool[1, 1, 0]) => -1//6,
+          rootedtree([1, 2, 3], Bool[0, 0, 1]) => -1//6,
+          rootedtree([1, 2, 3], Bool[1, 0, 1]) => -1//6,
+          rootedtree([1, 2, 3], Bool[0, 1, 1]) => 1//3,
+          rootedtree([1, 2, 3], Bool[1, 1, 1]) => 1//3,
+          rootedtree([1, 2, 2], Bool[0, 0, 0]) => 1//6,
+          rootedtree([1, 2, 2], Bool[1, 0, 0]) => 1//6,
+          rootedtree([1, 2, 2], Bool[0, 1, 0]) => -1//3,
+          rootedtree([1, 2, 2], Bool[1, 1, 0]) => -1//3,
+          rootedtree([1, 2, 2], Bool[0, 1, 1]) => 1//6,
+          rootedtree([1, 2, 2], Bool[1, 1, 1]) => 1//6,
+        )
+        for (key, val) in mod_eq
+          @test val == mod_eq_reference[key]
+        end
+      end
+
+      @testset "modifying_integrator" begin
+        mod_int = @inferred modifying_integrator(series_integrator)
+      end
+    end
   end
 
   @testset "Störmer-Verlet" begin
@@ -797,6 +838,129 @@ end
     series_integrator = @inferred bseries(ark, 3)
     series_exact = @inferred ExactSolution(series_integrator)
     @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+
+    # modified equations and modifying integrators
+    let series_integrator = @inferred bseries(ark, 4)
+      @testset "modified_equation" begin
+        mod_eq = @inferred modified_equation(series_integrator)
+
+        # second-order accurate
+        for t in BicoloredRootedTreeIterator(2)
+          @test iszero(mod_eq[t])
+        end
+
+        # # Hairer, Lubich, Wanner (2006) Geometric numerical integration
+        # # Table IX.10.2, p. 386
+        # # Black nodes are `0`, white nodes are `1`
+        series_reference = Dict(
+          rootedtree(Int[], Bool[])            => 1//1,
+          rootedtree([1], Bool[0])             => 1//1,
+          rootedtree([1], Bool[1])             => 1//1,
+          rootedtree([1, 2], Bool[0, 0])       => 1//2,
+          rootedtree([1, 2], Bool[1, 0])       => 1//2,
+          rootedtree([1, 2], Bool[0, 1])       => 1//2,
+          rootedtree([1, 2], Bool[1, 1])       => 1//2,
+          rootedtree([1, 2, 3], Bool[0, 0, 0]) => 1//4,
+          rootedtree([1, 2, 3], Bool[1, 0, 0]) => 1//4,
+          rootedtree([1, 2, 3], Bool[0, 1, 0]) => 0//1,
+          rootedtree([1, 2, 3], Bool[1, 1, 0]) => 0//1,
+          rootedtree([1, 2, 3], Bool[0, 0, 1]) => 1//4,
+          rootedtree([1, 2, 3], Bool[1, 0, 1]) => 1//4,
+          rootedtree([1, 2, 3], Bool[0, 1, 1]) => 1//4,
+          rootedtree([1, 2, 3], Bool[1, 1, 1]) => 1//4,
+          rootedtree([1, 2, 2], Bool[0, 0, 0]) => 1//2,
+          rootedtree([1, 2, 2], Bool[1, 0, 0]) => 1//2,
+          rootedtree([1, 2, 2], Bool[0, 1, 0]) => 1//4,
+          rootedtree([1, 2, 2], Bool[1, 1, 0]) => 1//4,
+          rootedtree([1, 2, 2], Bool[0, 1, 1]) => 1//4,
+          rootedtree([1, 2, 2], Bool[1, 1, 1]) => 1//4,
+        )
+        for t in keys(series_reference)
+          @test series_reference[t] == series_integrator[t]
+        end
+        mod_eq_reference = Dict(
+          rootedtree(Int[], Bool[])            => 0//1,
+          rootedtree([1], Bool[0])             => 1//1,
+          rootedtree([1], Bool[1])             => 1//1,
+          rootedtree([1, 2], Bool[0, 0])       => 0//1,
+          rootedtree([1, 2], Bool[1, 0])       => 0//1,
+          rootedtree([1, 2], Bool[0, 1])       => 0//1,
+          rootedtree([1, 2], Bool[1, 1])       => 0//1,
+          rootedtree([1, 2, 3], Bool[0, 0, 0]) => 1//12,
+          rootedtree([1, 2, 3], Bool[1, 0, 0]) => 1//12,
+          rootedtree([1, 2, 3], Bool[0, 1, 0]) => -1//6,
+          rootedtree([1, 2, 3], Bool[1, 1, 0]) => -1//6,
+          rootedtree([1, 2, 3], Bool[0, 0, 1]) => 1//12,
+          rootedtree([1, 2, 3], Bool[1, 0, 1]) => 1//12,
+          rootedtree([1, 2, 3], Bool[0, 1, 1]) => 1//12,
+          rootedtree([1, 2, 3], Bool[1, 1, 1]) => 1//12,
+          rootedtree([1, 2, 2], Bool[0, 0, 0]) => 1//6,
+          rootedtree([1, 2, 2], Bool[1, 0, 0]) => 1//6,
+          rootedtree([1, 2, 2], Bool[0, 1, 0]) => -1//12,
+          rootedtree([1, 2, 2], Bool[1, 1, 0]) => -1//12,
+          rootedtree([1, 2, 2], Bool[0, 1, 1]) => -1//12,
+          rootedtree([1, 2, 2], Bool[1, 1, 1]) => -1//12,
+        )
+        for t in keys(mod_eq_reference)
+          @test mod_eq_reference[t] == mod_eq[t]
+        end
+      end
+
+      @testset "modifying_integrator" begin
+        mod_int = @inferred modifying_integrator(series_integrator)
+
+        for t in BicoloredRootedTreeIterator(2)
+          @test iszero(mod_int[t])
+        end
+      end
+    end
+  end
+
+  @testset "SSPRK33 two times" begin
+    # Using the same method multiple times is equivalent to using a plain RK
+    # method without any splitting/partitioning/decomposition
+    A = @SArray [0 0 0; 1 0 0; 1//4 1//4 0]
+    b = @SArray [1//6, 1//6, 2//3]
+    rk = RungeKuttaMethod(A, b)
+    ark = AdditiveRungeKuttaMethod([rk, rk])
+
+    # third-order accurate
+    series_integrator = @inferred bseries(ark, 3)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(==, &, values(series_integrator), values(series_exact))
+
+    # not fourth-order accurate
+    series_integrator = @inferred bseries(ark, 4)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+
+    # modified equations and modifying integrators
+    let series_rk = bseries(rk, 5)
+      series_ark = bseries(ark, order(series_rk))
+
+      for colored_tree in keys(series_ark)
+        tree = rootedtree(colored_tree.level_sequence)
+        @test series_rk[tree] == series_ark[colored_tree]
+      end
+
+      @testset "modified_equation" begin
+        mod_eq_rk  = modified_equation(series_rk)
+        mod_eq_ark = modified_equation(series_ark)
+        for colored_tree in keys(mod_eq_ark)
+          tree = rootedtree(colored_tree.level_sequence)
+          @test mod_eq_rk[tree] == mod_eq_ark[colored_tree]
+        end
+      end
+
+      @testset "modifying_integrator" begin
+        mod_int_rk  = modifying_integrator(series_rk)
+        mod_int_ark = modifying_integrator(series_ark)
+        for colored_tree in keys(mod_int_ark)
+          tree = rootedtree(colored_tree.level_sequence)
+          @test mod_int_rk[tree] == mod_int_ark[colored_tree]
+        end
+      end
+    end
   end
 end
 
