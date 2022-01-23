@@ -798,6 +798,52 @@ end
     series_exact = @inferred ExactSolution(series_integrator)
     @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
   end
+
+  @testset "SSPRK33 two times" begin
+    # Using the same method multiple times is equivalent to using a plain RK
+    # method without any splitting/partitioning/decomposition
+    A = @SArray [0 0 0; 1 0 0; 1//4 1//4 0]
+    b = @SArray [1//6, 1//6, 2//3]
+    rk = RungeKuttaMethod(A, b)
+    ark = AdditiveRungeKuttaMethod([rk, rk])
+
+    # third-order accurate
+    series_integrator = @inferred bseries(ark, 3)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(==, &, values(series_integrator), values(series_exact))
+
+    # not fourth-order accurate
+    series_integrator = @inferred bseries(ark, 4)
+    series_exact = @inferred ExactSolution(series_integrator)
+    @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+
+    # modified equations and modifying integrators
+    let series_rk = bseries(rk, 4)
+      series_ark = bseries(ark, order(series_rk))
+
+      for colored_tree in keys(series_ark)
+        tree = rootedtree(colored_tree.level_sequence)
+        @test series_rk[tree] == series_ark[colored_tree]
+      end
+
+      mod_eq_rk  = modified_equation(series_rk)
+      mod_eq_ark = modified_equation(series_ark)
+      # TODO: Some trees are different - need to figure out why and whether
+      #       they should be different or not...
+      broken_trees = [ColoredRootedTree([1, 2, 3, 3], Bool[0, 0, 0, 1], true),
+                      ColoredRootedTree([1, 2, 3, 3], Bool[1, 0, 0, 1], true),
+                      ColoredRootedTree([1, 2, 3, 3], Bool[0, 1, 0, 1], true),
+                      ColoredRootedTree([1, 2, 3, 3], Bool[1, 1, 0, 1], true),]
+      for colored_tree in keys(mod_eq_ark)
+        tree = rootedtree(colored_tree.level_sequence)
+        if colored_tree in broken_trees
+          @test_broken mod_eq_rk[tree] == mod_eq_ark[colored_tree]
+        else
+          @test mod_eq_rk[tree] == mod_eq_ark[colored_tree]
+        end
+      end
+    end
+  end
 end
 
 
