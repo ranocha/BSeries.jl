@@ -579,7 +579,15 @@ end
 
 function evaluate(f, u, dt, series, ::EagerEvaluation, reduce_order_by)
   differentials = elementary_differentials(f, u, order(series))
-  result = zero(f)
+
+  # An additive decomposition is indicated by a tuple of vectors. A single
+  # vector field is assumed to be a vector, as everywhere else.
+  if f isa NTuple{N, AbstractVector} where {N}
+    result = zero(first(f))
+  else
+    result = zero(f)
+  end
+
   for t in keys(series)
     # Otherwise, SymPy.jl might result in
     #   DomainError with -1:

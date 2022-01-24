@@ -388,39 +388,67 @@ end
 
 @testset "modified_equation with elementary differentials" begin
   @testset "SymEngine.jl" begin
-    # Lotka-Volterra model
-    dt = SymEngine.symbols("dt")
-    p, q = u = SymEngine.symbols("p, q")
-    f = [p * (2 - q), q * (p - 1)]
+    @testset "Explicit Euler" begin
+      # Lotka-Volterra model
+      dt = SymEngine.symbols("dt")
+      p, q = u = SymEngine.symbols("p, q")
+      f = [p * (2 - q), q * (p - 1)]
 
-    # Explicit Euler method
-    A = @SArray [0//1;]
-    b = @SArray [1//1]
-    c = @SArray [0//1]
+      # Explicit Euler method
+      A = @SArray [0//1;]
+      b = @SArray [1//1]
+      c = @SArray [0//1]
 
-    # tested with the Python package BSeries
-    series2 = modified_equation(f, u, dt, A, b, c, 2)
-    series2_reference = [
-      -dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
-      -dt*( p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
-    ]
-    @test mapreduce(isequal, &, series2, series2_reference)
+      # tested with the Python package BSeries
+      series2 = modified_equation(f, u, dt, A, b, c, 2)
+      series2_reference = [
+        -dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
+        -dt*( p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
+      ]
+      @test mapreduce(isequal, &, series2, series2_reference)
 
-    # tested with the Python package BSeries
-    series3 = modified_equation(f, u, dt, A, b, c, 3)
-    series3_reference = [
-      -dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p^2*q*(2 - q) - p*q*(2 - q)*(p - 1) - p*q*(p - 1)^2 + p*(2 - q)^3)/3 - dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
-      dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p*q^2*(p - 1) + p*q*(2 - q)^2 + p*q*(2 - q)*(p - 1) + q*(p - 1)^3)/3 - dt*(p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
-    ]
-    @test mapreduce(iszero ∘ SymEngine.expand, &, series3 - series3_reference)
+      # tested with the Python package BSeries
+      series3 = modified_equation(f, u, dt, A, b, c, 3)
+      series3_reference = [
+        -dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p^2*q*(2 - q) - p*q*(2 - q)*(p - 1) - p*q*(p - 1)^2 + p*(2 - q)^3)/3 - dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
+        dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p*q^2*(p - 1) + p*q*(2 - q)^2 + p*q*(2 - q)*(p - 1) + q*(p - 1)^3)/3 - dt*(p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
+      ]
+      @test mapreduce(iszero ∘ SymEngine.expand, &, series3 - series3_reference)
 
-    # tested with the Python package BSeries
-    series4 = modified_equation(f, u, dt, A, b, c, 4)
-    series4_reference = [
-      -dt^3*(-2*p^2*q*(2 - q)*(p - 1) + 2*p*q*(2 - q)*(p - 1)*(q - 2))/12 - dt^3*(-p^2*q*(2 - q)^2 + p*q^2*(p - 1)^2 + p*q*(1 - p)*(2 - q)*(p - 1) + p*q*(2 - q)*(p - 1)*(q - 2))/12 - dt^3*(p^2*q^2*(p - 1) - 2*p^2*q*(2 - q)^2 - p^2*q*(2 - q)*(p - 1) - p*q*(2 - q)^2*(p - 1) - p*q*(2 - q)*(p - 1)^2 - p*q*(p - 1)^3 + p*(2 - q)^4)/4 - dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p^2*q*(2 - q) - p*q*(2 - q)*(p - 1) - p*q*(p - 1)^2 + p*(2 - q)^3)/3 - dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
-        -dt^3*(-2*p*q^2*(2 - q)*(p - 1) + 2*p*q*(2 - q)*(p - 1)^2)/12 - dt^3*(p^2*q*(2 - q)^2 - p*q^2*(p - 1)^2 + p*q*(2 - q)^2*(p - 1) + p*q*(2 - q)*(p - 1)^2)/12 - dt^3*(-p^2*q^2*(2 - q) - p*q^2*(2 - q)*(p - 1) - 2*p*q^2*(p - 1)^2 + p*q*(2 - q)^3 + p*q*(2 - q)^2*(p - 1) + p*q*(2 - q)*(p - 1)^2 + q*(p - 1)^4)/4 + dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p*q^2*(p - 1) + p*q*(2 - q)^2 + p*q*(2 - q)*(p - 1) + q*(p - 1)^3)/3 - dt*(p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
-    ]
-    @test mapreduce(iszero ∘ SymEngine.expand, &, series4 - series4_reference)
+      # tested with the Python package BSeries
+      series4 = modified_equation(f, u, dt, A, b, c, 4)
+      series4_reference = [
+        -dt^3*(-2*p^2*q*(2 - q)*(p - 1) + 2*p*q*(2 - q)*(p - 1)*(q - 2))/12 - dt^3*(-p^2*q*(2 - q)^2 + p*q^2*(p - 1)^2 + p*q*(1 - p)*(2 - q)*(p - 1) + p*q*(2 - q)*(p - 1)*(q - 2))/12 - dt^3*(p^2*q^2*(p - 1) - 2*p^2*q*(2 - q)^2 - p^2*q*(2 - q)*(p - 1) - p*q*(2 - q)^2*(p - 1) - p*q*(2 - q)*(p - 1)^2 - p*q*(p - 1)^3 + p*(2 - q)^4)/4 - dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p^2*q*(2 - q) - p*q*(2 - q)*(p - 1) - p*q*(p - 1)^2 + p*(2 - q)^3)/3 - dt*(-p*q*(p - 1) + p*(2 - q)^2)/2 + p*(2 - q),
+          -dt^3*(-2*p*q^2*(2 - q)*(p - 1) + 2*p*q*(2 - q)*(p - 1)^2)/12 - dt^3*(p^2*q*(2 - q)^2 - p*q^2*(p - 1)^2 + p*q*(2 - q)^2*(p - 1) + p*q*(2 - q)*(p - 1)^2)/12 - dt^3*(-p^2*q^2*(2 - q) - p*q^2*(2 - q)*(p - 1) - 2*p*q^2*(p - 1)^2 + p*q*(2 - q)^3 + p*q*(2 - q)^2*(p - 1) + p*q*(2 - q)*(p - 1)^2 + q*(p - 1)^4)/4 + dt^2*p*q*(2 - q)*(p - 1)/6 + dt^2*(-p*q^2*(p - 1) + p*q*(2 - q)^2 + p*q*(2 - q)*(p - 1) + q*(p - 1)^3)/3 - dt*(p*q*(2 - q) + q*(p - 1)^2)/2 + q*(p - 1)
+      ]
+      @test mapreduce(iszero ∘ SymEngine.expand, &, series4 - series4_reference)
+    end
+
+    @testset "IMEX Euler (partitioned Euler, symplectic Euler)" begin
+      # Lotka-Volterra model
+      dt = SymEngine.symbols("dt")
+      q, p = u = SymEngine.symbols("q, p")
+      f = ([0, p * (2 - q)], [q * (p - 1), 0])
+
+      # Symplectic Euler method
+      ex_euler = RungeKuttaMethod(
+        @SMatrix([0]), @SVector [1]
+      )
+      im_euler = RungeKuttaMethod(
+        @SMatrix([1]), @SVector [1]
+      )
+      ark = AdditiveRungeKuttaMethod([im_euler, ex_euler])
+
+      # Hairer, Lubich, Wanner (2006) Geometric numerical integration
+      # Example IX.1.3(b)
+      series_integrator = bseries(ark, 2)
+      series = modified_equation(f, u, dt, series_integrator)
+      series_reference = [
+        q*(p - 1) - dt / 2 * q * (p^2 + p * q - 4 * p + 1),
+        -p * (q - 2) + dt / 2 * p * (q^2 + p * q - 5 * q + 4)
+      ]
+      @test mapreduce(iszero ∘ SymEngine.expand, &, series - series_reference)
+    end
   end
 
   @testset "SymPy.jl" begin
