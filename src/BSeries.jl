@@ -939,13 +939,13 @@ end
 
 
 """
-    elementary_differentials(f, u, order)
+    elementary_differentials(f::AbstractVector, u, order)
 
 Compute all elementary differentials of the vector field `f` with independent
 variables `u` up to the given `order`. The return value can be indexed by
 rooted trees to obtain the corresponding elementary differential.
 """
-function elementary_differentials(f, u, order)
+function elementary_differentials(f::AbstractVector, u, order)
   order >= 1 || throw(ArgumentError("The `order` must be at least one (got $order)"))
   differentials = OrderedDict{RootedTree{Int, Vector{Int}}, typeof(f)}()
 
@@ -1085,6 +1085,71 @@ end
     end
   end
 end
+
+
+"""
+    elementary_differentials(fs::NTuple{2, AbstractVector}, u, order)
+
+Compute all elementary differentials of the sum of the two vector fields `f`
+with independent variables `u` up to the given `order`. The return value
+can be indexed by (bi-) colored rooted trees to obtain the corresponding
+elementary differential.
+"""
+function elementary_differentials(f::NTuple{2, AbstractVector}, u, order)
+  order >= 1 || throw(ArgumentError("The `order` must be at least one (got $order)"))
+  N = 2 # length(fs)
+
+  # Empty bicolored tree
+  t = rootedtree(Int[], Bool[])
+  differentials = OrderedDict{typeof(t), promote_type(map(typeof, f)...)}()
+  differentials[t] = one.(f[1])
+
+  # Bicolored trees with a single node
+  t = rootedtree([1], Bool[0])
+  differentials[t] = f[1]
+
+  t = rootedtree([1], Bool[1])
+  differentials[t] = f[2]
+
+  # Compute all necessary partial derivatives at first
+  derivatives = ntuple(n -> Array{eltype(f[n])}[], N)
+  for n in 1:N
+    push!(derivatives[n], f[n])
+  end
+  for o in 1:(order-1)
+    for n in 1:N
+      d = similar(f[n], eltype(f[n]), (length(f[n]), ntuple(_ -> length(u), o)...))
+      _compute_partial_derivatives!(d, f[n], u, derivatives[n][o])
+      push!(derivatives[n], d)
+    end
+  end
+
+  # Compute all elementary differentials
+  for o in 2:order
+    for _t in BicoloredRootedTreeIterator(o)
+      t = copy(_t)
+      differentials[t] = elementary_differential(f, t, differentials, derivatives)
+    end
+  end
+
+  return differentials
+end
+
+function elementary_differential(f::NTuple{2, AbstractVector},
+                                 t::ColoredRootedTree,
+                                 differentials, derivatives)
+  subtr = RootedTrees.subtrees(t)
+  n = RootedTrees.color_to_index(root_color(t))
+  result = similar(f[n])
+
+  input_differentials = ntuple(i -> differentials[subtr[i]], length(subtr))
+  input_derivative = derivatives[n][length(subtr) + 1]
+
+  _compute_elementary_differential!(result, input_differentials, input_derivative)
+
+  return result
+end
+
 
 
 include("latexify.jl")

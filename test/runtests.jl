@@ -317,6 +317,75 @@ end
 end
 
 
+@testset "elementary differentials" begin
+  @testset "Bicolored trees" begin
+    @testset "Lotka-Volterra" begin
+      # Verified with Mathematica
+      # u = {q, p};
+      # f1 = {q * (p - 1), 0};
+      # f2 = {0, p * (2 - q)};
+      #
+      # f1p = Simplify@D[f1, {u}];
+      # f2p = Simplify@D[f2, {u}];
+      #
+      # f1pp = Simplify@D[f1, {u, 2}];
+      # f2pp = Simplify@D[f2, {u, 2}];
+      #
+      # (* Trees of order 2 *)
+      # Map[InputForm, f1p.f1]
+      # Map[InputForm, f2p.f1]
+      # Map[InputForm, f1p.f2]
+      # Map[InputForm, f2p.f2]
+      #
+      # (* Tall trees of order 3 *)
+      # Map[InputForm, f1p.(f1p.f1)]
+      # Map[InputForm, f2p.(f1p.f1)]
+      # Map[InputForm, f1p.(f2p.f1)]
+      # Map[InputForm, f2p.(f2p.f1)]
+      # Map[InputForm, f1p.(f1p.f2)]
+      # Map[InputForm, f2p.(f1p.f2)]
+      # Map[InputForm, f1p.(f2p.f2)]
+      # Map[InputForm, f2p.(f2p.f2)]
+      #
+      # (* Bushy trees of order 3 *)
+      # Map[InputForm, f1pp.f1.f1]
+      # Map[InputForm, f2pp.f1.f1]
+      # Map[InputForm, f1pp.f2.f1]
+      # Map[InputForm, f2pp.f2.f1]
+      # (* The other choice of colors of the leaves is redundant *)
+      # Map[InputForm, f1pp.f2.f2]
+      # Map[InputForm, f2pp.f2.f2]
+      @testset "SymEngine" begin
+        q, p = u = SymEngine.symbols("q, p")
+        f = ([q * (p - 1), 0], [0, p * (2 - q)])
+        differentials = elementary_differentials(f, u, 3)
+        @test differentials[rootedtree(Int64[], Bool[])         ] == [1, 1]
+        @test differentials[rootedtree([1], Bool[0])            ] == [q * (p - 1), 0]
+        @test differentials[rootedtree([1], Bool[1])            ] == [0, p * (2 - q)]
+        @test differentials[rootedtree([1, 2], Bool[0, 0])      ] == [(-1 + p)^2*q,0]
+        @test differentials[rootedtree([1, 2], Bool[1, 0])      ] == [0,-((-1 + p)*p*q)]
+        @test differentials[rootedtree([1, 2], Bool[0, 1])      ] == [p*(2 - q)*q,0]
+        @test differentials[rootedtree([1, 2], Bool[1, 1])      ] == [0,p*(2 - q)^2]
+        @test differentials[rootedtree([1, 2, 3], Bool[0, 0, 0])] == [(-1 + p)^3*q,0]
+        @test differentials[rootedtree([1, 2, 3], Bool[1, 0, 0])] == [0,-((-1 + p)^2*p*q)]
+        @test differentials[rootedtree([1, 2, 3], Bool[0, 1, 0])] == [-((-1 + p)*p*q^2),0]
+        @test differentials[rootedtree([1, 2, 3], Bool[1, 1, 0])] == [0,-((-1 + p)*p*(2 - q)*q)]
+        @test differentials[rootedtree([1, 2, 3], Bool[0, 0, 1])] == [(-1 + p)*p*(2 - q)*q,0]
+        @test differentials[rootedtree([1, 2, 3], Bool[1, 0, 1])] == [0,-(p^2*(2 - q)*q)]
+        @test differentials[rootedtree([1, 2, 3], Bool[0, 1, 1])] == [p*(2 - q)^2*q,0]
+        @test differentials[rootedtree([1, 2, 3], Bool[1, 1, 1])] == [0,p*(2 - q)^3]
+        @test differentials[rootedtree([1, 2, 2], Bool[0, 0, 0])] == [0, 0]
+        @test differentials[rootedtree([1, 2, 2], Bool[1, 0, 0])] == [0, 0]
+        @test differentials[rootedtree([1, 2, 2], Bool[0, 1, 0])] == [(-1 + p)*p*(2 - q)*q,0]
+        @test differentials[rootedtree([1, 2, 2], Bool[1, 1, 0])] == [0,-((-1 + p)*p*(2 - q)*q)]
+        @test differentials[rootedtree([1, 2, 2], Bool[0, 1, 1])] == [0, 0]
+        @test differentials[rootedtree([1, 2, 2], Bool[1, 1, 1])] == [0, 0]
+      end
+    end
+  end
+end
+
+
 @testset "modified_equation with elementary differentials" begin
   @testset "SymEngine.jl" begin
     # Lotka-Volterra model
