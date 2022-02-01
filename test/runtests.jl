@@ -946,9 +946,9 @@ end
           @test iszero(mod_eq[t])
         end
 
-        # # Hairer, Lubich, Wanner (2006) Geometric numerical integration
-        # # Table IX.10.2, p. 386
-        # # Black nodes are `0`, white nodes are `1`
+        # Hairer, Lubich, Wanner (2006) Geometric numerical integration
+        # Table IX.10.2, p. 386
+        # Black nodes are `0`, white nodes are `1`
         series_reference = Dict(
           rootedtree(Int[], Bool[])            => 1//1,
           rootedtree([1], Bool[0])             => 1//1,
@@ -1001,7 +1001,20 @@ end
         for t in keys(mod_eq_reference)
           @test mod_eq_reference[t] == mod_eq[t]
         end
-      end
+
+        # Hairer, Lubich, Wanner (2003)
+        # Geometric numerical integration illustrated by the Störmer-Verlet method
+        # https://doi.org/10.1017/S0962492902000144
+        @testset "Pendulum, SymEngine" begin
+          dt = SymEngine.symbols("dt")
+          q, v = u = SymEngine.symbols("q, v")
+          f = ([v, 0], [0, -sin(q)])
+
+          series = modified_equation(f, u, dt, series_integrator)
+          series_reference = f[1] + f[2] + 1//12 * dt^2 * [2 * cos(q) * v, sin(q) * cos(q) + sin(q) * v^2]
+          @test mapreduce(iszero ∘ SymEngine.expand, &, series - series_reference)
+        end
+      end # @testset "modified_equation"
 
       @testset "modifying_integrator" begin
         mod_int = @inferred modifying_integrator(series_integrator)

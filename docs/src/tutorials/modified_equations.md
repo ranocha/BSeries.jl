@@ -179,27 +179,30 @@ using OrdinaryDiffEq
 
 function f1(du, u, params, t)
   q, p = u
-  dp = (2 - q) * p
+  # dp = (2 - q) * p
+  dp = (1 - q) * p
   du[1] = 0; du[2] = dp
   return nothing
 end
 
 function f2(du, u, params, t)
   q, p = u
-  dq = (p - 1) * q
+  # dq = (p - 1) * q
+  dq = (p - 2) * q
   du[1] = dq; du[2] = 0
   return nothing
 end
 
 # u0 = [1.5, 2.25]
-# tspan = (0.0, 15.0)
-u0 = [3.0, 2.0]
+# u0 = [3.0, 2.0]
+# u0 = [6.5, 1.0]
+u0 = [4.0, 2.0]
 tspan = (0.0, 15.0)
 ode = SplitODEProblem(f1, f2, u0, tspan)
 
-dt = 0.1
+dt = 0.12
 sol_euler = solve(ode, IMEXEuler(), dt=dt)
-sol_ref = solve(ode, Tsit5())
+sol_ref = solve(ode, Tsit5(), abstol=1.0e-12, reltol=1.0e-12)
 nothing # hide
 ```
 
