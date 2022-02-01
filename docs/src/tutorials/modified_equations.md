@@ -309,7 +309,133 @@ savefig(fig, "lotka_volterra_modified3.svg"); nothing # hide
 ![](lotka_volterra_modified3.svg)
 
 
+## Nonlinear pendulum, Störmer-Verlet method
+
+Let's reproduce the example shown in Figure 4.1 of [^HairerLubichWanner2003].
+Thus, we consider the dynamical ODE system describing a nonlinear pendulum as
+
+```math
+q'(t) = v,
+\quad
+v'(t) = -sin(q).
+```
+
+Note that [^HairerLubichWanner2003] use the order `q, v` of the variables
+(position and velocity) but
+[OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl)
+requires the order `v, q` for dynamical ODE systems. Thus, we need to `reverse`
+the order of variables from time to time.
+
+First, we set up the ODE system and compute a reference solution as well as
+the numerical solution obtained by the classical Störmer-Verlet method.
+
+```@example ex:pendulum
+using OrdinaryDiffEq, LaTeXStrings, Plots
+
+f1(v, q, params, t) = -sin(q)
+f2(v, q, params, t) = v
+v0 = 1.0
+q0 = -1.2
+tspan = (0.0, 55.0)
+ode = DynamicalODEProblem(f1, f2, v0, q0, tspan)
+
+dt = 1.1
+alg = VerletLeapfrog()
+sol_baseline = solve(ode, alg, dt=dt)
+sol_ref = solve(ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
+
+fig = plot(xguide=L"$q$", yguide=L"$v$")
+default(linewidth=2)
+plot!(fig, sol_ref, vars=(2, 1), label="Reference solution")
+scatter!(fig, last.(sol_baseline.u), first.(sol_baseline.u),
+         label="Störmer-Verlet, dt = $dt")
+
+savefig(fig, "pendulum_original.svg"); nothing # hide
+```
+
+![](pendulum_original.svg)
+
+The exact solution of this problem is periodic. Since the Störmer-Verlet method
+is symplectic, it captures this qualitative property of the exact solution very
+well. However, we can see that the numerical solution trajectory does not really
+match the reference solution. Indeed, numerical errors pollute the solution and
+the numerical approximation is closer to a solution of a modified equation.
+We can compute the first terms of this modified equations as follows. First, we
+need to set up the time integration method in a form usable by BSeries.jl.
+For this, we interpret it as an additive Runge-Kutta method
+(see [`AdditiveRungeKuttaMethod`](@ref)) as follows.
+
+```@example ex:pendulum
+using BSeries
+
+# Störmer-Verlet method as additive RK method, see
+# Hairer, Lubich, Wanner (2002)
+# Geometric numerical integration
+# Table II.2.1
+As = [
+    [0 0; 1//2 1//2],
+    [1//2 0; 1//2 0]
+]
+bs = [
+    [1//2, 1//2],
+    [1//2, 1//2]
+]
+ark = AdditiveRungeKuttaMethod(As, bs)
+```
+
+Next, we can set up the symbolic part. Note that we use the order `q, v`
+here instead of `v, q` used above.
+
+```@example ex:pendulum
+using Symbolics
+
+# Set up symbolic equation
+@variables dt_sym
+u_sym = @variables q, v
+fq_sym = [f2(reverse(u_sym)..., nothing, nothing), 0]
+fv_sym = [0, f1(reverse(u_sym)..., nothing, nothing)]
+f_sym = (fq_sym, fv_sym)
+
+# Compute B-series of the numerical integrator and the modified equation
+series_integrator = bseries(ark, 3)
+series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
+```
+
+You can compare this result to eq. (4.8) of [^HairerLubichWanner2003].
+Next, we can solve the modified differential equations with high precision
+as follows.
+
+```@example ex:pendulum
+for truncation_order in 3:2:5
+  series_integrator = bseries(ark, truncation_order)
+  series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
+  series = Symbolics.substitute.(series, dt_sym => dt)
+  modified_f, _ = build_function(series, u_sym, expression=Val(false))
+  modified_ode = ODEProblem((u, params, t) -> modified_f(u), [q0, v0], ode.tspan)
+  modified_sol = solve(modified_ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
+  plot!(fig, modified_sol, vars=(1, 2),
+        label="Modified equation, order $(truncation_order-1)")
+end
+fig
+
+savefig(fig, "pendulum_modified.svg"); nothing # hide
+```
+
+![](pendulum_modified.svg)
+
+You can see that the high-precision solutions of the modified equations match
+the numerical solution obtained by the Störmer-Verlet method very well. In fact,
+the fourth-order modified equation is even a bit more accurate than the
+second-order one.
+
+
+
 ## References
+
+[^HairerLubichWanner2003]:
+  Ernst Hairer, Christian Lubich, Gerhard Wanner (2003)
+  Geometric numerical integration illustrated by the Störmer-Verlet method.
+  [DOI: 10.1017/S0962492902000144](https://doi.org/10.1017/S0962492902000144)
 
 [^HairerLubichWanner2006]:
   Ernst Hairer, Christian Lubich, Gerhard Wanner (2006)
