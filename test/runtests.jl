@@ -1005,6 +1005,7 @@ end
         # Hairer, Lubich, Wanner (2003)
         # Geometric numerical integration illustrated by the Störmer-Verlet method
         # https://doi.org/10.1017/S0962492902000144
+        # equation (4.8)
         @testset "Pendulum, SymEngine" begin
           dt = SymEngine.symbols("dt")
           q, v = u = SymEngine.symbols("q, v")
