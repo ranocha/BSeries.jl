@@ -80,10 +80,10 @@ produces an unstable trajectory. Here, we used an especially large time step to
 more clearly illustrate what will follow, but the qualitative behavior is the
 same for any time step size.
 
-Next, we will derive the "modified equation" of the explicit Euler method and
-solve this new ODE to high accuracy. The perturbed system takes the form of a
-power series in the time step size `dt`, and in order to compute with it we will
-truncate it at a certain order.
+Next, we will derive the "modified equation" (see [`modified_equation`](@ref))
+of the explicit Euler method and solve this new ODE to high accuracy. The
+perturbed system takes the form of a power series in the time step size `dt`,
+and in order to compute with it we will truncate it at a certain order.
 
 Here, we use [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
 for the symbolic computations.
@@ -158,7 +158,7 @@ savefig(fig, "lotka_volterra_modified3.svg"); nothing # hide
 ## Lotka-Volterra model, symplectic Euler method
 
 Next, we reproduce the second part of the example on p. 340 of
-[^HairerLubichWanner2006]. Thus, we consider the symplectic Euler method
+[^HairerLubichWanner2006]. Thus, we consider the symplectic (IMEX) Euler method
 to solve the classical Lotka-Volterra model
 
 ```math
@@ -175,46 +175,35 @@ and compute some numerical solutions using
 [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl).
 
 ```@example ex:lotka-volterra-symplectic-euler
-using OrdinaryDiffEq
+using OrdinaryDiffEq, LaTeXStrings, Plots
 
 function f1(du, u, params, t)
   q, p = u
-  # dp = (2 - q) * p
-  dp = (1 - q) * p
+  dp = (2 - q) * p
   du[1] = 0; du[2] = dp
   return nothing
 end
 
 function f2(du, u, params, t)
   q, p = u
-  # dq = (p - 1) * q
-  dq = (p - 2) * q
+  dq = (p - 1) * q
   du[1] = dq; du[2] = 0
   return nothing
 end
 
-# u0 = [1.5, 2.25]
-# u0 = [3.0, 2.0]
-# u0 = [6.5, 1.0]
-u0 = [4.0, 2.0]
+u0 = [3.0, 2.0]
 tspan = (0.0, 15.0)
 ode = SplitODEProblem(f1, f2, u0, tspan)
 
-dt = 0.12
-sol_euler = solve(ode, IMEXEuler(), dt=dt)
-sol_ref = solve(ode, Tsit5(), abstol=1.0e-12, reltol=1.0e-12)
-nothing # hide
-```
-
-Next, we look at some phase space plots of the numerical solution.
-
-```@example ex:lotka-volterra-symplectic-euler
-using LaTeXStrings, Plots
+dt = 0.1
+alg = IMEXEuler()
+sol_baseline = solve(ode, IMEXEuler(), dt=dt)
+sol_ref = solve(ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
 
 fig = plot(xguide=L"$q$", yguide=L"$p$")
 default(linewidth=2)
 plot!(fig, sol_ref, vars=(1, 2), label="Reference solution")
-scatter!(fig, first.(sol_euler.u), last.(sol_euler.u),
+scatter!(fig, first.(sol_baseline.u), last.(sol_baseline.u),
          label="Symplectic Euler, dt = $dt")
 
 savefig(fig, "lotka_volterra_original.svg"); nothing # hide
@@ -225,88 +214,46 @@ savefig(fig, "lotka_volterra_original.svg"); nothing # hide
 The exact solution of this problem is periodic. Due to its structure-preserving
 properties, the symplectic Euler method also produces a stable trajectory.
 
-Next, we will derive the "modified equation" of the symplectic Euler method and
+Next, we will derive the modified equation of the symplectic Euler method and
 solve this new ODE to high accuracy. The perturbed system takes the form of a
 power series in the time step size `dt`, and in order to compute with it we will
 truncate it at a certain order.
 
-Here, we use [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
+Again, we use [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
 for the symbolic computations.
 
 ```@example ex:lotka-volterra-symplectic-euler
 using BSeries, StaticArrays, Symbolics
 
-function solve_modified_equation(ode, truncation_orders, dt)
-  # Symplectic (IMEX) Euler method
-  ex_euler = RungeKuttaMethod(
-    @SMatrix([0]), @SVector [1]
-  )
-  im_euler = RungeKuttaMethod(
-    @SMatrix([1]), @SVector [1]
-  )
-  ark = AdditiveRungeKuttaMethod([im_euler, ex_euler])
+ex_euler = RungeKuttaMethod(
+  @SMatrix([0]), @SVector [1]
+)
+im_euler = RungeKuttaMethod(
+  @SMatrix([1]), @SVector [1]
+)
+ark = AdditiveRungeKuttaMethod([im_euler, ex_euler])
+alg = IMEXEuler()
 
-  # Setup of symbolic variables
-  @variables dt_sym
-  u_sym = @variables q p
-  f1_sym = similar(u_sym); f1(f1_sym, u_sym, nothing, nothing)
-  f2_sym = similar(u_sym); f2(f2_sym, u_sym, nothing, nothing)
-  f_sym = (f1_sym, f2_sym)
+@variables dt_sym
+u_sym = @variables q, p
+f1_sym = similar(u_sym); f1(f1_sym, u_sym, nothing, nothing)
+f2_sym = similar(u_sym); f2(f2_sym, u_sym, nothing, nothing)
+f_sym = (f1_sym, f2_sym)
 
-  sol_euler = solve(ode, IMEXEuler(), dt=dt)
-
-  fig = plot(xguide=L"$q$", yguide=L"$p$")
-  default(linewidth=2)
-  scatter!(fig, first.(sol_euler.u), last.(sol_euler.u),
-          label="Symplectic Euler, dt = $dt")
-
-  for truncation_order in truncation_orders
-    series_integrator = bseries(ark, truncation_order)
-    series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
-    series = Symbolics.substitute.(series, dt_sym => dt)
-    modified_f, _ = build_function(series, u_sym, expression=Val(false))
-    modified_ode = ODEProblem((u, params, t) -> modified_f(u), ode.u0, ode.tspan)
-    modified_sol = solve(modified_ode, Tsit5())
-    plot!(fig, modified_sol, vars=(1, 2),
-          label="Modified ODE, order $(truncation_order-1)")
-  end
-  fig
-end
-
-fig = solve_modified_equation(ode, 2:4, dt)
+truncation_order = 2
+series_integrator = bseries(ark, truncation_order)
+series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
+series = Symbolics.substitute.(series, dt_sym => dt)
+modified_f, _ = build_function(series, u_sym, expression=Val(false))
+modified_ode = ODEProblem((u, params, t) -> modified_f(u), ode.u0, ode.tspan)
+modified_sol = solve(modified_ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
+plot!(fig, modified_sol, vars=(1, 2),
+      label="Modified equation, order $(truncation_order-1)")
 
 savefig(fig, "lotka_volterra_modified1.svg"); nothing # hide
 ```
 
-# TODO
-
-![](lotka_volterra_modified1.svg)
-
-The exact solution of the Lotka-Volterra model is periodic, but Euler's method
-generates a solution with growing amplitude. The modified equations accurately
-predict this.
-
-Now we go to the next order and increase the time step size `dt` slightly.
-
-```@example ex:lotka-volterra-explicit-euler
-fig = solve_modified_equation(ode, 2:3, 0.11)
-
-savefig(fig, "lotka_volterra_modified2.svg"); nothing # hide
-```
-
-![](lotka_volterra_modified2.svg)
-
-Using a larger step size, we see that the first-order modified equations are
-not fully accurate, but by including the ``O(h^2)`` terms we get much better
-accuracy at late times. Let's keep going.
-
-```@example ex:lotka-volterra-explicit-euler
-fig = solve_modified_equation(ode, 2:4, 0.12)
-
-savefig(fig, "lotka_volterra_modified3.svg"); nothing # hide
-```
-
-![](lotka_volterra_modified3.svg)
+TODO: Debug and finish this!
 
 
 ## Nonlinear pendulum, Störmer-Verlet method
@@ -362,8 +309,7 @@ match the reference solution. Indeed, numerical errors pollute the solution and
 the numerical approximation is closer to a solution of a modified equation.
 We can compute the first terms of this modified equations as follows. First, we
 need to set up the time integration method in a form usable by BSeries.jl.
-For this, we interpret it as an additive Runge-Kutta method
-(see [`AdditiveRungeKuttaMethod`](@ref)) as follows.
+For this, we interpret it as an additive Runge-Kutta method as follows.
 
 ```@example ex:pendulum
 using BSeries
