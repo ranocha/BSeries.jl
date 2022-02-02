@@ -70,10 +70,10 @@ scatter!(fig, last.(sol_euler.u), first.(sol_euler.u),
          label="Explicit Euler, dt = $dt")
 plot!(fig, xlims=(0.0, 9.0), ylims=(0.0, 5.0))
 
-savefig(fig, "lotka_volterra_original.svg"); nothing # hide
+savefig(fig, "lotka_volterra_explicit_euler.svg"); nothing # hide
 ```
 
-![](lotka_volterra_original.svg)
+![](lotka_volterra_explicit_euler.svg)
 
 The exact solution of this problem is periodic, but the explicit Euler method
 produces an unstable trajectory. Here, we used an especially large time step to
@@ -123,10 +123,10 @@ end
 
 fig = solve_modified_equation(ode, 2, dt)
 
-savefig(fig, "lotka_volterra_modified1.svg"); nothing # hide
+savefig(fig, "lotka_volterra_explicit_euler_modified1.svg"); nothing # hide
 ```
 
-![](lotka_volterra_modified1.svg)
+![](lotka_volterra_explicit_euler_modified1.svg)
 
 The exact solution of the Lotka-Volterra model is periodic, but Euler's method
 generates a solution with growing amplitude. The modified equations accurately
@@ -137,10 +137,10 @@ Now we go to the next order and increase the time step size `dt` slightly.
 ```@example ex:lotka-volterra-explicit-euler
 fig = solve_modified_equation(ode, 2:3, 0.11)
 
-savefig(fig, "lotka_volterra_modified2.svg"); nothing # hide
+savefig(fig, "lotka_volterra_explicit_euler_modified2.svg"); nothing # hide
 ```
 
-![](lotka_volterra_modified2.svg)
+![](lotka_volterra_explicit_euler_modified2.svg)
 
 Using a larger step size, we see that the first-order modified equations are
 not fully accurate, but by including the ``O(h^2)`` terms we get much better
@@ -149,10 +149,10 @@ accuracy at late times. Let's keep going.
 ```@example ex:lotka-volterra-explicit-euler
 fig = solve_modified_equation(ode, 2:4, 0.12)
 
-savefig(fig, "lotka_volterra_modified3.svg"); nothing # hide
+savefig(fig, "lotka_volterra_explicit_euler_modified3.svg"); nothing # hide
 ```
 
-![](lotka_volterra_modified3.svg)
+![](lotka_volterra_explicit_euler_modified3.svg)
 
 
 ## Lotka-Volterra model, symplectic Euler method
@@ -207,10 +207,10 @@ u'(t) = f^1(u) + f^2(u)
 the symplectic/IMEX Euler method we are interested in is
 
 ```math
-\\begin{aligned}
-  y^1 &= u^n + \\Delta t f^1(y^1), \\\\
-  u^{n+1} &= u^n + \\Delta t f^1(y^1) + \\Delta t f^2(y^1).
-\\end{aligned}
+\begin{aligned}
+  y^1 &= u^n + \Delta t f^1(y^1), \\
+  u^{n+1} &= u^n + \Delta t f^1(y^1) + \Delta t f^2(y^1).
+\end{aligned}
 ```
 
 There is an `IMEXEuler` method in
@@ -218,7 +218,7 @@ There is an `IMEXEuler` method in
 However, this is a multistep variant using the update
 
 ```math
-u^{n+1} &= u^n + \\Delta t f^1(u^{n+1}) + \\Delta t f^2(u^n)
+u^{n+1} &= u^n + \Delta t f^1(u^{n+1}) + \Delta t f^2(u^n)
 ```
 
 and not an additive Runge-Kutta method, see also
@@ -269,10 +269,10 @@ dt = 0.12
 qs, ps = imex_euler_lotka_volterra(ode.u0, ode.tspan, dt)
 scatter!(fig, qs, ps, label="Symplectic Euler, dt = $dt")
 
-savefig(fig, "lotka_volterra_original.svg"); nothing # hide
+savefig(fig, "lotka_volterra_symplectic_euler.svg"); nothing # hide
 ```
 
-![](lotka_volterra_original.svg)
+![](lotka_volterra_symplectic_euler.svg)
 
 The exact solution of this problem is periodic. Due to its structure-preserving
 properties, the symplectic Euler method also produces a stable trajectory.
@@ -314,10 +314,10 @@ for truncation_order in 2:3
 end
 
 fig
-savefig(fig, "lotka_volterra_modified.svg"); nothing # hide
+savefig(fig, "lotka_volterra_symplectic_euler_modified.svg"); nothing # hide
 ```
 
-![](lotka_volterra_modified.svg)
+![](lotka_volterra_symplectic_euler_modified.svg)
 
 
 ## Nonlinear pendulum, Störmer-Verlet method
