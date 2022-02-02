@@ -328,7 +328,7 @@ Thus, we consider the dynamical ODE system describing a nonlinear pendulum as
 ```math
 q'(t) = v,
 \quad
-v'(t) = -sin(q).
+v'(t) = -\sin(q).
 ```
 
 Note that [^HairerLubichWanner2003] use the order `q, v` of the variables
