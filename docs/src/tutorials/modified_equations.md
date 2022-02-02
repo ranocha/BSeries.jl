@@ -170,41 +170,104 @@ q'(t) = (p - 1) q.
 Here, the implicit part will be applied to ``p'`` and the explicit part
 to ``q'``.
 
-First, we set up the additive decomposition of the ODE as `SplitODEProblem`
-and compute some numerical solutions using
+First, we set up the ODE and compute a reference solution using
 [OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl).
 
 ```@example ex:lotka-volterra-symplectic-euler
-using OrdinaryDiffEq, LaTeXStrings, Plots
+using OrdinaryDiffEq, Plots, LaTeXStrings
 
-function f1(du, u, params, t)
+function f!(du, u, params, t)
   q, p = u
-  dp = (2 - q) * p
-  du[1] = 0; du[2] = dp
+  du[1] = (p - 1) * q # dq/dt
+  du[2] = (2 - q) * p # dp/dt
   return nothing
 end
 
-function f2(du, u, params, t)
-  q, p = u
-  dq = (p - 1) * q
-  du[1] = dq; du[2] = 0
-  return nothing
-end
-
-u0 = [3.0, 2.0]
+u0 = [6.5, 1.0]
 tspan = (0.0, 15.0)
-ode = SplitODEProblem(f1, f2, u0, tspan)
-
-dt = 0.1
-alg = IMEXEuler()
-sol_baseline = solve(ode, IMEXEuler(), dt=dt)
+ode = ODEProblem(f!, u0, tspan)
 sol_ref = solve(ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
 
 fig = plot(xguide=L"$q$", yguide=L"$p$")
 default(linewidth=2)
 plot!(fig, sol_ref, vars=(1, 2), label="Reference solution")
-scatter!(fig, first.(sol_baseline.u), last.(sol_baseline.u),
-         label="Symplectic Euler, dt = $dt")
+
+savefig(fig, "lotka_volterra_reference.svg"); nothing # hide
+```
+
+![](lotka_volterra_reference.svg)
+
+Next, we apply a symplectic (implicit-explicit, IMEX) Euler method to this
+problem. Given an additively partitioned ODE
+
+```math
+u'(t) = f^1(u) + f^2(u)
+```
+
+the symplectic/IMEX Euler method we are interested in is
+
+```math
+\\begin{aligned}
+  y^1 &= u^n + \\Delta t f^1(y^1), \\\\
+  u^{n+1} &= u^n + \\Delta t f^1(y^1) + \\Delta t f^2(y^1).
+\\end{aligned}
+```
+
+There is an `IMEXEuler` method in
+[OrdinaryDiffEq.jl](https://github.com/SciML/OrdinaryDiffEq.jl).
+However, this is a multistep variant using the update
+
+```math
+u^{n+1} &= u^n + \\Delta t f^1(u^{n+1}) + \\Delta t f^2(u^n)
+```
+
+and not an additive Runge-Kutta method, see also
+[OrdinaryDiffEq.jl#1590](https://github.com/SciML/OrdinaryDiffEq.jl/issues/1590).
+Thus, we implement our own symplectic Euler method for this specific problem.
+
+```@example ex:lotka-volterra-symplectic-euler
+function imex_euler_lotka_volterra(u0, tspan, dt)
+  @assert tspan[1] < tspan[2]
+  @assert dt > 0
+
+  # setup solution arrays
+  qs = [u0[1]]
+  sizehint!(qs, round(Int, (tspan[2] - tspan[1]) / dt))
+  ps = [u0[2]]
+  sizehint!(ps, length(qs))
+
+  t = tspan[1]
+  while t < tspan[2]
+    qold = qs[end]
+    pold = ps[end]
+
+    # ARK, p implicit
+    pnew = pold / (1 + dt * (qold - 2))
+    qnew = qold + dt * (pnew - 1) * qold
+
+    # ARK, q implicit
+    #qnew = qold / (1 + dt * (1 - pold))
+    #pnew = pold + dt * (2 - qnew) * pold
+
+    # Multistep version of Ascher, Ruuth, Wetton (1995), p implicit
+    #qnew = qold + dt * (pold - 1) * qold
+    #pnew = pold / (1 + dt * (qnew - 2))
+
+    # Multistep version of Ascher, Ruuth, Wetton (1995), q implicit
+    #pnew = pold + dt * (2 - qold) * pold
+    #qnew = qold / (1 + dt * (1 - pnew))
+
+    push!(qs, qnew)
+    push!(ps, pnew)
+    t += dt
+  end
+
+  return qs, ps
+end
+
+dt = 0.12
+qs, ps = imex_euler_lotka_volterra(ode.u0, ode.tspan, dt)
+scatter!(fig, qs, ps, label="Symplectic Euler, dt = $dt")
 
 savefig(fig, "lotka_volterra_original.svg"); nothing # hide
 ```
@@ -232,28 +295,29 @@ im_euler = RungeKuttaMethod(
   @SMatrix([1]), @SVector [1]
 )
 ark = AdditiveRungeKuttaMethod([im_euler, ex_euler])
-alg = IMEXEuler()
 
 @variables dt_sym
 u_sym = @variables q, p
-f1_sym = similar(u_sym); f1(f1_sym, u_sym, nothing, nothing)
-f2_sym = similar(u_sym); f2(f2_sym, u_sym, nothing, nothing)
+f1_sym = [0, (2 - q) * p] # p implicit
+f2_sym = [(p - 1) * q, 0] # q explicit
 f_sym = (f1_sym, f2_sym)
 
-truncation_order = 2
-series_integrator = bseries(ark, truncation_order)
-series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
-series = Symbolics.substitute.(series, dt_sym => dt)
-modified_f, _ = build_function(series, u_sym, expression=Val(false))
-modified_ode = ODEProblem((u, params, t) -> modified_f(u), ode.u0, ode.tspan)
-modified_sol = solve(modified_ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
-plot!(fig, modified_sol, vars=(1, 2),
-      label="Modified equation, order $(truncation_order-1)")
+for truncation_order in 2:3
+  series_integrator = bseries(ark, truncation_order)
+  series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
+  series = Symbolics.substitute.(series, dt_sym => dt)
+  modified_f, _ = build_function(series, u_sym, expression=Val(false))
+  modified_ode = ODEProblem((u, params, t) -> modified_f(u), ode.u0, ode.tspan)
+  modified_sol = solve(modified_ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
+  plot!(fig, modified_sol, vars=(1, 2),
+        label="Modified equation, order $(truncation_order-1)")
+end
 
-savefig(fig, "lotka_volterra_modified1.svg"); nothing # hide
+fig
+savefig(fig, "lotka_volterra_modified.svg"); nothing # hide
 ```
 
-TODO: Debug and finish this!
+![](lotka_volterra_modified.svg)
 
 
 ## Nonlinear pendulum, Störmer-Verlet method
