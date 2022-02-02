@@ -218,7 +218,7 @@ There is an `IMEXEuler` method in
 However, this is a multistep variant using the update
 
 ```math
-u^{n+1} &= u^n + \Delta t f^1(u^{n+1}) + \Delta t f^2(u^n)
+u^{n+1} = u^n + \Delta t f^1(u^{n+1}) + \Delta t f^2(u^n)
 ```
 
 and not an additive Runge-Kutta method, see also
@@ -409,6 +409,10 @@ f_sym = (fq_sym, fv_sym)
 # Compute B-series of the numerical integrator and the modified equation
 series_integrator = bseries(ark, 3)
 series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
+
+@show series[1]
+@show series[2]
+nothing # hide
 ```
 
 You can compare this result to eq. (4.8) of [^HairerLubichWanner2003].
@@ -417,8 +421,8 @@ as follows.
 
 ```@example ex:pendulum
 for truncation_order in 3:2:5
-  series_integrator = bseries(ark, truncation_order)
-  series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
+  local series_integrator = bseries(ark, truncation_order)
+  local series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
   series = Symbolics.substitute.(series, dt_sym => dt)
   modified_f, _ = build_function(series, u_sym, expression=Val(false))
   modified_ode = ODEProblem((u, params, t) -> modified_f(u), [q0, v0], ode.tspan)
