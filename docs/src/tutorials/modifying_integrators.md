@@ -94,7 +94,7 @@ for the symbolic computations.
 using BSeries, StaticArrays, Symbolics
 
 # Explicit Euler method
-A = @SArray [0//1;]
+A = @SMatrix [0//1;;]
 b = @SArray [1//1]
 c = @SArray [0//1]
 
