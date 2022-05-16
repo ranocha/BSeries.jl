@@ -132,6 +132,19 @@ for op in (:+, :-)
 
     return series_result
   end
+
+  @eval function ($op)(series::TruncatedBSeries)
+    series_keys = keys(series)
+
+    T = keytype(series)
+    V = valtype(series)
+    series_result = TruncatedBSeries{T, V}()
+    for (key, val) in zip(series_keys, values(series))
+      series_result[key] = ($op)(val)
+    end
+
+    return series_result
+  end
 end
 
 for op in (:*, :/)
