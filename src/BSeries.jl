@@ -3,6 +3,8 @@ module BSeries
 @doc read(joinpath(dirname(@__DIR__), "README.md"), String) BSeries
 
 
+import Base: +, -, *, /, \
+
 using Reexport: @reexport
 
 @reexport using RootedTrees
@@ -43,7 +45,7 @@ evaluation_type(::AbstractDict) = EagerEvaluation() # dictionaries store results
 
 # internal interface
 # TODO: `bseries(series::AbstractBSeries) = series` or a `copy`?
-# TODO: `bseries(series, order)`` returns a `copy`? up to `order`, if available
+# TODO: `bseries(series, order)` returns a `copy`? up to `order`, if available
 # TODO: `truncate!(series, order)`
 
 
@@ -112,6 +114,57 @@ truncated B-series `series`.
 RootedTrees.order(series::TruncatedBSeries) = order(series.coef.keys[end])
 
 
+# vector space interface
+for op in (:+, :-)
+  @eval function ($op)(series1::TruncatedBSeries{T}, series2::TruncatedBSeries{T}) where {T}
+    # truncate the longer B-series
+    if order(series1) > order(series2)
+      series_keys = keys(series1)
+    else
+      series_keys = keys(series2)
+    end
+
+    V = promote_type(valtype(series1), valtype(series2))
+    series_result = TruncatedBSeries{T, V}()
+    for (key, val1, val2) in zip(series_keys, values(series1), values(series2))
+      series_result[key] = ($op)(val1, val2)
+    end
+
+    return series_result
+  end
+end
+
+for op in (:*, :/)
+  @eval function ($op)(series::TruncatedBSeries, scalar::Number)
+    series_keys = keys(series)
+
+    T = keytype(series)
+    V = promote_type(valtype(series), typeof(scalar))
+    series_result = TruncatedBSeries{T, V}()
+    for (key, val) in zip(series_keys, values(series))
+      series_result[key] = ($op)(val, scalar)
+    end
+
+    return series_result
+  end
+end
+
+for op in (:*, :\)
+  @eval function ($op)(scalar::Number, series::TruncatedBSeries)
+    series_keys = keys(series)
+
+    T = keytype(series)
+    V = promote_type(valtype(series), typeof(scalar))
+    series_result = TruncatedBSeries{T, V}()
+    for (key, val) in zip(series_keys, values(series))
+      series_result[key] = ($op)(scalar, val)
+    end
+
+    return series_result
+  end
+end
+
+
 
 """
     ExactSolution{V}()
@@ -131,7 +184,7 @@ Base.valtype(exact::ExactSolution) = valtype(typeof(exact))
 Base.valtype(::Type{ExactSolution{V}}) where {V} = V
 
 function Base.iterate(exact::ExactSolution)
-  iterator = RootedTreeIterator(1)
+  iterator = RootedTreeIterator(0)
   t, state = iterate(iterator)
   (exact[t], (state, iterator))
 end
@@ -186,6 +239,38 @@ function ExactSolution(series_integrator, ::EagerEvaluation)
     iter = iterate(series_keys, t_state)
   end
   series
+end
+
+# vector space interface
+for op in (:+, :-)
+  @eval function ($op)(series1::TruncatedBSeries, series2::ExactSolution)
+    # truncate the B-series of the exact solution
+    series_keys = keys(series1)
+
+    T = keytype(series1)
+    V = promote_type(valtype(series1), valtype(series2))
+    series_result = TruncatedBSeries{T, V}()
+    for (key, val1, val2) in zip(series_keys, values(series1), values(series2))
+      @info "op" key val1 val2
+      series_result[key] = ($op)(val1, val2)
+    end
+
+    return series_result
+  end
+
+  @eval function ($op)(series1::ExactSolution, series2::TruncatedBSeries)
+    # truncate the B-series of the exact solution
+    series_keys = keys(series2)
+
+    T = keytype(series2)
+    V = promote_type(valtype(series1), valtype(series2))
+    series_result = TruncatedBSeries{T, V}()
+    for (key, val1, val2) in zip(series_keys, values(series1), values(series2))
+      series_result[key] = ($op)(val1, val2)
+    end
+
+    return series_result
+  end
 end
 
 

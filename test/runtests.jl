@@ -15,8 +15,8 @@ using Symbolics: Symbolics
 
 @testset "lazy representation of exact ODE solution" begin
   exact = ExactSolution{Rational{Int}}()
-  terms = collect(Iterators.take(exact, 4))
-  @test terms == [1//1, 1//2, 1//6, 1//3]
+  terms = collect(Iterators.take(exact, 5))
+  @test terms == [1//1, 1//1, 1//2, 1//6, 1//3]
   @test exact == ExactSolution(exact)
 end
 
@@ -395,7 +395,7 @@ end
       f = [p * (2 - q), q * (p - 1)]
 
       # Explicit Euler method
-      A = @SArray [0//1;]
+      A = @SArray [0//1;;]
       b = @SArray [1//1]
       c = @SArray [0//1]
 
@@ -458,7 +458,7 @@ end
     f = [p * (2 - q), q * (p - 1)]
 
     # Explicit Euler method
-    A = @SArray [0//1;]
+    A = @SArray [0//1;;]
     b = @SArray [1//1]
     c = @SArray [0//1]
 
@@ -494,7 +494,7 @@ end
     f = [p * (2 - q), q * (p - 1)]
 
     # Explicit Euler method
-    A = @SArray [0//1;]
+    A = @SArray [0//1;;]
     b = @SArray [1//1]
     c = @SArray [0//1]
 
@@ -640,7 +640,7 @@ end
     f = [α*u[2]*u[3], β*u[3]*u[1], γ*u[1]*u[2]]
 
     # Implicit midpoint method
-    A = @SArray [1//2;]
+    A = @SArray [1//2;;]
     b = @SArray [1//1]
     c = @SArray [1//2]
 
@@ -681,7 +681,7 @@ end
     f = [α*u[2]*u[3], β*u[3]*u[1], γ*u[1]*u[2]]
 
     # Implicit midpoint method
-    A = @SArray [1//2;]
+    A = @SArray [1//2;;]
     b = @SArray [1//1]
     c = @SArray [1//2]
 
@@ -722,7 +722,7 @@ end
     f = [α*u[2]*u[3], β*u[3]*u[1], γ*u[1]*u[2]]
 
     # Implicit midpoint method
-    A = @SArray [1//2;]
+    A = @SArray [1//2;;]
     b = @SArray [1//1]
     c = @SArray [1//2]
 
