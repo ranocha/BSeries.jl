@@ -82,6 +82,28 @@ end
 end
 
 
+@testset "vector space interface" begin
+  # explicit midpoint method
+  A = @SArray [0 0; 1//2 0]; b = @SArray [0, 1//1]; c = @SArray [0, 1//2];
+  series1 = @inferred bseries(A, b, c, 2)
+  series2 = @inferred bseries(float.(A), b, c, 3)
+  exact = ExactSolution{Rational{Int128}}()
+
+  diff = @inferred series1 - series2
+  @test mapreduce(iszero, &, values(diff))
+
+  diff = @inferred series1 - exact
+  @test mapreduce(iszero, &, values(diff))
+
+  diff = @inferred exact - series1
+  @test mapreduce(iszero, &, values(diff))
+
+  half1 = @inferred 0.5 * series1
+  half2 = @inferred 2 \ series1
+  @test half1 == half2
+end
+
+
 @testset "substitute" begin
   Symbolics.@variables a1 a2 a31 a32
   a = OrderedDict{RootedTrees.RootedTree{Int, Vector{Int}}, Symbolics.Num}(
