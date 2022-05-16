@@ -23,6 +23,8 @@ The main API of BSeries.jl consists of the following components.
   (abstract) `RootedTree`s to coefficients.
 - The B-series of time integration methods such as Runge-Kutta methods
   can be constructed by the function [`bseries`](@ref).
+- Vector space operations (addition/subtraction and multiplication by scalars)
+  are available.
 - The algebraic structures of the composition law and the substitution law are
   implemented via [`compose`](@ref) and [`substitute`](@ref).
 - Backward error analysis can be performed via
