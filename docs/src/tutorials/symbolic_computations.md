@@ -117,7 +117,7 @@ calculations with high-order RK methods, the denominators may become too large t
 leading to overflow.  This can be remedied by specifying higher precision when entering the coefficients:
 
 ```@example int128-coefficients-symbolics
-b = Rational{Int128}[(1081252805//134140608),(2639189439//74522560),(33646441//4191894),(-7873511875//210792384),(-504040617//14904512),(2110843561//115277085),(13//7),(1//2)];
+b = Rational{Int128}[(1081252805//134140608),(2639189439//74522560),(33646441//4191894),(-7873511875//210792384),(-504040617//14904512),(2110843561//115277085),(13//7),(1//2)]
 ```
 
 If even `Int128` is not enough, one can specify the type `BigInt`, which has adjustable precision.
