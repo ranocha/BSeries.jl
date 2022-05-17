@@ -92,6 +92,8 @@ end
   diff = @inferred series1 - series2
   @test mapreduce(iszero, &, values(diff))
 
+  @test @inferred(series1 - series2) = @inferred(-(series2 - series1))
+
   diff = @inferred series1 - exact
   @test mapreduce(iszero, &, values(diff))
 
@@ -104,7 +106,12 @@ end
 
   half1 = @inferred 0.5 * series1
   half2 = @inferred 2 \ series1
+  half3 = @inferred series1 * 0.5
+  half4 = @inferred series1 / 2
   @test half1 == half2
+  @test half1 == half2
+  @test half1 == half3
+  @test half1 == half4
 
   @test @inferred(+series2) == series2
   @test @inferred(-series2) == -1 * series2
