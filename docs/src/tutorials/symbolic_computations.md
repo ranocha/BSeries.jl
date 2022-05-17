@@ -106,3 +106,18 @@ c = [0, 1/(2α)]
 series = modified_equation(A, b, c, 3)
 ```
 
+## Working with rational coefficients
+
+High-order Runge-Kutta methods are often given in terms of rational coefficients that have large denominators.
+It's often best to use the rational coefficients in calculations, rather than converting to floating-point, since otherwise 
+terms that ought to cancel may not cancel exactly.  Rational coefficients can be entered by using `//` for the division operation.
+
+By default, Julia uses 64-bit integers for the numerator and denominator of a rational on 64-bit systems.  In practical 
+calculations with high-order RK methods, the denominators may become too large to be represented with 64 bits, 
+leading to overflow.  This can be remedied by specifying higher precision when entering the coefficients:
+
+```@example int128-coefficients-symbolics
+b = Rational{Int128}[(1081252805//134140608),(2639189439//74522560),(33646441//4191894),(-7873511875//210792384),(-504040617//14904512),(2110843561//115277085),(13//7),(1//2)]
+```
+
+If even `Int128` is not enough, one can specify the type `BigInt`, which has adjustable precision.
