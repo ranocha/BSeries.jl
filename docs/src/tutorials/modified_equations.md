@@ -93,7 +93,7 @@ using BSeries, StaticArrays, Symbolics
 
 function solve_modified_equation(ode, truncation_orders, dt)
   # Explicit Euler method
-  A = @SArray [0//1;]
+  A = @SMatrix [0//1;;]
   b = @SArray [1//1]
   c = @SArray [0//1]
 

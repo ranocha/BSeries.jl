@@ -15,8 +15,8 @@ using Symbolics: Symbolics
 
 @testset "lazy representation of exact ODE solution" begin
   exact = ExactSolution{Rational{Int}}()
-  terms = collect(Iterators.take(exact, 4))
-  @test terms == [1//1, 1//2, 1//6, 1//3]
+  terms = collect(Iterators.take(exact, 5))
+  @test terms == [1//1, 1//1, 1//2, 1//6, 1//3]
   @test exact == ExactSolution(exact)
 end
 
@@ -79,6 +79,45 @@ end
   @test pop!(series_integrator, rootedtree([1]), :default) == :default
   series_integrator[rootedtree([1])] = 3
   @test isempty(delete!(series_integrator, rootedtree([1])))
+end
+
+
+@testset "vector space interface" begin
+  # explicit midpoint method
+  A = @SArray [0 0; 1//2 0]; b = @SArray [0, 1//1]; c = @SArray [0, 1//2];
+  series1 = @inferred bseries(A, b, c, 2)
+  series2 = @inferred bseries(float.(A), b, c, 3)
+  exact = ExactSolution{Rational{Int128}}()
+
+  diff = @inferred series1 - series2
+  @test mapreduce(iszero, &, values(diff))
+
+  @test @inferred(series1 - series2) == @inferred(-(series2 - series1))
+
+  diff = @inferred series1 - exact
+  @test mapreduce(iszero, &, values(diff))
+
+  diff = @inferred exact - series1
+  @test mapreduce(iszero, &, values(diff))
+
+  @test @inferred(series1 + series2) == @inferred(2 * series1)
+  @test @inferred(series1 + exact) == @inferred(2 * series1)
+  @test @inferred(exact + series1) == @inferred(2 * series1)
+
+  half1 = @inferred 0.5 * series1
+  half2 = @inferred 2 \ series1
+  half3 = @inferred series1 * 0.5
+  half4 = @inferred series1 / 2
+  @test half1 == half2
+  @test half1 == half2
+  @test half1 == half3
+  @test half1 == half4
+
+  @test @inferred(+series2) == series2
+  @test @inferred(-series2) == -1 * series2
+
+  diff = @inferred(series2 + (-series2))
+  @test mapreduce(iszero, &, values(diff))
 end
 
 
@@ -395,7 +434,7 @@ end
       f = [p * (2 - q), q * (p - 1)]
 
       # Explicit Euler method
-      A = @SArray [0//1;]
+      A = @SMatrix [0//1;;]
       b = @SArray [1//1]
       c = @SArray [0//1]
 
@@ -458,7 +497,7 @@ end
     f = [p * (2 - q), q * (p - 1)]
 
     # Explicit Euler method
-    A = @SArray [0//1;]
+    A = @SMatrix [0//1;;]
     b = @SArray [1//1]
     c = @SArray [0//1]
 
@@ -494,7 +533,7 @@ end
     f = [p * (2 - q), q * (p - 1)]
 
     # Explicit Euler method
-    A = @SArray [0//1;]
+    A = @SMatrix [0//1;;]
     b = @SArray [1//1]
     c = @SArray [0//1]
 
@@ -640,7 +679,7 @@ end
     f = [α*u[2]*u[3], β*u[3]*u[1], γ*u[1]*u[2]]
 
     # Implicit midpoint method
-    A = @SArray [1//2;]
+    A = @SMatrix [1//2;;]
     b = @SArray [1//1]
     c = @SArray [1//2]
 
@@ -681,7 +720,7 @@ end
     f = [α*u[2]*u[3], β*u[3]*u[1], γ*u[1]*u[2]]
 
     # Implicit midpoint method
-    A = @SArray [1//2;]
+    A = @SMatrix [1//2;;]
     b = @SArray [1//1]
     c = @SArray [1//2]
 
@@ -722,7 +761,7 @@ end
     f = [α*u[2]*u[3], β*u[3]*u[1], γ*u[1]*u[2]]
 
     # Implicit midpoint method
-    A = @SArray [1//2;]
+    A = @SMatrix [1//2;;]
     b = @SArray [1//1]
     c = @SArray [1//2]
 
