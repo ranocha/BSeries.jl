@@ -92,7 +92,7 @@ end
   diff = @inferred series1 - series2
   @test mapreduce(iszero, &, values(diff))
 
-  @test @inferred(series1 - series2) = @inferred(-(series2 - series1))
+  @test @inferred(series1 - series2) == @inferred(-(series2 - series1))
 
   diff = @inferred series1 - exact
   @test mapreduce(iszero, &, values(diff))
