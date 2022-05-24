@@ -3,7 +3,7 @@
 This tutorial describes the API of
 [BSeries.jl](https://github.com/ranocha/BSeries.jl)
 related to the notion of *modified equations*. The main API entry point is
-[`modified_equation`](@ref).
+the function [`modified_equation`](@ref).
 
 Given a first-order autonomous ordinary differential equation (ODE)
 
@@ -40,7 +40,7 @@ First, we set up the ODE and compute some numerical solutions using
 ```@example ex:lotka-volterra-explicit-euler
 using OrdinaryDiffEq
 
-function f(du, u, params, t)
+function f!(du, u, params, t)
   p, q = u
   dp = (2 - q) * p
   dq = (p - 1) * q
@@ -50,13 +50,20 @@ end
 
 u0 = [1.5, 2.25]
 tspan = (0.0, 15.0)
-ode = ODEProblem(f, u0, tspan)
+ode = ODEProblem(f!, u0, tspan)
 
 dt = 0.1
 sol_euler = solve(ode, Euler(), dt=dt)
 sol_ref = solve(ode, Tsit5())
 nothing # hide
 ```
+
+We use the in-place form of the right-hand side (RHS) and follow the Julia
+convention to indicate that `f!` modifies its first argument `du` by appending
+`!` to its name. Thus, calling `f!(du, u, params, t)` will compute the RHS at
+the state `u` and time `t` (unused) and store the result in `du`. The argument
+`params` could be used to pass additional parameters explicitly, which we do not
+need in this case.
 
 Next, we look at some phase space plots of the numerical solution.
 
@@ -100,7 +107,9 @@ function solve_modified_equation(ode, truncation_orders, dt)
   # Setup of symbolic variables
   @variables dt_sym
   u_sym = @variables p q
-  f_sym = similar(u_sym); f(f_sym, u_sym, nothing, nothing)
+  # Create `f_sym` as a vector `similar` to `u_sym` to store symbolic expressions.
+  # Then, call the in-place function `f!` to write the RHS to `f_sym`.
+  f_sym = similar(u_sym); f!(f_sym, u_sym, nothing, nothing)
 
   sol_euler = solve(ode, Euler(), dt=dt)
 
