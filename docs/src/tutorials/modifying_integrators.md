@@ -39,7 +39,7 @@ First, we set up the ODE and compute some numerical solutions using
 ```@example ex:lotka-volterra
 using OrdinaryDiffEq
 
-function f(du, u, params, t)
+function f!(du, u, params, t)
   p, q = u
   dp = (2 - q) * p
   dq = (p - 1) * q
@@ -49,7 +49,7 @@ end
 
 u0 = [1.5, 2.25]
 tspan = (0.0, 15.0)
-ode = ODEProblem(f, u0, tspan)
+ode = ODEProblem(f!, u0, tspan)
 
 dt = 0.35
 sol_euler = solve(ode, Euler(), dt=dt)
@@ -101,7 +101,7 @@ c = @SArray [0//1]
 # Setup of symbolic variables
 @variables dt_sym
 u_sym = @variables p q
-f_sym = similar(u_sym); f(f_sym, u_sym, nothing, nothing)
+f_sym = similar(u_sym); f!(f_sym, u_sym, nothing, nothing)
 
 for truncation_order in 2:4
   series = modifying_integrator(f_sym, u_sym, dt_sym, A, b, c, truncation_order)
