@@ -673,10 +673,10 @@ Section 3.2 of
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
 function evaluate(f, u, dt, series, reduce_order_by=0)
-  evaluate(f, u, dt, series, evaluation_type(series), reduce_order_by)
+  _evaluate(f, u, dt, series, evaluation_type(series), reduce_order_by)
 end
 
-function evaluate(f, u, dt, series, ::EagerEvaluation, reduce_order_by)
+function _evaluate(f, u, dt, series, ::EagerEvaluation, reduce_order_by)
   differentials = elementary_differentials(f, u, order(series))
 
   # An additive decomposition is indicated by a tuple of vectors. A single
@@ -735,10 +735,10 @@ Section 3.2 of
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
 function modified_equation(series_integrator)
-  modified_equation(series_integrator, evaluation_type(series_integrator))
+  _modified_equation(series_integrator, evaluation_type(series_integrator))
 end
 
-function modified_equation(series_integrator, ::EagerEvaluation)
+function _modified_equation(series_integrator, ::EagerEvaluation)
   V = valtype(series_integrator)
 
   # B-series of the exact solution
@@ -907,10 +907,10 @@ Section 3.2 of
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
 function modifying_integrator(series_integrator)
-  modifying_integrator(series_integrator, evaluation_type(series_integrator))
+  _modifying_integrator(series_integrator, evaluation_type(series_integrator))
 end
 
-function modifying_integrator(series_integrator, ::EagerEvaluation)
+function _modifying_integrator(series_integrator, ::EagerEvaluation)
   V = valtype(series_integrator)
 
   # B-series of the exact solution
