@@ -9,6 +9,8 @@ using SymEngine: SymEngine
 using SymPy: SymPy
 using Symbolics: Symbolics
 
+using Aqua: Aqua
+
 
 @testset "BSeries" begin
 
@@ -50,7 +52,7 @@ end
     series_integrator = bseries(A, b, c, 3)
     @test_nowarn latexify(series_integrator)
   end
-end
+end # @testset "latexify"
 
 
 @testset "AbstractDict interface" begin
@@ -79,7 +81,7 @@ end
   @test pop!(series_integrator, rootedtree([1]), :default) == :default
   series_integrator[rootedtree([1])] = 3
   @test isempty(delete!(series_integrator, rootedtree([1])))
-end
+end # @testset "AbstractDict interface"
 
 
 @testset "vector space interface" begin
@@ -118,7 +120,7 @@ end
 
   diff = @inferred(series2 + (-series2))
   @test mapreduce(iszero, &, values(diff))
-end
+end # @testset "vector space interface"
 
 
 @testset "substitute" begin
@@ -170,7 +172,7 @@ end
   @inferred substitute(b, a, t)
   @test isequal(substitute(b, a, t), coef)
   @test isequal(ba[t], coef)
-end
+end # @testset "substitute"
 
 
 @testset "compose" begin
@@ -246,7 +248,7 @@ end
       @test unnormalized_series[t] == series_rk4_composed[t] * 2^order(t)
     end
   end
-end
+end # @testset "compose"
 
 
 @testset "modified_equation" begin
@@ -353,7 +355,7 @@ end
     @test series[t58] == -19//240
     @test series[t59] == -1//20
   end
-end
+end # @testset "modified_equation"
 
 
 @testset "elementary differentials" begin
@@ -422,7 +424,7 @@ end
       end
     end
   end
-end
+end # @testset "elementary differentials"
 
 
 @testset "modified_equation with elementary differentials" begin
@@ -561,7 +563,7 @@ end
     ]
     @test mapreduce(iszero ∘ Symbolics.expand, &, series4 - series4_reference)
   end
-end
+end # @testset "modified_equation with elementary differentials"
 
 
 @testset "modifying_integrator" begin
@@ -668,7 +670,7 @@ end
     @test series[t58] == 13//80
     @test series[t59] == 2//15
   end
-end
+end # @testset "modifying_integrator"
 
 
 @testset "modifying_integrator with elementary differentials" begin
@@ -795,7 +797,7 @@ end
       @test iszero(Symbolics.expand(s5 - s5_reference))
     end
   end
-end
+end # @testset "modifying_integrator with elementary differentials"
 
 
 @testset "nonlinear oscillator" begin
@@ -858,7 +860,7 @@ end
     @test isequal(terms[1], 1//48 * dt^5 + 31//640 * dt^7 + 8969//80640 * dt^9)
     @test isequal(terms[2], 1 + 1//12 * dt^2 + 1//20 * dt^4 + 127//2016 * dt^6 + 1513//12960 * dt^8)
   end
-end
+end # @testset "nonlinear oscillator"
 
 
 @testset "integer coefficients" begin
@@ -886,7 +888,7 @@ end
   series_integrator = @inferred bseries(rk, 5)
   series_exact = @inferred ExactSolution(series_integrator)
   @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
-end
+end # @testset "Runge-Kutta methods interface"
 
 
 @testset "additive Runge-Kutta methods interface" begin
@@ -1112,7 +1114,7 @@ end
       end
     end
   end
-end
+end # @testset "additive Runge-Kutta methods interface"
 
 
 @testset "multirate infinitesimal split methods interface" begin
@@ -1455,6 +1457,27 @@ end
     series_integrator = @inferred bseries(mis, 4)
     series_exact = @inferred ExactSolution(series_integrator)
     @test mapreduce(≈, &, values(series_integrator), values(series_exact)) == false
+  end
+end # @testset "multirate infinitesimal split methods interface"
+
+
+@testset "Aqua" begin
+  Aqua.test_all(BSeries;
+    # We would like to check for ambiguities but cannot do so right now because
+    # of https://github.com/JuliaTesting/Aqua.jl/issues/79
+    # Thus, we do not test for ambiguities here but run an additional test
+    # below excluding ambiguity tests with Base.
+    ambiguities=false
+    # ambiguities=(; exclude=[
+    #   isapprox, Base.var"#isapprox##kw", # with Polynomials.jl
+    #   getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
+    #   /, # https://github.com/jump-dev/MutableArithmetics.jl/issues/161
+    # ])
+  )
+
+  # No Base and as extra test for the reson described above
+  @testset "ambiguities" begin
+    Aqua.test_ambiguities([BSeries, Core])
   end
 end
 
