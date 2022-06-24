@@ -61,7 +61,7 @@ makedocs(modules = [BSeries],
              "Contributing" => "contributing.md",
              "License" => "license.md",
          ],
-	 # to make the GitHub action fail when doctests fail
+         # to make the GitHub action fail when doctests fail
          strict = true)
 
 deploydocs(repo = "github.com/ranocha/BSeries.jl",
