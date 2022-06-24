@@ -93,7 +93,8 @@ end
 end
 
 @inline function Base.delete!(series::TruncatedBSeries, t::AbstractRootedTree)
-    (delete!(series.coef, t); series)
+    delete!(series.coef, t)
+    return series
 end
 
 @inline Base.pop!(series::TruncatedBSeries, t::AbstractRootedTree) = pop!(series.coef, t)
