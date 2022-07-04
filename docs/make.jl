@@ -51,6 +51,7 @@ makedocs(modules = [BSeries],
              "Home" => "index.md",
              # "Introduction" => "introduction.md",
              "Tutorials" => [
+                 "tutorials/bseries_basics.md",
                  "tutorials/modified_equations.md",
                  "tutorials/modifying_integrators.md",
                  "tutorials/symbolic_computations.md",
