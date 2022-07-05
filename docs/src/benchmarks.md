@@ -155,8 +155,16 @@ The results are as follows.
 using BSeries, Markdown                                                   # hide
 filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
   "benchmark_python_bseries.txt")                                         # hide
-results = "```\n" * read(filename, String) * "```\n"                      # hide
-Markdown.parse(results)                                                   # hide
+try                                                                       # hide
+  results = "```\n" * read(filename, String) * "```\n"                    # hide
+  Markdown.parse(results)                                                 # hide
+catch                                                                     # hide
+  if get(ENV, "CI", nothing) != "true"                                    # hide
+    println("We are not running CI so we do not show results here.")      # hide
+  else                                                                    # hide
+    rethrow()                                                             # hide
+  end                                                                     # hide
+end                                                                       # hide
 ````
 
 
@@ -186,8 +194,16 @@ The results are as follows.
 using BSeries, Markdown                                                   # hide
 filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
   "benchmark_python_pybs.txt")                                            # hide
-results = "```\n" * read(filename, String) * "```\n"                      # hide
-Markdown.parse(results)                                                   # hide
+try                                                                       # hide
+  results = "```\n" * read(filename, String) * "```\n"                    # hide
+  Markdown.parse(results)                                                 # hide
+catch                                                                     # hide
+  if get(ENV, "CI", nothing) != "true"                                    # hide
+    println("We are not running CI so we do not show results here.")      # hide
+  else                                                                    # hide
+    rethrow()                                                             # hide
+  end                                                                     # hide
+end                                                                       # hide
 ````
 
 
