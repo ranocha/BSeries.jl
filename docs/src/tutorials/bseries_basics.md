@@ -7,7 +7,7 @@ methods, generically or when applied to a specific ordinary differential equatio
 ```@example bseries-basics
 # Load the packages we will use.  These must first be installed using: import Pkg; Pkg.add("package_name")
 using BSeries
-using Latexify  # Only needed for some pretty-printing cells below
+using Latexify  # Only needed for some pretty-printing cells below using `latexify`
 import SymPy; sp=SymPy;
 ```
 
