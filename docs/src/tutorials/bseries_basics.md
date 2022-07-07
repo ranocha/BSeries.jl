@@ -1,6 +1,7 @@
 # [B-Series basics](@id tutorial-bseries-basics)
-In this tutorial we use `bseries.jl` to investigate error expansions for RK
-methods, generically or when applied to a specific ODE.
+
+In this tutorial we use BSeries.jl to investigate error expansions for Runge-Kutta (RK)
+methods, generically or when applied to a specific ordinary differential equation (ODE).
 
 
 ```@example bseries-basics
