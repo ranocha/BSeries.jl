@@ -1,12 +1,13 @@
 # [B-Series basics](@id tutorial-bseries-basics)
-In this tutorial we use `bseries.jl` to investigate error expansions for RK
-methods, generically or when applied to a specific ODE.
+
+In this tutorial we use BSeries.jl to investigate error expansions for Runge-Kutta (RK)
+methods, generically or when applied to a specific ordinary differential equation (ODE).
 
 
 ```@example bseries-basics
 # Load the packages we will use.  These must first be installed using: import Pkg; Pkg.add("package_name")
 using BSeries
-using Latexify  # Only needed for some pretty-printing cells below
+using Latexify  # Only needed for some pretty-printing cells below using `latexify`
 import SymPy; sp=SymPy;
 ```
 
@@ -29,7 +30,7 @@ represent elementary differentials, which are products of derivatives of the
 ODE right-hand side.  Since we haven't specified an ODE, these are indicated
 simply by the associated rooted tree.  The rooted trees are printed as nested
 lists, essentially in the form used in Butcher's book.  The rooted trees written
-in this way can be rendered in LaTex using the package `forest`; unfortunately,
+in this way can be rendered in LaTex using the package [`forest`](https://ctan.org/pkg/forest); unfortunately,
 there is no easy way to render them in the browser.
 
 Here is a B-series for a 4th-order method, expanded up to 5th-order terms:
