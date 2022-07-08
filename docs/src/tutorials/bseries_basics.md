@@ -30,7 +30,7 @@ represent elementary differentials, which are products of derivatives of the
 ODE right-hand side.  Since we haven't specified an ODE, these are indicated
 simply by the associated rooted tree.  The rooted trees are printed as nested
 lists, essentially in the form used in Butcher's book.  The rooted trees written
-in this way can be rendered in LaTex using the package `forest`; unfortunately,
+in this way can be rendered in LaTex using the package [`forest`](https://ctan.org/pkg/forest); unfortunately,
 there is no easy way to render them in the browser.
 
 Here is a B-series for a 4th-order method, expanded up to 5th-order terms:
