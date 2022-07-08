@@ -36,9 +36,9 @@ Here is a B-series for a 4th-order method, expanded up to 5th-order terms:
 
 
 ```@example bseries-basics
-A = Rational{Int128}[0 0 0 0 0 0 0 0;(-1//6) (1//2) 0 0 0 0 0 0;(-1//10) (1//10) (1//2) 0 0 0 0 0;(-21463//39375) (21017//26250) (-5//9) (1//2) 0 0 0 0;(-59588//54675) (118717//36450) (-4375//2187) 0 (1//2) 0 0 0;(-19993033//9443328) (28508695//3147776) (-13577105//2360832) (-4090625//3147776) (1136025//3147776) (1//2) 0 0;(367020141781//199294617600) (814214904871//22143846400) (-29834937659//1992946176) (-1983358776875//87689631744) (-6702625935//885753856) (688576//109395) (1//2) 0;(1081252805//134140608) (2639189439//74522560) (33646441//4191894) (-7873511875//210792384) (-504040617//14904512) (2110843561//115277085) (13//7) (1//2)];
-b = Rational{Int128}[(1081252805//134140608),(2639189439//74522560),(33646441//4191894),(-7873511875//210792384),(-504040617//14904512),(2110843561//115277085),(13//7),(1//2)];
-c = Rational{Int128}[0,(1//3),(1//2),(1//5),(2//3),(3//4),(1//4),1];
+A = [0 0 0 0; 1//2 0 0 0; 0 1//2 0 0; 0 0 1 0];
+b = [1//6, 1//3, 1//3, 1//6];
+c = [0, 1//2, 1//2, 1];
 
 coeffs4 = bseries(A,b,c,5)
 latexify(coeffs4, cdot=false)
@@ -140,17 +140,6 @@ And their difference, which is the local error:
 
 ```@example bseries-basics
 expr = sp.simplify(evaluate(ff,u,h,coeffs4)-evaluate(ff,u,h,coeffs_ex))[1]
-```
-
-Because of the simplicity of the PR problem, the error has a relatively simple form:
-
-
-```@example bseries-basics
-sp.simplify(sp.expand(expr))
-```
-
-```@example bseries-basics
-sp.collect(sp.expand(expr),λ)
 ```
 
 # B-series for a generic RK method
