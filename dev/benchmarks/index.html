@@ -48,46 +48,46 @@ subs = Symbolics.substitute
 benchmark(u, dt, subs, 8)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SymEngine
 
  Computing the series coefficients:
-  0.008343 seconds (242 allocations: 95.047 KiB)
-  0.008342 seconds (242 allocations: 95.047 KiB)
+  0.007313 seconds (242 allocations: 95.047 KiB)
+  0.007295 seconds (242 allocations: 95.047 KiB)
 
  Computing the series including elementary differentials:
-  1.347912 seconds (2.29 M allocations: 120.791 MiB, 4.94% gc time, 97.35% compilation time)
-  0.023375 seconds (50.09 k allocations: 1.219 MiB)
+  1.306797 seconds (2.29 M allocations: 120.688 MiB, 3.38% gc time, 98.01% compilation time)
+  0.023307 seconds (50.09 k allocations: 1.219 MiB)
 
  Substituting the initial condition:
-  0.097900 seconds (205.21 k allocations: 10.627 MiB, 93.74% compilation time)
-  0.004971 seconds (10.49 k allocations: 120.227 KiB)
+  0.097905 seconds (205.21 k allocations: 10.627 MiB, 94.19% compilation time)
+  0.004546 seconds (10.49 k allocations: 120.227 KiB)
 
 
 SymPy
 
  Computing the series coefficients:
-  0.008419 seconds (242 allocations: 95.047 KiB)
-  0.008376 seconds (242 allocations: 95.047 KiB)
+  0.007299 seconds (242 allocations: 95.047 KiB)
+  0.007277 seconds (242 allocations: 95.047 KiB)
 
  Computing the series including elementary differentials:
-  5.595282 seconds (2.47 M allocations: 133.052 MiB, 0.64% gc time, 33.59% compilation time)
-  2.927747 seconds (93.62 k allocations: 3.397 MiB, 0.67% gc time)
+  5.353639 seconds (2.50 M allocations: 133.712 MiB, 3.83% gc time, 37.21% compilation time)
+  2.668204 seconds (135.07 k allocations: 4.030 MiB)
 
  Substituting the initial condition:
-  0.496108 seconds (467.40 k allocations: 28.316 MiB, 38.58% compilation time)
-  0.209443 seconds (146 allocations: 4.484 KiB)
+  0.502662 seconds (467.01 k allocations: 28.295 MiB, 3.88% gc time, 41.37% compilation time)
+  0.188507 seconds (130 allocations: 4.234 KiB)
 
 
 Symbolics
 
  Computing the series coefficients:
-  0.008350 seconds (242 allocations: 95.047 KiB)
-  0.008635 seconds (242 allocations: 95.047 KiB)
+  0.007283 seconds (242 allocations: 95.047 KiB)
+  0.007263 seconds (242 allocations: 95.047 KiB)
 
  Computing the series including elementary differentials:
- 38.356938 seconds (55.05 M allocations: 3.038 GiB, 3.33% gc time, 96.50% compilation time)
-  1.100288 seconds (5.85 M allocations: 244.419 MiB, 11.77% gc time)
+ 38.186926 seconds (56.08 M allocations: 3.105 GiB, 3.58% gc time, 96.27% compilation time)
+  1.105926 seconds (5.85 M allocations: 244.419 MiB, 12.74% gc time)
 
  Substituting the initial condition:
-  8.478761 seconds (29.57 M allocations: 1.263 GiB, 5.93% gc time, 59.39% compilation time)
-  3.395147 seconds (21.26 M allocations: 803.153 MiB, 7.67% gc time)</code></pre><p>These results were obtained using the following versions.</p><pre><code class="language-julia hljs">using InteractiveUtils
+  8.263772 seconds (29.74 M allocations: 1.274 GiB, 6.53% gc time, 60.49% compilation time)
+  3.178751 seconds (21.26 M allocations: 803.153 MiB, 7.98% gc time)</code></pre><p>These results were obtained using the following versions.</p><pre><code class="language-julia hljs">using InteractiveUtils
 versioninfo()
 
 using Pkg
@@ -101,7 +101,7 @@ Platform Info:
   LIBM: libopenlibm
   LLVM: libLLVM-12.0.1 (ORCJIT, skylake-avx512)
 <span class="sgr32"><span class="sgr1">      Status</span></span> `~/work/BSeries.jl/BSeries.jl/docs/Manifest.toml`
- <span class="sgr90"> [ebb8d67c] </span>BSeries v0.1.23 `~/work/BSeries.jl/BSeries.jl`
+ <span class="sgr90"> [ebb8d67c] </span>BSeries v0.1.24 `~/work/BSeries.jl/BSeries.jl`
  <span class="sgr90"> [47965b36] </span>RootedTrees v2.11.1
  <span class="sgr90"> [123dc426] </span>SymEngine v0.8.7
  <span class="sgr90"> [24249f21] </span>SymPy v1.1.6
@@ -164,15 +164,15 @@ Package version 0.3
 
 Modified equation
 19063/26880
- 16.171207666397095 seconds
+ 15.19888162612915 seconds
 19063/26880
- 16.577625036239624 seconds
+ 15.666366338729858 seconds
 
 Modifying integrator
 5460293/241920
- 14.926359176635742 seconds
+ 13.77606463432312 seconds
 5460293/241920
- 15.311820030212402 seconds</code></pre>
+ 14.138158559799194 seconds</code></pre>
 </div><p>Next, we look at the Python package <a href="https://github.com/henriksu/pybs"><code>pybs</code></a> and the following benchmark script. Note that this package does not provide functionality for modifying integrators.</p><div class="markdown"><pre><code class="language-python">import sys
 from importlib.metadata import version
 print&#40;&quot;Python version&quot;, sys.version&#41;
@@ -214,9 +214,9 @@ Package version 0.3
 
 Modified equation
 19063/26880
- 5.727510213851929 seconds
+ 5.182774066925049 seconds
 19063/26880
- 5.6211302280426025 seconds</code></pre>
+ 5.021250486373901 seconds</code></pre>
 </div><p>Finally, we perform the same task using <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> in Julia.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays
 
 A = @SArray [0 0; 1//2 0]
@@ -248,12 +248,12 @@ end
   println(sum(values(series)))
 end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Modified equation
 19063//26880
-  0.246873 seconds (135.06 k allocations: 7.996 MiB, 63.50% compilation time)
+  0.224257 seconds (135.36 k allocations: 8.018 MiB, 64.66% compilation time)
 19063//26880
-  0.090132 seconds (598 allocations: 367.781 KiB)
+  0.079162 seconds (599 allocations: 368.078 KiB)
 
 Modifying integrator
 5460293//241920
-  0.047802 seconds (629 allocations: 334.406 KiB, 13.64% compilation time)
+  0.042157 seconds (629 allocations: 334.406 KiB, 14.22% compilation time)
 5460293//241920
-  0.041187 seconds (582 allocations: 332.359 KiB)</code></pre><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>Hendrik Ranocha and David Ketcheson (2020)   Energy Stability of Explicit Runge-Kutta Methods for Nonautonomous or   Nonlinear Problems.   SIAM Journal on Numerical Analysis   <a href="https://doi.org/10.1137/19M1290346">DOI: 10.1137/19M1290346</a></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-RanochaKetcheson2020"><a class="tag is-link" href="#citeref-RanochaKetcheson2020">RanochaKetcheson2020</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tutorials/symbolic_computations/">« Symbolic computations</a><a class="docs-footer-nextpage" href="../api_reference/">API reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.20 on <span class="colophon-date" title="Sunday 10 July 2022 07:45">Sunday 10 July 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  0.036186 seconds (582 allocations: 332.359 KiB)</code></pre><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>Hendrik Ranocha and David Ketcheson (2020)   Energy Stability of Explicit Runge-Kutta Methods for Nonautonomous or   Nonlinear Problems.   SIAM Journal on Numerical Analysis   <a href="https://doi.org/10.1137/19M1290346">DOI: 10.1137/19M1290346</a></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-RanochaKetcheson2020"><a class="tag is-link" href="#citeref-RanochaKetcheson2020">RanochaKetcheson2020</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tutorials/symbolic_computations/">« Symbolic computations</a><a class="docs-footer-nextpage" href="../api_reference/">API reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.20 on <span class="colophon-date" title="Sunday 10 July 2022 08:11">Sunday 10 July 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
