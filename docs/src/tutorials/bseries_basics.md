@@ -5,7 +5,8 @@ methods, generically or when applied to a specific ordinary differential equatio
 
 
 ```@example bseries-basics
-# Load the packages we will use.  These must first be installed using: import Pkg; Pkg.add("package_name")
+# Load the packages we will use.  
+# These must first be installed using: import Pkg; Pkg.add("package_name")
 using BSeries
 using Latexify  # Only needed for some pretty-printing cells below using `latexify`
 import SymPy; sp=SymPy;
@@ -21,7 +22,7 @@ Here is a generic 2-stage, 2nd-order method:
 ```@example bseries-basics
 α = sp.symbols("α", real=true)
 A = [0 0; 1/(2*α) 0]; b = [1-α, α]; c = [0, 1/(2*α)]
-coeffs2 = bseries(A,b,c,3)
+coeffs2 = bseries(A, b, c, 3)
 latexify(coeffs2, cdot=false)
 ```
 
@@ -30,10 +31,10 @@ represent elementary differentials, which are products of derivatives of the
 ODE right-hand side.  Since we haven't specified an ODE, these are indicated
 simply by the associated rooted tree.  The rooted trees are printed as nested
 lists, essentially in the form used in Butcher's book.  The rooted trees written
-in this way can be rendered in LaTex using the package [`forest`](https://ctan.org/pkg/forest); unfortunately,
+in this way can be rendered in LaTeX using the package [`forest`](https://ctan.org/pkg/forest); unfortunately,
 there is no easy way to render them in the browser.
 
-Here is a B-series for a 4th-order method, expanded up to 5th-order terms:
+Here is a B-series for the classical 4th-order method, expanded up to 5th-order terms:
 
 
 ```@example bseries-basics
@@ -41,7 +42,7 @@ A = [0 0 0 0; 1//2 0 0 0; 0 1//2 0 0; 0 0 1 0];
 b = [1//6, 1//3, 1//3, 1//6];
 c = [0, 1//2, 1//2, 1];
 
-coeffs4 = bseries(A,b,c,5)
+coeffs4 = bseries(A, b, c, 5)
 latexify(coeffs4, cdot=false)
 ```
 
@@ -65,14 +66,14 @@ coeffs_ex = ExactSolution(coeffs4)
 
 
 ```@example bseries-basics
-latexify(coeffs_ex,cdot=false)
+latexify(coeffs_ex, cdot=false)
 ```
 
 We can find the local error by subtracting the exact solution B-series from the RK method B-series:
 
 
 ```@example bseries-basics
-latexify(coeffs4-coeffs_ex,cdot=false)
+latexify(coeffs4-coeffs_ex, cdot=false)
 ```
 
 
@@ -84,7 +85,7 @@ For the 2nd-order method, we get:
 
 
 ```@example bseries-basics
-latexify(coeffs2-coeffs_ex,cdot=false)
+latexify(coeffs2-coeffs_ex, cdot=false)
 ```
 
 This confirms again the accuracy of the method, and shows us that we
@@ -123,7 +124,7 @@ Finally, we get the B-Series for our RK method applied to our ODE:
 
 
 ```@example bseries-basics
-evaluate(ff,u,h,coeffs4)[1]
+evaluate(ff, u, h, coeffs4)[1]
 ```
 
 Notice that the series is truncated at the same order that we specified
@@ -133,14 +134,14 @@ Here's the B-Series for the exact solution of the same ODE:
 
 
 ```@example bseries-basics
-evaluate(ff,u,h,coeffs_ex)[1]
+evaluate(ff, u, h, coeffs_ex)[1]
 ```
 
 And their difference, which is the local error:
 
 
 ```@example bseries-basics
-expr = sp.simplify(evaluate(ff,u,h,coeffs4)-evaluate(ff,u,h,coeffs_ex))[1]
+expr = sp.simplify(evaluate(ff, u, h, coeffs4) - evaluate(ff, u, h,coeffs_ex))[1]
 ```
 
 # B-series for a generic RK method
@@ -149,5 +150,5 @@ We can also examine just the elementary differentials, without specifying a RK m
 
 
 ```@example bseries-basics
-elementary_differentials(ff,u,5)
+elementary_differentials(ff, u, 5)
 ```
