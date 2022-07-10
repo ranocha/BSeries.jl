@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Benchmarks · BSeries.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://ranocha.github.io/BSeries.jl/stable/benchmarks/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.044/juliamono.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">BSeries.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../tutorials/modified_equations/">Modified equations</a></li><li><a class="tocitem" href="../tutorials/modifying_integrators/">Modifying integrators</a></li><li><a class="tocitem" href="../tutorials/symbolic_computations/">Symbolic computations</a></li></ul></li><li class="is-active"><a class="tocitem" href>Benchmarks</a><ul class="internal"><li><a class="tocitem" href="#benchmarks-symbolic-computations"><span>Comparing different symbolic packages</span></a></li><li><a class="tocitem" href="#benchmarks-other-packages"><span>Comparison with other packages</span></a></li><li><a class="tocitem" href="#References"><span>References</span></a></li></ul></li><li><a class="tocitem" href="../api_reference/">API reference</a></li><li><a class="tocitem" href="../contributing/">Contributing</a></li><li><a class="tocitem" href="../license/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Benchmarks</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Benchmarks</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ranocha/BSeries.jl/blob/main/docs/src/benchmarks.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="benchmarks"><a class="docs-heading-anchor" href="#benchmarks">Benchmarks</a><a id="benchmarks-1"></a><a class="docs-heading-anchor-permalink" href="#benchmarks" title="Permalink"></a></h1><p>Here, we collect some simple benchmarks of <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a>. Take them with a grain of salt since they run on virtual machines in the cloud to generate the documentation automatically. You can of course also copy the code and run the benchmarks locally yourself.</p><h2 id="benchmarks-symbolic-computations"><a class="docs-heading-anchor" href="#benchmarks-symbolic-computations">Comparing different symbolic packages</a><a id="benchmarks-symbolic-computations-1"></a><a class="docs-heading-anchor-permalink" href="#benchmarks-symbolic-computations" title="Permalink"></a></h2><p>Symbolic computations of <a href="../api_reference/#BSeries.modified_equation-NTuple{4, Any}"><code>modified_equation</code></a>s and <a href="../api_reference/#BSeries.modifying_integrator-NTuple{4, Any}"><code>modifying_integrator</code></a>s in <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> support</p><ul><li><a href="https://github.com/symengine/SymEngine.jl">SymEngine.jl</a>,</li><li><a href="https://github.com/JuliaPy/SymPy.jl">SymPy.jl</a>, and</li><li><a href="https://github.com/JuliaSymbolics/Symbolics.jl">Symbolics.jl</a></li></ul><p>as symbolic backends. Here, we compare them in the context of the explicit midpoint method and the nonlinear oscillator ODE</p><p class="math-container">\[u&#39;(t) = \frac{1}{\| u(t) \|^2} \begin{pmatrix} -u_2(t) \\ u_1(t) \end{pmatrix}.\]</p><p>This particular combination of explicit Runge-Kutta method and ODE is special since the explicit midpoint method is unconditionally energy-conserving for this problem<sup class="footnote-reference"><a id="citeref-RanochaKetcheson2020" href="#footnote-RanochaKetcheson2020">[RanochaKetcheson2020]</a></sup>.</p><p>First, we set up some code to perform the benchmarks. Here, we use a very naive approach, run the code twice (to see the effect of compilation) and use <code>@time</code> to print the runtime. More sophisticated approaches should of course use something like <code>@benchmark</code> from <a href="https://github.com/JuliaCI/BenchmarkTools.jl">BenchmarkTools.jl</a>. However, this simple and cheap version suffices to compare the orders of magnitude.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Benchmarks · BSeries.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://ranocha.github.io/BSeries.jl/stable/benchmarks/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">BSeries.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../tutorials/bseries_basics/">B-Series basics</a></li><li><a class="tocitem" href="../tutorials/modified_equations/">Modified equations</a></li><li><a class="tocitem" href="../tutorials/modifying_integrators/">Modifying integrators</a></li><li><a class="tocitem" href="../tutorials/symbolic_computations/">Symbolic computations</a></li></ul></li><li class="is-active"><a class="tocitem" href>Benchmarks</a><ul class="internal"><li><a class="tocitem" href="#benchmarks-symbolic-computations"><span>Comparing different symbolic packages</span></a></li><li><a class="tocitem" href="#benchmarks-other-packages"><span>Comparison with other packages</span></a></li><li><a class="tocitem" href="#References"><span>References</span></a></li></ul></li><li><a class="tocitem" href="../api_reference/">API reference</a></li><li><a class="tocitem" href="../contributing/">Contributing</a></li><li><a class="tocitem" href="../license/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Benchmarks</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Benchmarks</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ranocha/BSeries.jl/blob/main/docs/src/benchmarks.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="benchmarks"><a class="docs-heading-anchor" href="#benchmarks">Benchmarks</a><a id="benchmarks-1"></a><a class="docs-heading-anchor-permalink" href="#benchmarks" title="Permalink"></a></h1><p>Here, we collect some simple benchmarks of <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a>. Take them with a grain of salt since they run on virtual machines in the cloud to generate the documentation automatically. You can of course also copy the code and run the benchmarks locally yourself.</p><h2 id="benchmarks-symbolic-computations"><a class="docs-heading-anchor" href="#benchmarks-symbolic-computations">Comparing different symbolic packages</a><a id="benchmarks-symbolic-computations-1"></a><a class="docs-heading-anchor-permalink" href="#benchmarks-symbolic-computations" title="Permalink"></a></h2><p>Symbolic computations of <a href="../api_reference/#BSeries.modified_equation-NTuple{4, Any}"><code>modified_equation</code></a>s and <a href="../api_reference/#BSeries.modifying_integrator-NTuple{4, Any}"><code>modifying_integrator</code></a>s in <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> support</p><ul><li><a href="https://github.com/symengine/SymEngine.jl">SymEngine.jl</a>,</li><li><a href="https://github.com/JuliaPy/SymPy.jl">SymPy.jl</a>, and</li><li><a href="https://github.com/JuliaSymbolics/Symbolics.jl">Symbolics.jl</a></li></ul><p>as symbolic backends. Here, we compare them in the context of the explicit midpoint method and the nonlinear oscillator ODE</p><p class="math-container">\[u&#39;(t) = \frac{1}{\| u(t) \|^2} \begin{pmatrix} -u_2(t) \\ u_1(t) \end{pmatrix}.\]</p><p>This particular combination of explicit Runge-Kutta method and ODE is special since the explicit midpoint method is unconditionally energy-conserving for this problem<sup class="footnote-reference"><a id="citeref-RanochaKetcheson2020" href="#footnote-RanochaKetcheson2020">[RanochaKetcheson2020]</a></sup>.</p><p>First, we set up some code to perform the benchmarks. Here, we use a very naive approach, run the code twice (to see the effect of compilation) and use <code>@time</code> to print the runtime. More sophisticated approaches should of course use something like <code>@benchmark</code> from <a href="https://github.com/JuliaCI/BenchmarkTools.jl">BenchmarkTools.jl</a>. However, this simple and cheap version suffices to compare the orders of magnitude.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays
 
 function benchmark(u, dt, subs, order)
   # explicit midpoint method
@@ -48,46 +48,46 @@ subs = Symbolics.substitute
 benchmark(u, dt, subs, 8)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SymEngine
 
  Computing the series coefficients:
-  0.008296 seconds (242 allocations: 95.047 KiB)
-  0.008297 seconds (242 allocations: 95.047 KiB)
+  0.008343 seconds (242 allocations: 95.047 KiB)
+  0.008342 seconds (242 allocations: 95.047 KiB)
 
  Computing the series including elementary differentials:
-  1.327413 seconds (2.29 M allocations: 120.687 MiB, 5.09% gc time, 97.43% compilation time)
-  0.024833 seconds (50.09 k allocations: 1.219 MiB)
+  1.347912 seconds (2.29 M allocations: 120.791 MiB, 4.94% gc time, 97.35% compilation time)
+  0.023375 seconds (50.09 k allocations: 1.219 MiB)
 
  Substituting the initial condition:
-  0.112555 seconds (205.21 k allocations: 10.627 MiB, 94.65% compilation time)
-  0.004870 seconds (10.49 k allocations: 120.227 KiB)
+  0.097900 seconds (205.21 k allocations: 10.627 MiB, 93.74% compilation time)
+  0.004971 seconds (10.49 k allocations: 120.227 KiB)
 
 
 SymPy
 
  Computing the series coefficients:
-  0.008369 seconds (242 allocations: 95.047 KiB)
-  0.008337 seconds (242 allocations: 95.047 KiB)
+  0.008419 seconds (242 allocations: 95.047 KiB)
+  0.008376 seconds (242 allocations: 95.047 KiB)
 
  Computing the series including elementary differentials:
-  5.625131 seconds (2.48 M allocations: 135.328 MiB, 1.52% gc time, 34.51% compilation time)
-  2.894604 seconds (92.82 k allocations: 3.385 MiB)
+  5.595282 seconds (2.47 M allocations: 133.052 MiB, 0.64% gc time, 33.59% compilation time)
+  2.927747 seconds (93.62 k allocations: 3.397 MiB, 0.67% gc time)
 
  Substituting the initial condition:
-  1.079459 seconds (464.29 k allocations: 28.100 MiB, 18.28% compilation time)
-  0.938691 seconds (130 allocations: 4.234 KiB)
+  0.496108 seconds (467.40 k allocations: 28.316 MiB, 38.58% compilation time)
+  0.209443 seconds (146 allocations: 4.484 KiB)
 
 
 Symbolics
 
  Computing the series coefficients:
-  0.008337 seconds (242 allocations: 95.047 KiB)
-  0.008296 seconds (242 allocations: 95.047 KiB)
+  0.008350 seconds (242 allocations: 95.047 KiB)
+  0.008635 seconds (242 allocations: 95.047 KiB)
 
  Computing the series including elementary differentials:
- 38.093372 seconds (53.81 M allocations: 2.984 GiB, 3.33% gc time, 96.41% compilation time)
-  1.112865 seconds (5.85 M allocations: 244.419 MiB, 13.38% gc time)
+ 38.356938 seconds (55.05 M allocations: 3.038 GiB, 3.33% gc time, 96.50% compilation time)
+  1.100288 seconds (5.85 M allocations: 244.419 MiB, 11.77% gc time)
 
  Substituting the initial condition:
-  8.620664 seconds (29.24 M allocations: 1.247 GiB, 6.53% gc time, 58.09% compilation time)
-  3.534569 seconds (21.26 M allocations: 803.153 MiB, 8.30% gc time)</code></pre><p>These results were obtained using the following versions.</p><pre><code class="language-julia hljs">using InteractiveUtils
+  8.478761 seconds (29.57 M allocations: 1.263 GiB, 5.93% gc time, 59.39% compilation time)
+  3.395147 seconds (21.26 M allocations: 803.153 MiB, 7.67% gc time)</code></pre><p>These results were obtained using the following versions.</p><pre><code class="language-julia hljs">using InteractiveUtils
 versioninfo()
 
 using Pkg
@@ -164,15 +164,15 @@ Package version 0.3
 
 Modified equation
 19063/26880
- 16.71989154815674 seconds
+ 16.171207666397095 seconds
 19063/26880
- 17.52280592918396 seconds
+ 16.577625036239624 seconds
 
 Modifying integrator
 5460293/241920
- 16.07430148124695 seconds
+ 14.926359176635742 seconds
 5460293/241920
- 16.37231755256653 seconds</code></pre>
+ 15.311820030212402 seconds</code></pre>
 </div><p>Next, we look at the Python package <a href="https://github.com/henriksu/pybs"><code>pybs</code></a> and the following benchmark script. Note that this package does not provide functionality for modifying integrators.</p><div class="markdown"><pre><code class="language-python">import sys
 from importlib.metadata import version
 print&#40;&quot;Python version&quot;, sys.version&#41;
@@ -214,9 +214,9 @@ Package version 0.3
 
 Modified equation
 19063/26880
- 5.709536790847778 seconds
+ 5.727510213851929 seconds
 19063/26880
- 5.627973556518555 seconds</code></pre>
+ 5.6211302280426025 seconds</code></pre>
 </div><p>Finally, we perform the same task using <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> in Julia.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays
 
 A = @SArray [0 0; 1//2 0]
@@ -248,12 +248,12 @@ end
   println(sum(values(series)))
 end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Modified equation
 19063//26880
-  0.244094 seconds (135.45 k allocations: 8.022 MiB, 63.03% compilation time)
+  0.246873 seconds (135.06 k allocations: 7.996 MiB, 63.50% compilation time)
 19063//26880
-  0.090253 seconds (599 allocations: 368.078 KiB)
+  0.090132 seconds (598 allocations: 367.781 KiB)
 
 Modifying integrator
 5460293//241920
-  0.047059 seconds (629 allocations: 334.406 KiB, 12.92% compilation time)
+  0.047802 seconds (629 allocations: 334.406 KiB, 13.64% compilation time)
 5460293//241920
-  0.040960 seconds (582 allocations: 332.359 KiB)</code></pre><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>Hendrik Ranocha and David Ketcheson (2020)   Energy Stability of Explicit Runge-Kutta Methods for Nonautonomous or   Nonlinear Problems.   SIAM Journal on Numerical Analysis   <a href="https://doi.org/10.1137/19M1290346">DOI: 10.1137/19M1290346</a></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-RanochaKetcheson2020"><a class="tag is-link" href="#citeref-RanochaKetcheson2020">RanochaKetcheson2020</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tutorials/symbolic_computations/">« Symbolic computations</a><a class="docs-footer-nextpage" href="../api_reference/">API reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.19 on <span class="colophon-date" title="Wednesday 6 July 2022 04:28">Wednesday 6 July 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  0.041187 seconds (582 allocations: 332.359 KiB)</code></pre><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>Hendrik Ranocha and David Ketcheson (2020)   Energy Stability of Explicit Runge-Kutta Methods for Nonautonomous or   Nonlinear Problems.   SIAM Journal on Numerical Analysis   <a href="https://doi.org/10.1137/19M1290346">DOI: 10.1137/19M1290346</a></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-RanochaKetcheson2020"><a class="tag is-link" href="#citeref-RanochaKetcheson2020">RanochaKetcheson2020</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tutorials/symbolic_computations/">« Symbolic computations</a><a class="docs-footer-nextpage" href="../api_reference/">API reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.20 on <span class="colophon-date" title="Sunday 10 July 2022 07:45">Sunday 10 July 2022</span>. Using Julia version 1.7.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
