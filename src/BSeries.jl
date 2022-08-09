@@ -328,9 +328,9 @@ We can generate this as follows.
 ```jldoctest
 julia> series = bseries(3) do t, series
     if order(t) in (0, 1)
-        return 1//1
+        return 1 // 1
     else
-        v = 1//1
+        v = 1 // 1
         n = 0
         for subtree in SubtreeIterator(t)
             v *= series[subtree]
