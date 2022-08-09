@@ -1,4 +1,4 @@
-# Creating B-series
+# [Creating B-series](@id tutorial-bseries-creation)
 
 We have already seen some ways of creating B-series in the
 [basic tutorial](@ref tutorial-bseries-basics). In this tutorial, we look at
@@ -83,7 +83,7 @@ series - ExactSolution(series)
   Springer, 2002.
 
 
-## B-series for the average vector field method
+## [B-series for the average vector field method](@id tutorial-bseries-creation-AVF)
 
 Consider the autonomous ODE
 
@@ -102,10 +102,10 @@ method. Quispel and McLaren (2008) discovered that it is indeed a B-series metho
 Its coefficients are given explicitly as
 
 ```math
-\begin{align}
+\begin{align*}
 b(.) &= 1, \\
 b([t_1, ..., t_n]) &= b(t_1)...b(t_n) / (n + 1).
-\end{align}
+\end{align*}
 ```
 
 by Celledoni, McLachlan, McLaren, Owren, Quispel, and Wright (2009). We can
@@ -143,9 +143,11 @@ series - ExactSolution(series)
   Philosophical Transactions of the Royal Society of London.
   Series A: Mathematical, Physical and Engineering Sciences 357,
   no. 1754 (1999): 1021-1045.
+  [DOI: 10.1098/rsta.1999.0363](https://doi.org/10.1098/rsta.1999.0363)
 - G. Reinout W. Quispel, and David Ian McLaren.
   "A new class of energy-preserving numerical integration methods."
   Journal of Physics A: Mathematical and Theoretical 41, no. 4 (2008): 045206.
+  [DOI: 10.1088/1751-8113/41/4/045206](https://doi.org/10.1088/1751-8113/41/4/045206)
 - Elena Celledoni, Robert I. McLachlan, David I. McLaren, Brynjulf Owren,
   G. Reinout W. Quispel, and William M. Wright.
   "Energy-preserving Runge-Kutta methods."

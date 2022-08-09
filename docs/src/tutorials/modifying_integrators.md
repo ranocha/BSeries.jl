@@ -64,7 +64,7 @@ using LaTeXStrings, Plots
 
 fig = plot(xguide=L"$q$", yguide=L"$p$")
 default(linewidth=2)
-plot!(fig, sol_ref, vars=(2, 1), label="Reference solution")
+plot!(fig, sol_ref, idxs=(2, 1), label="Reference solution")
 scatter!(fig, last.(sol_euler.u), first.(sol_euler.u),
          label="Explicit Euler, dt = $dt")
 plot!(fig, xlims=(0.0, 4.0), ylims=(0.0, 2.5))
@@ -109,7 +109,7 @@ for truncation_order in 2:4
   modified_f, _ = build_function(series, u_sym, expression=Val(false))
   modified_ode = ODEProblem((u, params, t) -> modified_f(u), ode.u0, tspan)
   modified_sol_euler = solve(modified_ode, Euler(), dt=dt)
-  plot!(fig, modified_sol_euler, vars=(2, 1),
+  plot!(fig, modified_sol_euler, idxs=(2, 1),
         label="Euler, modified ODE order $(truncation_order-1)")
 end
 plot!(fig, xlims=(0.0, 4.0), ylims=(0.0, 2.5))
