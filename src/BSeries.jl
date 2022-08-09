@@ -339,7 +339,7 @@ julia> series = bseries(3) do t, series
                return v / (n + 1)
            end
        end
-TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 5 entries:
 RootedTree{Int64}: Int64[]         => 1//1
 RootedTree{Int64}: [1]             => 1//1
 RootedTree{Int64}: [1, 2]          => 1//2
