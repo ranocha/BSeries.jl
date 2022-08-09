@@ -347,7 +347,7 @@ RootedTree{Int64}: [1, 2, 3]       => 1//4
 RootedTree{Int64}: [1, 2, 2]       => 1//3
 ```
 """
-function bseries(f::Function, order, iterator_type=RootedTreeIterator)
+function bseries(f::Function, order, iterator_type = RootedTreeIterator)
     # Get the coefficient of the empty tree
     t = first(iterator_type(0))
     v = f(t, nothing)
