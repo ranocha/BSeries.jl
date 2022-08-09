@@ -969,6 +969,25 @@ using Aqua: Aqua
         @inferred modified_equation(A, b, c, 4)
     end
 
+    @testset "average vector field method" begin
+        series = bseries(3) do t, series
+            if order(t) in (0, 1)
+                return 1//1
+            else
+                v = 1//1
+                n = 0
+                for subtree in SubtreeIterator(t)
+                    v *= series[subtree]
+                    n += 1
+                end
+                return v / (n + 1)
+            end
+        end
+
+        diff = series - ExactSolution(series)
+        @test mapreduce(abs∘last, +, diff) == 1//12
+    end
+
     @testset "Runge-Kutta methods interface" begin
         # classical RK4
         A = [0 0 0 0
