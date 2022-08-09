@@ -180,6 +180,7 @@ Its coefficients are given explicitly as
 \begin{align}
 b(.) &= 1, \\
 b([t_1, ..., t_n]) &= b(t_1)...b(t_n) / (n + 1).
+\end{align}
 ```
 
 by Celledoni, McLachlan, McLaren, Owren, Quispel, and Wright (2009). We can
