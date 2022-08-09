@@ -222,6 +222,6 @@ series - ExactSolution(series)
   Journal of Physics A: Mathematical and Theoretical 41, no. 4 (2008): 045206.
 - Elena Celledoni, Robert I. McLachlan, David I. McLaren, Brynjulf Owren,
   G. Reinout W. Quispel, and William M. Wright.
-  "Energy-preserving runge-kutta methods."
+  "Energy-preserving Runge-Kutta methods."
   ESAIM: Mathematical Modelling and Numerical Analysis 43, no. 4 (2009): 645-649.
   [DOI: 10.1051/m2an/2009020](https://doi.org/10.1051/m2an/2009020)
