@@ -48,6 +48,8 @@ we can write the Störmer-Verlet method as additive Runge-Kutta method following
 Table II.2.1 of Hairer, Lubich, and Wanner (2002).
 
 ```@example ex:SV
+using BSeries
+
 As = [
     [0 0; 1//2 1//2],
     [1//2 0; 1//2 0],
@@ -111,6 +113,7 @@ implement this up to order 5 in BSeries.jl as follows.
 
 ```@example ex:AVF
 using BSeries
+
 series = bseries(5) do t, series
     if order(t) in (0, 1)
         return 1 // 1
