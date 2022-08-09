@@ -5,14 +5,14 @@ methods, generically or when applied to a specific ordinary differential equatio
 
 
 ```@example bseries-basics
-# Load the packages we will use.  
+# Load the packages we will use.
 # These must first be installed using: import Pkg; Pkg.add("package_name")
 using BSeries
 using Latexify  # Only needed for some pretty-printing cells below using `latexify`
 import SymPy; sp=SymPy;
 ```
 
-# B-Series for a generic ODE
+## B-Series for a generic ODE
 
 First we specify the Butcher coefficients of the RK method.
 This can include symbolic expressions and parameterized families of methods.
@@ -53,9 +53,11 @@ We can also print out the B-series coefficients this way:
 coeffs4
 ```
 
-In this form, the rooted trees are printed as level sequences.  The corresponding coefficients are on the right.
+In this form, the rooted trees are printed as level sequences.
+The corresponding coefficients are on the right.
 
-# Exact series and local error
+
+## Exact series and local error
 
 We can also get the B-series of the exact solution:
 
@@ -92,7 +94,8 @@ This confirms again the accuracy of the method, and shows us that we
 can eliminate one of the leading error terms completely if we take
 $\alpha=3/4$ (this is known as Ralston's method, or sometimes as Heun's method).
 
-# B-Series for a specific ODE
+
+## B-Series for a specific ODE
 
 Next, let us define an ODE.  We'll consider the Prothero-Robinson problem:
 
@@ -144,7 +147,8 @@ And their difference, which is the local error:
 expr = sp.simplify(evaluate(ff, u, h, coeffs4) - evaluate(ff, u, h,coeffs_ex))[1]
 ```
 
-# B-series for a generic RK method
+
+## B-series for a generic RK method
 
 We can also examine just the elementary differentials, without specifying a RK method:
 
@@ -152,3 +156,71 @@ We can also examine just the elementary differentials, without specifying a RK m
 ```@example bseries-basics
 elementary_differentials(ff, u, 5)
 ```
+
+
+## B-series for the average vector field method
+
+Consider the autonomous ODE
+
+```math
+u'(t) = f\bigl( u(t) \bigr).
+```
+
+The average vector field method
+
+```math
+u^{n+1} = u^{n} + \Delta t \int_0^1 f\bigl(\xi u^{n+1} + (1 - \xi) u^{n}\bigr) \mathrm{d} \xi
+```
+
+introduced by McLachlan, Quispel, and Robidoux (1999) is a second-order accurate
+method. Quispel and McLaren (2008) discovered that it is indeed a B-series method.
+It's coefficients are given explicitly as
+
+```math
+\begin{align}
+b(.) &= 1, \\
+b([t_1, ..., t_n]) &= b(t_1)...b(t_n) / (n + 1).
+```
+
+by Celledoni. McLachlan, McLaren, Owren, Quispel, and Wright (2009). We can
+implement this up to order 5 in BSeries.jl as follows.
+
+```@example ex:AVF
+using BSeries
+series = bseries(5) do t, series
+    if order(t) in (0, 1)
+        return 1//1
+    else
+        v = 1//1
+        n = 0
+        for subtree in SubtreeIterator(t)
+            v *= series[subtree]
+            n += 1
+        end
+        return v / (n + 1)
+    end
+end
+```
+
+We can check that this method is second-order accurate by comparing it to
+the B-series of the exact solution, truncated at the same order.
+
+```@example ex:AVF
+series - ExactSolution(series)
+```
+
+### References
+
+- Robert I. McLachlan, G. Reinout W. Quispel, and Nicolas Robidoux.
+  "Geometric integration using discrete gradients."
+  Philosophical Transactions of the Royal Society of London.
+  Series A: Mathematical, Physical and Engineering Sciences 357,
+  no. 1754 (1999): 1021-1045.
+- G. Reinout W. Quispel, and David Ian McLaren.
+  "A new class of energy-preserving numerical integration methods."
+  Journal of Physics A: Mathematical and Theoretical 41, no. 4 (2008): 045206.
+- Elena Celledoni, Robert I. McLachlan, David I. McLaren, Brynjulf Owren,
+  G. Reinout W. Quispel, and William M. Wright.
+  "Energy-preserving runge-kutta methods."
+  ESAIM: Mathematical Modelling and Numerical Analysis 43, no. 4 (2009): 645-649.
+  [DOI: 10.1051/m2an/2009020](https://doi.org/10.1051/m2an/2009020)
