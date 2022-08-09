@@ -352,6 +352,83 @@ using Aqua: Aqua
             @test series[t58] == -19 // 240
             @test series[t59] == -1 // 20
         end
+
+        @testset "Average vector field method" begin
+            # Example 1 of
+            # Elena Celledoni, Robert I. McLachlan, Brynjulf Owren, and G. R. W. Quispel (2010)
+            # Energy-preserving integrators and the structure of B-series.
+            # Foundations of Computational Mathematics
+            # [DOI: 10.1007/s10208-010-9073-1](https://doi.org/10.1007/s10208-010-9073-1)
+            series = bseries(5) do t, series
+                if order(t) in (0, 1)
+                    return 1 // 1
+                else
+                    v = 1 // 1
+                    n = 0
+                    for subtree in SubtreeIterator(t)
+                        v *= series[subtree]
+                        n += 1
+                    end
+                    return v / (n + 1)
+                end
+            end
+
+            coefficients = @inferred modified_equation(series)
+            let t = rootedtree(Int[])
+                @test coefficients[t] / symmetry(t) == 0
+            end
+            let t = rootedtree([1])
+                @test coefficients[t] / symmetry(t) == 1
+            end
+            let t = rootedtree([1, 2])
+                @test coefficients[t] / symmetry(t) == 0
+            end
+            let t = rootedtree([1, 2, 3])
+                @test coefficients[t] / symmetry(t) == 1 // 12
+            end
+            let t = rootedtree([1, 2, 2])
+                @test coefficients[t] / symmetry(t) == 0
+            end
+            let t = rootedtree([1, 2, 3, 4])
+                @test coefficients[t] / symmetry(t) == 0
+            end
+            let t = rootedtree([1, 2, 3, 3])
+                @test coefficients[t] / symmetry(t) == 0
+            end
+            let t = rootedtree([1, 2, 3, 2])
+                @test coefficients[t] / symmetry(t) == 0
+            end
+            let t = rootedtree([1, 2, 2, 2])
+                @test coefficients[t] / symmetry(t) == 0
+            end
+            let t = rootedtree([1, 2, 3, 4, 5])
+                @test coefficients[t] / symmetry(t) == 9 // 720
+            end
+            let t = rootedtree([1, 2, 3, 4, 4])
+                @test coefficients[t] / symmetry(t) == 4 // 720
+            end
+            let t = rootedtree([1, 2, 3, 4, 3])
+                @test coefficients[t] / symmetry(t) == 2 // 720
+            end
+            let t = rootedtree([1, 2, 3, 4, 2])
+                @test coefficients[t] / symmetry(t) == -4 // 720
+            end
+            let t = rootedtree([1, 2, 3, 3, 3])
+                @test coefficients[t] / symmetry(t) == -1 // 720
+            end
+            let t = rootedtree([1, 2, 3, 3, 2])
+                @test coefficients[t] / symmetry(t) == -4 // 720
+            end
+            let t = rootedtree([1, 2, 3, 2, 3])
+                @test coefficients[t] / symmetry(t) == 2 // 720
+            end
+            let t = rootedtree([1, 2, 3, 2, 2])
+                @test coefficients[t] / symmetry(t) == -1 // 720
+            end
+            let t = rootedtree([1, 2, 2, 2, 2])
+                @test coefficients[t] / symmetry(t) == 0
+            end
+        end
     end # @testset "modified_equation"
 
     @testset "elementary differentials" begin @testset "Bicolored trees" begin @testset "Lotka-Volterra" begin
@@ -967,6 +1044,25 @@ using Aqua: Aqua
         b = [1]
         c = [1]
         @inferred modified_equation(A, b, c, 4)
+    end
+
+    @testset "average vector field method" begin
+        series = bseries(3) do t, series
+            if order(t) in (0, 1)
+                return 1 // 1
+            else
+                v = 1 // 1
+                n = 0
+                for subtree in SubtreeIterator(t)
+                    v *= series[subtree]
+                    n += 1
+                end
+                return v / (n + 1)
+            end
+        end
+
+        diff = series - ExactSolution(series)
+        @test mapreduce(abs ∘ last, +, diff) == 1 // 12
     end
 
     @testset "Runge-Kutta methods interface" begin

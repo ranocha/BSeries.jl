@@ -5,14 +5,14 @@ methods, generically or when applied to a specific ordinary differential equatio
 
 
 ```@example bseries-basics
-# Load the packages we will use.  
+# Load the packages we will use.
 # These must first be installed using: import Pkg; Pkg.add("package_name")
 using BSeries
 using Latexify  # Only needed for some pretty-printing cells below using `latexify`
 import SymPy; sp=SymPy;
 ```
 
-# B-Series for a generic ODE
+## B-Series for a generic ODE
 
 First we specify the Butcher coefficients of the RK method.
 This can include symbolic expressions and parameterized families of methods.
@@ -53,9 +53,11 @@ We can also print out the B-series coefficients this way:
 coeffs4
 ```
 
-In this form, the rooted trees are printed as level sequences.  The corresponding coefficients are on the right.
+In this form, the rooted trees are printed as level sequences.
+The corresponding coefficients are on the right.
 
-# Exact series and local error
+
+## Exact series and local error
 
 We can also get the B-series of the exact solution:
 
@@ -92,7 +94,8 @@ This confirms again the accuracy of the method, and shows us that we
 can eliminate one of the leading error terms completely if we take
 $\alpha=3/4$ (this is known as Ralston's method, or sometimes as Heun's method).
 
-# B-Series for a specific ODE
+
+## B-Series for a specific ODE
 
 Next, let us define an ODE.  We'll consider the Prothero-Robinson problem:
 
@@ -144,7 +147,8 @@ And their difference, which is the local error:
 expr = sp.simplify(evaluate(ff, u, h, coeffs4) - evaluate(ff, u, h,coeffs_ex))[1]
 ```
 
-# B-series for a generic RK method
+
+## B-series for a generic RK method
 
 We can also examine just the elementary differentials, without specifying a RK method:
 

@@ -72,7 +72,7 @@ using LaTeXStrings, Plots
 
 fig = plot(xguide=L"$q$", yguide=L"$p$")
 default(linewidth=2)
-plot!(fig, sol_ref, vars=(2, 1), label="Reference solution")
+plot!(fig, sol_ref, idxs=(2, 1), label="Reference solution")
 scatter!(fig, last.(sol_euler.u), first.(sol_euler.u),
          label="Explicit Euler, dt = $dt")
 plot!(fig, xlims=(0.0, 9.0), ylims=(0.0, 5.0))
@@ -124,7 +124,7 @@ function solve_modified_equation(ode, truncation_orders, dt)
     modified_f, _ = build_function(series, u_sym, expression=Val(false))
     modified_ode = ODEProblem((u, params, t) -> modified_f(u), ode.u0, ode.tspan)
     modified_sol = solve(modified_ode, Tsit5())
-    plot!(fig, modified_sol, vars=(2, 1),
+    plot!(fig, modified_sol, idxs=(2, 1),
           label="Modified ODE, order $(truncation_order-1)")
   end
   fig
@@ -199,7 +199,7 @@ sol_ref = solve(ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
 
 fig = plot(xguide=L"$q$", yguide=L"$p$")
 default(linewidth=2)
-plot!(fig, sol_ref, vars=(1, 2), label="Reference solution")
+plot!(fig, sol_ref, idxs=(1, 2), label="Reference solution")
 
 savefig(fig, "lotka_volterra_reference.svg"); nothing # hide
 ```
@@ -318,7 +318,7 @@ for truncation_order in 2:3
   modified_f, _ = build_function(series, u_sym, expression=Val(false))
   modified_ode = ODEProblem((u, params, t) -> modified_f(u), ode.u0, ode.tspan)
   modified_sol = solve(modified_ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
-  plot!(fig, modified_sol, vars=(1, 2),
+  plot!(fig, modified_sol, idxs=(1, 2),
         label="Modified equation, order $(truncation_order-1)")
 end
 
@@ -366,7 +366,7 @@ sol_ref = solve(ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
 
 fig = plot(xguide=L"$q$", yguide=L"$v$")
 default(linewidth=2)
-plot!(fig, sol_ref, vars=(2, 1), label="Reference solution")
+plot!(fig, sol_ref, idxs=(2, 1), label="Reference solution")
 scatter!(fig, last.(sol_baseline.u), first.(sol_baseline.u),
          label="Störmer-Verlet, dt = $dt")
 
@@ -436,7 +436,7 @@ for truncation_order in 3:2:5
   modified_f, _ = build_function(series, u_sym, expression=Val(false))
   modified_ode = ODEProblem((u, params, t) -> modified_f(u), [q0, v0], ode.tspan)
   modified_sol = solve(modified_ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
-  plot!(fig, modified_sol, vars=(1, 2),
+  plot!(fig, modified_sol, idxs=(1, 2),
         label="Modified equation, order $(truncation_order-1)")
 end
 fig
@@ -451,6 +451,39 @@ the numerical solution obtained by the Störmer-Verlet method very well. In fact
 the fourth-order modified equation is even a bit more accurate than the
 second-order one.
 
+
+## Modified equation of the average vector field method
+
+Here, we reproduce Example 1 of [^CelledoniMcLachlanOwrenQuispel2010].
+First, we create the B-series of the average vector field method as described
+in the [tutorial on creating B-series](@ref tutorial-bseries-creation-AVF).
+
+```@example ex:AVF-mod-eq
+using BSeries
+
+series = bseries(5) do t, series
+    if order(t) in (0, 1)
+        return 1 // 1
+    else
+        v = 1 // 1
+        n = 0
+        for subtree in SubtreeIterator(t)
+            v *= series[subtree]
+            n += 1
+        end
+        return v / (n + 1)
+    end
+end
+```
+
+Next, we compute the coefficients of its modified equation.
+
+```@example ex:AVF-mod-eq
+coefficients = modified_equation(series)
+```
+
+Remember that the coefficients of the B-series need to be divided by the
+symmetry of the rooted trees to get the final expressions.
 
 
 ## References
@@ -470,3 +503,9 @@ second-order one.
   Algebraic Structures of B-series.
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+
+[^CelledoniMcLachlanOwrenQuispel2010]:
+  Elena Celledoni, Robert I. McLachlan, Brynjulf Owren, and G. R. W. Quispel (2010)
+  Energy-preserving integrators and the structure of B-series.
+  Foundations of Computational Mathematics
+  [DOI: 10.1007/s10208-010-9073-1](https://doi.org/10.1007/s10208-010-9073-1)
