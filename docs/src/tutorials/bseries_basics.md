@@ -182,7 +182,7 @@ b(.) &= 1, \\
 b([t_1, ..., t_n]) &= b(t_1)...b(t_n) / (n + 1).
 ```
 
-by Celledoni. McLachlan, McLaren, Owren, Quispel, and Wright (2009). We can
+by Celledoni, McLachlan, McLaren, Owren, Quispel, and Wright (2009). We can
 implement this up to order 5 in BSeries.jl as follows.
 
 ```@example ex:AVF
