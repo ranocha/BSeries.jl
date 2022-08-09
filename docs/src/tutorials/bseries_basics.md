@@ -174,7 +174,7 @@ u^{n+1} = u^{n} + \Delta t \int_0^1 f\bigl(\xi u^{n+1} + (1 - \xi) u^{n}\bigr) \
 
 introduced by McLachlan, Quispel, and Robidoux (1999) is a second-order accurate
 method. Quispel and McLaren (2008) discovered that it is indeed a B-series method.
-It's coefficients are given explicitly as
+Its coefficients are given explicitly as
 
 ```math
 \begin{align}
