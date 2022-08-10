@@ -232,4 +232,4 @@ series - ExactSolution(series)
   "The effective order of Runge-Kutta methods."
   In Conference on the numerical solution of differential equations,
   pp. 133-139. Springer, Berlin, Heidelberg, 1969.
-  https://doi.org/10.1007/BFb0060019
+  [DOI: 10.1007/BFb0060019](https://doi.org/10.1007/BFb0060019)
