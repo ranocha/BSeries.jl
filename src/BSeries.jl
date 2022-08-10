@@ -686,7 +686,8 @@ Compose the B-series `a` with the B-series `b`. It is assumed that the B-series
 `b` has the coefficient unity of the empty tree.
 
 In the notation of Chartier, Hairer and Vilmart (2010), we have
-`compose(b, a) = b ⋅ a`.
+`compose(b, a) = b ⋅ a`. Note that this means that method `b` is applied first,
+followed by method `a`.
 
 If `normalize_stepsize = true`, the coefficients of the returned B-series
 are divied by `2^order(t)` for each rooted tree `t`. This normalizes the step
@@ -723,7 +724,9 @@ Compose the B-series `b1`, `b2`, `bs...`. It is assumed that all B-series
 have the coefficient unity of the empty tree.
 
 In the notation of Chartier, Hairer and Vilmart (2010), we have
-`compose(b1, b2, b3) = b1 ⋅ b2 ⋅ b3`. Note that this product is associative.
+`compose(b1, b2, b3) = b1 ⋅ b2 ⋅ b3`. Note that this product is associative and
+has to be read from left to right, i.e., method `b1` is applied first, followed
+by `b2`, `bs...`.
 
 If `normalize_stepsize = true`, the coefficients of the returned B-series
 are divied by `n^order(t)` for each rooted tree `t`, where `n` is the total
