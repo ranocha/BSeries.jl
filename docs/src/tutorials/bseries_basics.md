@@ -1,4 +1,4 @@
-# [B-Series basics](@id tutorial-bseries-basics)
+# [B-series basics](@id tutorial-bseries-basics)
 
 In this tutorial we use BSeries.jl to investigate error expansions for Runge-Kutta (RK)
 methods, generically or when applied to a specific ordinary differential equation (ODE).
@@ -12,7 +12,7 @@ using Latexify  # Only needed for some pretty-printing cells below using `latexi
 import SymPy; sp=SymPy;
 ```
 
-## B-Series for a generic ODE
+## B-series for a generic ODE
 
 First we specify the Butcher coefficients of the RK method.
 This can include symbolic expressions and parameterized families of methods.
@@ -95,7 +95,7 @@ can eliminate one of the leading error terms completely if we take
 $\alpha=3/4$ (this is known as Ralston's method, or sometimes as Heun's method).
 
 
-## B-Series for a specific ODE
+## B-series for a specific ODE
 
 Next, let us define an ODE.  We'll consider the Prothero-Robinson problem:
 
