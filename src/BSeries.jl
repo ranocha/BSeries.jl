@@ -690,7 +690,7 @@ In the notation of Chartier, Hairer and Vilmart (2010), we have
 followed by method `a`.
 
 If `normalize_stepsize = true`, the coefficients of the returned B-series
-are divied by `2^order(t)` for each rooted tree `t`. This normalizes the step
+are divided by `2^order(t)` for each rooted tree `t`. This normalizes the step
 size so that the resulting numerical integrator B-series uses the same step size
 as the input series (instead of a doubled step size).
 
@@ -729,7 +729,7 @@ has to be read from left to right, i.e., method `b1` is applied first, followed
 by `b2`, `bs...`.
 
 If `normalize_stepsize = true`, the coefficients of the returned B-series
-are divied by `n^order(t)` for each rooted tree `t`, where `n` is the total
+are divided by `n^order(t)` for each rooted tree `t`, where `n` is the total
 number of composed B-series. This normalizes the step size so that the resulting
 numerical integrator B-series uses the same step size as the input series
 (instead of an `n`-fold step size).
