@@ -153,3 +153,83 @@ series - ExactSolution(series)
   "Energy-preserving Runge-Kutta methods."
   ESAIM: Mathematical Modelling and Numerical Analysis 43, no. 4 (2009): 645-649.
   [DOI: 10.1051/m2an/2009020](https://doi.org/10.1051/m2an/2009020)
+
+
+## [Composing B-series](@id tutorial-bseries-creation-compose)
+
+B-series representing a mapping such as a time integration method can be
+[`compose`](@ref)d. This operation is equivalent to performing a step with
+one method after another. Here, we present the example of Butcher's method of
+effective order 5. This is a fourth-order Runge-Kutta method resulting in a
+fifth-order method when composed with a special starting and finishing
+procedure.
+
+First, we set up the B-series of the main method (method "a" in Butcher's paper):
+
+```@example ex:compose
+using BSeries
+
+A = [0 0 0 0 0;
+     1//5 0 0 0 0;
+     0 2//5 0 0 0;
+     3//16 0 5//16 0 0;
+     1//4 0 -5//4 2 0]
+b = [1 // 6, 0, 0, 2 // 3, 1 // 6]
+rk_a = RungeKuttaMethod(A, b)
+series_a = bseries(rk_a, 6)
+```
+
+Note that this method is fourth-order accurate:
+
+```@example ex:compose
+series_a - ExactSolution(series_a)
+```
+
+Next, we set up the starting procedure (method "b" in Butcher's paper):
+
+```@example ex:compose
+A = [0 0 0 0 0;
+     1//5 0 0 0 0;
+     0 2//5 0 0 0;
+     75//64 -9//4 117//64 0 0;
+     -37//36 7//3 -3//4 4//9 0]
+b = [19 // 144, 0, 25 // 48, 2 // 9, 1 // 8]
+rk_b = RungeKuttaMethod(A, b)
+series_b = bseries(rk_b, 6)
+```
+
+Note that this method is only third-order accurate - as is the finishing
+procedure given by
+
+```@example ex:compose
+A = [0 0 0 0 0;
+     1//5 0 0 0 0;
+     0 2//5 0 0 0;
+     161//192 -19//12 287//192 0 0;
+     -27//28 19//7 -291//196 36//49 0]
+b = [7 // 48, 0, 475 // 1008, 2 // 7, 7 // 72]
+rk_c = RungeKuttaMethod(A, b)
+series_c = bseries(rk_c, 6)
+```
+
+Finally, we can compose the three methods to obtain
+
+```@example ex:compose
+series = compose(series_b, series_a, series_c, normalize_stepsize = true)
+```
+
+Note that this composition has to be read from left to right. Finally, we check
+that the resulting `series` is indeed fifth-order accurate:
+
+```@example ex:compose
+series - ExactSolution(series)
+```
+
+
+### References
+
+- Butcher, J. C.
+  "The effective order of Runge-Kutta methods."
+  In Conference on the numerical solution of differential equations,
+  pp. 133-139. Springer, Berlin, Heidelberg, 1969.
+  https://doi.org/10.1007/BFb0060019

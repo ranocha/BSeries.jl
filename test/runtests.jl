@@ -248,6 +248,47 @@ using Aqua: Aqua
                 @test unnormalized_series[t] == series_rk4_composed[t] * 2^order(t)
             end
         end
+
+        @testset "Butcher's effective order 5 method" begin
+            # Butcher, J. C.
+            # "The effective order of Runge-Kutta methods."
+            # In Conference on the numerical solution of differential equations,
+            # pp. 133-139. Springer, Berlin, Heidelberg, 1969.
+            # https://doi.org/10.1007/BFb0060019
+            A = [0 0 0 0 0;
+                 1//5 0 0 0 0;
+                 0 2//5 0 0 0;
+                 3//16 0 5//16 0 0;
+                 1//4 0 -5//4 2 0]
+            b = [1 // 6, 0, 0, 2 // 3, 1 // 6]
+            rk_a = RungeKuttaMethod(A, b)
+            series_a = @inferred bseries(rk_a, 5)
+            # this is the main method
+
+            A = [0 0 0 0 0;
+                 1//5 0 0 0 0;
+                 0 2//5 0 0 0;
+                 75//64 -9//4 117//64 0 0;
+                 -37//36 7//3 -3//4 4//9 0]
+            b = [19 // 144, 0, 25 // 48, 2 // 9, 1 // 8]
+            rk_b = RungeKuttaMethod(A, b)
+            series_b = @inferred bseries(rk_b, 5)
+            # this is the starting method
+
+            A = [0 0 0 0 0;
+                 1//5 0 0 0 0;
+                 0 2//5 0 0 0;
+                 161//192 -19//12 287//192 0 0;
+                 -27//28 19//7 -291//196 36//49 0]
+            b = [7 // 48, 0, 475 // 1008, 2 // 7, 7 // 72]
+            rk_c = RungeKuttaMethod(A, b)
+            series_c = @inferred bseries(rk_c, 5)
+            # this is the finishing method
+
+            series = @inferred compose(series_b, series_a, series_c,
+                                       normalize_stepsize = true)
+            @test series == ExactSolution(series)
+        end
     end # @testset "compose"
 
     @testset "modified_equation" begin
