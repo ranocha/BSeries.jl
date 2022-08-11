@@ -33,6 +33,15 @@ The main API of BSeries.jl consists of the following components.
 Further information is provided in the following tutorials and
 API documentation.
 
+!!! note
+
+    Please note that B-series analysis is most conveniently applied to the 
+    autonomous form of ordinary differential equations (ODEs). Thus, BSeries.jl and
+    RootedTrees.jl usually assume that time integration methods give the same
+    result, independent of whether an ODE is written in an autonomous or a 
+    non-autonomous form. For Runge-Kutta methods, this means that the usual row-sum
+    assumption is used.
+
 
 ## Installation
 
