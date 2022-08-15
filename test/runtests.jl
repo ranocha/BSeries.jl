@@ -128,6 +128,39 @@ using Aqua: Aqua
         @test mapreduce(iszero, &, values(diff))
     end # @testset "vector space interface"
 
+    @testset "order_of_accuracy" begin
+        @testset "RK4, rational coefficients" begin
+            # classical fourth-order Runge-Kutta method
+            A = [0 0 0 0;
+                 1//2 0 0 0;
+                 0 1//2 0 0;
+                 0 0 1 0]
+            b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+            rk = RungeKuttaMethod(A, b)
+            series = bseries(rk, 5)
+            @test @inferred(order_of_accuracy(series)) == 4
+
+            series = bseries(rk, 3)
+            @test @inferred(order_of_accuracy(series)) == 3
+        end
+
+        @testset "RK4, floating point coefficients" begin
+            # classical fourth-order Runge-Kutta method
+            A = [0 0 0 0;
+                 1/2 0 0 0;
+                 0 1/2 0 0;
+                 0 0 1 0]
+            b = [1 / 6, 1 / 3, 1 / 3, 1 / 6]
+            rk = RungeKuttaMethod(A, b)
+            series = bseries(rk, 5)
+            @test @inferred(order_of_accuracy(series)) == 4
+            @test @inferred(order_of_accuracy(series; atol=10*eps())) == 4
+
+            series = bseries(rk, 3)
+            @test @inferred(order_of_accuracy(series)) == 3
+        end
+    end
+
     @testset "substitute" begin
         Symbolics.@variables a1 a2 a31 a32
         a = OrderedDict{RootedTrees.RootedTree{Int, Vector{Int}}, Symbolics.Num}(rootedtree(Int[]) => 1,
@@ -1104,6 +1137,7 @@ using Aqua: Aqua
 
         diff = series - ExactSolution(series)
         @test mapreduce(abs ∘ last, +, diff) == 1 // 12
+        @test @inferred(order_of_accuracy(series)) == 2
     end
 
     @testset "Runge-Kutta methods interface" begin
@@ -1119,11 +1153,13 @@ using Aqua: Aqua
         series_integrator = @inferred bseries(rk, 4)
         series_exact = @inferred ExactSolution(series_integrator)
         @test mapreduce(==, &, values(series_integrator), values(series_exact))
+        @test @inferred(order_of_accuracy(series_integrator)) == 4
 
         # not fifth-order accurate
         series_integrator = @inferred bseries(rk, 5)
         series_exact = @inferred ExactSolution(series_integrator)
         @test mapreduce(==, &, values(series_integrator), values(series_exact)) == false
+        @test @inferred(order_of_accuracy(series_integrator)) == 4
     end # @testset "Runge-Kutta methods interface"
 
     @testset "additive Runge-Kutta methods interface" begin
