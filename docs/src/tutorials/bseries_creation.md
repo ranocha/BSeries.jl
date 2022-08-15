@@ -38,6 +38,10 @@ We can check that the classical Runge-Kutta method is indeed fourth-order accura
 series - ExactSolution(series)
 ```
 
+```@example ex:RK4
+order_of_accuracy(series)
+```
+
 
 ## B-series for additive Runge-Kutta methods
 
@@ -73,6 +77,10 @@ the exact solution.
 
 ```@example ex:SV
 series - ExactSolution(series)
+```
+
+```@example ex:SV
+order_of_accuracy(series)
 ```
 
 
@@ -136,6 +144,10 @@ the B-series of the exact solution, truncated at the same order.
 series - ExactSolution(series)
 ```
 
+```@example ex:AVF
+order_of_accuracy(series)
+```
+
 ### References
 
 - Robert I. McLachlan, G. Reinout W. Quispel, and Nicolas Robidoux.
@@ -182,7 +194,7 @@ series_a = bseries(rk_a, 6)
 Note that this method is fourth-order accurate:
 
 ```@example ex:compose
-series_a - ExactSolution(series_a)
+order_of_accuracy(series_a)
 ```
 
 Next, we set up the starting procedure (method "b" in Butcher's paper):
@@ -196,6 +208,10 @@ A = [0 0 0 0 0;
 b = [19 // 144, 0, 25 // 48, 2 // 9, 1 // 8]
 rk_b = RungeKuttaMethod(A, b)
 series_b = bseries(rk_b, 6)
+```
+
+```@example ex:compose
+order_of_accuracy(series_b)
 ```
 
 Note that this method is only third-order accurate - as is the finishing
@@ -212,6 +228,10 @@ rk_c = RungeKuttaMethod(A, b)
 series_c = bseries(rk_c, 6)
 ```
 
+```@example ex:compose
+order_of_accuracy(series_c)
+```
+
 Finally, we can compose the three methods to obtain
 
 ```@example ex:compose
@@ -220,6 +240,10 @@ series = compose(series_b, series_a, series_c, normalize_stepsize = true)
 
 Note that this composition has to be read from left to right. Finally, we check
 that the resulting `series` is indeed fifth-order accurate:
+
+```@example ex:compose
+order_of_accuracy(series)
+```
 
 ```@example ex:compose
 series - ExactSolution(series)
