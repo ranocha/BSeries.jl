@@ -274,7 +274,6 @@ for op in (:+, :-)
         V = promote_type(valtype(series1), valtype(series2))
         series_result = TruncatedBSeries{T, V}()
         for (key, val1, val2) in zip(series_keys, values(series1), values(series2))
-            @info "op" key val1 val2
             series_result[key] = ($op)(val1, val2)
         end
 
