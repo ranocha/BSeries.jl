@@ -154,7 +154,7 @@ using Aqua: Aqua
             rk = RungeKuttaMethod(A, b)
             series = bseries(rk, 5)
             @test @inferred(order_of_accuracy(series)) == 4
-            @test @inferred(order_of_accuracy(series; atol=10*eps())) == 4
+            @test @inferred(order_of_accuracy(series; atol = 10 * eps())) == 4
 
             series = bseries(rk, 3)
             @test @inferred(order_of_accuracy(series)) == 3
