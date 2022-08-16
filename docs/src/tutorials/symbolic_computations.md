@@ -69,6 +69,22 @@ using Latexify
 latexify(series, reduce_order_by=1, dt=SymEngine.symbols("h"), cdot=false) |> println
 ```
 
+The argument `dt=SymEngine.symbols("h")` is not required here.
+
+```@example modified-equation-symengine
+using Latexify
+latexify(series, reduce_order_by=1, cdot=false) |> println
+```
+
+We can obtain basically the same result (up to other notations of the coefficients)
+by dividing the B-series `series` by a symbolic variable for the time step size
+as follows.
+
+```@example modified-equation-symengine
+using Latexify
+h = SymEngine.symbols("h")
+latexify(series / h, cdot=false) |> println
+```
 
 We can also use other packages for the symbolic computations, of course.
 SymPy.jl often provides very clean expressions.
@@ -92,13 +108,25 @@ using Latexify
 latexify(series, reduce_order_by=1, dt=SymPy.symbols("h"), cdot=false) |> println
 ```
 
+We can also use the simplified versions.
+
+```@example modified-equation-sympy
+using Latexify
+latexify(series, reduce_order_by=1, cdot=false) |> println
+```
+
+```@example modified-equation-sympy
+using Latexify
+h = SymPy.symbols("h", real=true)
+latexify(series / h, cdot=false) |> println
+```
 
 Alternatively, we can also use Symbolics.jl.
 
 ```@example modified-equation-symbolics
 using BSeries, Symbolics
 
-Symbolics.@variables α h
+Symbolics.@variables α
 A = [0 0; 1/(2α) 0]
 b = [1-α, α]
 c = [0, 1/(2α)]
@@ -106,14 +134,20 @@ c = [0, 1/(2α)]
 series = modified_equation(A, b, c, 3)
 ```
 
+```@example modified-equation-symbolics
+using Latexify
+Symbolics.@variables h
+latexify(series / h, cdot=false) |> println
+```
+
 ## Working with rational coefficients
 
 High-order Runge-Kutta methods are often given in terms of rational coefficients that have large denominators.
-It's often best to use the rational coefficients in calculations, rather than converting to floating-point, since otherwise 
+It's often best to use the rational coefficients in calculations, rather than converting to floating-point, since otherwise
 terms that ought to cancel may not cancel exactly.  Rational coefficients can be entered by using `//` for the division operation.
 
-By default, Julia uses 64-bit integers for the numerator and denominator of a rational on 64-bit systems.  In practical 
-calculations with high-order RK methods, the denominators may become too large to be represented with 64 bits, 
+By default, Julia uses 64-bit integers for the numerator and denominator of a rational on 64-bit systems.  In practical
+calculations with high-order RK methods, the denominators may become too large to be represented with 64 bits,
 leading to overflow.  This can be remedied by specifying higher precision when entering the coefficients:
 
 ```@example int128-coefficients-symbolics

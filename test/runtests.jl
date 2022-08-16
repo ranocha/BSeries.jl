@@ -31,30 +31,81 @@ using Aqua: Aqua
         @test_nowarn latexify(series_integrator, dt = SymEngine.symbols("h"))
 
         @testset "SymEngine.jl" begin
-            α = SymEngine.symbols("α")
-            A = [0 0; 1/(2 * α) 0]
-            b = [1 - α, α]
-            c = [0, 1 / (2 * α)]
-            series_integrator = bseries(A, b, c, 3)
-            @test_nowarn latexify(series_integrator)
+            @testset "Symbolic coefficients" begin
+                α = SymEngine.symbols("α")
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = bseries(A, b, c, 3)
+                @test_nowarn latexify(series_integrator)
+            end
+
+            @testset "Divide by h" begin
+                A = [0 0; 1//2 0]
+                b = [0, 1]
+                c = [0, 1 // 2]
+                series_integrator = bseries(A, b, c, 1)
+                @test_nowarn latexify(series_integrator)
+
+                h = SymEngine.symbols("h")
+                coefficients = modified_equation(series_integrator)
+                val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
+                                             cdot = false)
+                val2 = @test_nowarn latexify(coefficients / h, cdot = false)
+                @test val1 == val2
+            end
         end
 
         @testset "SymPy.jl" begin
-            α = SymPy.symbols("α", real = true)
-            A = [0 0; 1/(2 * α) 0]
-            b = [1 - α, α]
-            c = [0, 1 / (2 * α)]
-            series_integrator = bseries(A, b, c, 3)
-            @test_nowarn latexify(series_integrator)
+            @testset "Symbolic coefficients" begin
+                α = SymPy.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = bseries(A, b, c, 3)
+                @test_nowarn latexify(series_integrator)
+            end
+
+            @testset "Divide by h" begin
+                A = [0 0; 1//2 0]
+                b = [0, 1]
+                c = [0, 1 // 2]
+                series_integrator = bseries(A, b, c, 1)
+                @test_nowarn latexify(series_integrator)
+
+                h = SymPy.symbols("h", real = true)
+                coefficients = modified_equation(series_integrator)
+                val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
+                                             cdot = false)
+                val2 = @test_nowarn latexify(coefficients / h, cdot = false)
+                @test val1 == val2
+            end
         end
 
         @testset "Symbolics.jl" begin
-            Symbolics.@variables α
-            A = [0 0; 1/(2 * α) 0]
-            b = [1 - α, α]
-            c = [0, 1 / (2 * α)]
-            series_integrator = bseries(A, b, c, 3)
-            @test_nowarn latexify(series_integrator)
+            @testset "Symbolic coefficients" begin
+                Symbolics.@variables α
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = bseries(A, b, c, 3)
+                @test_nowarn latexify(series_integrator)
+            end
+
+            @testset "Divide by h" begin
+                A = [0 0; 1//2 0]
+                b = [0, 1]
+                c = [0, 1 // 2]
+                series_integrator = bseries(A, b, c, 1)
+                @test_nowarn latexify(series_integrator)
+
+                Symbolics.@variables h
+                coefficients = modified_equation(series_integrator)
+                val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
+                                             cdot = false)
+                val2 = @test_nowarn latexify(coefficients / h, cdot = false)
+                @test val1 == val2
+            end
         end
     end # @testset "latexify"
 
