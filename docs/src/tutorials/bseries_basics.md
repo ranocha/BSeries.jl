@@ -82,9 +82,20 @@ latexify(coeffs4-coeffs_ex, cdot=false)
 This confirms that the method is of 4th order, since all terms involving
 smaller powers of $h$ vanish exactly.  We don't see the $h^6$ and higher
 order terms since we only generated the truncated B-series up to 5th order.
+We can also obtain the order of accuracy awithout comparing the coefficients
+to the exact solution manually:
 
-For the 2nd-order method, we get:
+```@example bseries-basics
+order_of_accuracy(coeffs4)
+```
 
+For the 2nd-order method, we get
+
+```@example bseries-basics
+order_of_accuracy(coeffs2)
+```
+
+with the following leading error terms:
 
 ```@example bseries-basics
 latexify(coeffs2-coeffs_ex, cdot=false)

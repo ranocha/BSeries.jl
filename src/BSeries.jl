@@ -19,6 +19,8 @@ using Latexify: Latexify, LaTeXString
 
 export TruncatedBSeries, ExactSolution
 
+export order_of_accuracy
+
 export bseries, substitute, compose, evaluate
 
 export modified_equation, modifying_integrator
@@ -120,6 +122,8 @@ end
 
 The maximal `order` of a rooted tree with non-vanishing coefficient in the
 truncated B-series `series`.
+
+See also [`order_of_accuracy`](@ref).
 """
 RootedTrees.order(series::TruncatedBSeries) = order(series.coef.keys[end])
 
@@ -185,6 +189,16 @@ for op in (:*, :\)
 
         return series_result
     end
+end
+
+# Return a function returning an iterator over all rooted trees used as
+# keys for the B-series when given an order of the trees.
+function _iterator_type(::TruncatedBSeries{<:RootedTree})
+    return RootedTreeIterator
+end
+
+function _iterator_type(::TruncatedBSeries{<:BicoloredRootedTree})
+    return BicoloredRootedTreeIterator
 end
 
 """
@@ -274,7 +288,6 @@ for op in (:+, :-)
         V = promote_type(valtype(series1), valtype(series2))
         series_result = TruncatedBSeries{T, V}()
         for (key, val1, val2) in zip(series_keys, values(series1), values(series2))
-            @info "op" key val1 val2
             series_result[key] = ($op)(val1, val2)
         end
 
@@ -296,6 +309,42 @@ for op in (:+, :-)
     end
 end
 
+# investigate properties of B-series
+"""
+    order_of_accuracy(series; kwargs...)
+
+Determine the order of accuracy of the B-series `series`. By default, the
+comparison with the coefficients of the exact solution is performed using
+`isequal`. If keyword arguments such as absolute/relative tolerances `atol`/`rtol`
+are given or floating point numbers are used, the comparison is perfomed using
+`isapprox` and the keyword arguments `kwargs...` are forwarded.
+
+See also [`order`](@ref), [`ExactSolution`](@ref).
+"""
+function order_of_accuracy(series::TruncatedBSeries; kwargs...)
+    if isempty(kwargs) && !(valtype(series) <: AbstractFloat)
+        compare = isequal
+    else
+        compare = (a, b) -> isapprox(a, b; kwargs...)
+    end
+
+    exact = ExactSolution{valtype(series)}()
+    iterator = _iterator_type(series)
+
+    for o in 0:order(series)
+        # Iterate over all rooted trees used as keys in `series`
+        # of a given order `o`.
+        for t in iterator(o)
+            if compare(series[t], exact[t]) == false
+                return order(t) - 1
+            end
+        end
+    end
+
+    return order(series)
+end
+
+# construct B-series
 """
     bseries(f::Function, order, iterator_type=RootedTreeIterator)
 
