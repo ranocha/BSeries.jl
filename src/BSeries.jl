@@ -191,6 +191,16 @@ for op in (:*, :\)
     end
 end
 
+# Return a function returning an iterator over all rooted trees used as
+# keys for the B-series when given an order of the trees.
+function _iterator_type(::TruncatedBSeries{<:RootedTree})
+    return RootedTreeIterator
+end
+
+function _iterator_type(::TruncatedBSeries{<:BicoloredRootedTree})
+    return BicoloredRootedTreeIterator
+end
+
 """
     ExactSolution{V}()
 
@@ -319,16 +329,15 @@ function order_of_accuracy(series::TruncatedBSeries; kwargs...)
     end
 
     exact = ExactSolution{valtype(series)}()
+    iterator = _iterator_type(series)
 
-    # TODO: TruncatedBSeries
-    # This assumes that the `coef` are always stored with increasing `order` of the
-    # rooted trees and that the underlying data format in OrderedCollections.jl does
-    # not change. Since we do not consider the constructor as public API but as
-    # internal implementation detail, users violating this assumption are outside of
-    # the public API and may run into self-made problems.
-    for (t, val) in series
-        if compare(val, exact[t]) == false
-            return order(t) - 1
+    for o in 0:order(series)
+        # Iterate over all rooted trees used as keys in `series`
+        # of a given order `o`.
+        for t in iterator(o)
+            if compare(series[t], exact[t]) == false
+                return order(t) - 1
+            end
         end
     end
 

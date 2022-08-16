@@ -1172,6 +1172,7 @@ using Aqua: Aqua
             series_integrator = @inferred bseries(ark, 1)
             series_exact = @inferred ExactSolution(series_integrator)
             @test mapreduce(==, &, values(series_integrator), values(series_exact))
+            @test @inferred(order_of_accuracy(series_integrator)) == 1
 
             # not second-order accurate
             series_integrator = @inferred bseries(ark, 2)
@@ -1234,6 +1235,7 @@ using Aqua: Aqua
             series_integrator = @inferred bseries(ark, 2)
             series_exact = @inferred ExactSolution(series_integrator)
             @test mapreduce(==, &, values(series_integrator), values(series_exact))
+            @test @inferred(order_of_accuracy(series_integrator)) == 2
 
             # not third-order accurate
             series_integrator = @inferred bseries(ark, 3)
@@ -1342,6 +1344,7 @@ using Aqua: Aqua
             series_integrator = @inferred bseries(ark, 3)
             series_exact = @inferred ExactSolution(series_integrator)
             @test mapreduce(==, &, values(series_integrator), values(series_exact))
+            @test @inferred(order_of_accuracy(series_integrator)) == 3
 
             # not fourth-order accurate
             series_integrator = @inferred bseries(ark, 4)
