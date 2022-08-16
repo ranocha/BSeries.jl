@@ -49,8 +49,9 @@ using Aqua: Aqua
 
                 h = SymEngine.symbols("h")
                 coefficients = modified_equation(series_integrator)
-                val1 = @test_nowarn latexify(coefficients, reduce_order_by=1, cdot=false)
-                val2 = @test_nowarn latexify(coefficients / h, cdot=false)
+                val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
+                                             cdot = false)
+                val2 = @test_nowarn latexify(coefficients / h, cdot = false)
                 @test val1 == val2
             end
         end
@@ -74,8 +75,9 @@ using Aqua: Aqua
 
                 h = SymPy.symbols("h", real = true)
                 coefficients = modified_equation(series_integrator)
-                val1 = @test_nowarn latexify(coefficients, reduce_order_by=1, cdot=false)
-                val2 = @test_nowarn latexify(coefficients / h, cdot=false)
+                val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
+                                             cdot = false)
+                val2 = @test_nowarn latexify(coefficients / h, cdot = false)
                 @test val1 == val2
             end
         end
@@ -99,8 +101,9 @@ using Aqua: Aqua
 
                 Symbolics.@variables h
                 coefficients = modified_equation(series_integrator)
-                val1 = @test_nowarn latexify(coefficients, reduce_order_by=1, cdot=false)
-                val2 = @test_nowarn latexify(coefficients / h, cdot=false)
+                val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
+                                             cdot = false)
+                val2 = @test_nowarn latexify(coefficients / h, cdot = false)
                 @test val1 == val2
             end
         end
