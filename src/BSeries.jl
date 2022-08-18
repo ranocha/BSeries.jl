@@ -501,6 +501,44 @@ end
 # TODO: bseries(ark::AdditiveRungeKuttaMethod)
 # should create a lazy version, optionally a memoized one
 
+"""
+    bseries(ros::RosenbrockMethod, order)
+
+Compute the B-series of the Rosenbrock method `ros` up to a prescribed
+integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+"""
+function bseries(ros::RosenbrockMethod, order)
+    V_tmp = eltype(ros)
+    if V_tmp <: Integer
+        # If people use integer coefficients, they will likely want to have results
+        # as exact as possible. However, general terms are not integers. Thus, we
+        # use rationals instead.
+        V = Rational{V_tmp}
+    else
+        V = V_tmp
+    end
+    series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
+
+    series[rootedtree(Int[])] = one(V)
+    for o in 1:order
+        for t in RootedTreeIterator(o)
+            series[copy(t)] = elementary_weight(t, ros)
+        end
+    end
+
+    return series
+end
+
+# TODO: bseries(ros::RosenbrockMethod)
+# should create a lazy version, optionally a memoized one
+
 # TODO: Documentation, Base.show, export etc.
 """
     MultirateInfinitesimalSplitMethod(A, D, G, c)

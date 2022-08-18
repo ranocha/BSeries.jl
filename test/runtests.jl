@@ -1432,6 +1432,31 @@ using Aqua: Aqua
         end
     end # @testset "additive Runge-Kutta methods interface"
 
+    @testset "Rosenbrock methods interface" begin
+        # Kaps, Rentrop (1979)
+        # Generalized Runge-Kutta methods of order four with stepsize control
+        # for stiff ordinary differential equations
+        # https://doi.org/10.1007/BF01396495
+        γ = [0.395 0 0 0;
+                -0.767672395484 0.395 0 0;
+                -0.851675323742 0.522967289188 0.395 0;
+                0.288463109545 0.880214273381e-1 -0.337389840627 0.395]
+        A = [0 0 0 0;
+                0.438 0 0 0;
+                0.796920457938 0.730795420615e-1 0 0;
+                0.796920457938 0.730795420615e-1 0 0]
+        b = [0.199293275701, 0.482645235674, 0.680614886256e-1, 0.25]
+        ros = @inferred RosenbrockMethod(γ, A, b)
+
+        # fourth-order accurate
+        series_integrator = @inferred bseries(ros, 5)
+        @test @inferred(order_of_accuracy(series_integrator)) == 4
+
+        # not fifth-order accurate
+        series_exact = @inferred ExactSolution(series_integrator)
+        @test mapreduce(isapprox, &, values(series_integrator), values(series_exact)) == false
+    end # @testset "Rosenbrock methods interface"
+
     @testset "multirate infinitesimal split methods interface" begin
         # NOTE: This is still considered experimental and might change at any time!
 
