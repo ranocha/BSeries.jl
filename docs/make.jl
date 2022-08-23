@@ -41,7 +41,7 @@ open(joinpath(@__DIR__, "src", "contributing.md"), "w") do io
 end
 
 # Make documentation
-makedocs(modules = [BSeries, RootedTrees],
+makedocs(modules = [BSeries],
          sitename = "BSeries.jl",
          format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true",
                                   canonical = "https://ranocha.github.io/BSeries.jl/stable",
