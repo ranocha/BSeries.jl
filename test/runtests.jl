@@ -1439,13 +1439,13 @@ using Aqua: Aqua
             # for stiff ordinary differential equations
             # https://doi.org/10.1007/BF01396495
             Γ = [0.395 0 0 0;
-                -0.767672395484 0.395 0 0;
-                -0.851675323742 0.522967289188 0.395 0;
-                0.288463109545 0.880214273381e-1 -0.337389840627 0.395]
+                 -0.767672395484 0.395 0 0;
+                 -0.851675323742 0.522967289188 0.395 0;
+                 0.288463109545 0.880214273381e-1 -0.337389840627 0.395]
             A = [0 0 0 0;
-                0.438 0 0 0;
-                0.796920457938 0.730795420615e-1 0 0;
-                0.796920457938 0.730795420615e-1 0 0]
+                 0.438 0 0 0;
+                 0.796920457938 0.730795420615e-1 0 0;
+                 0.796920457938 0.730795420615e-1 0 0]
             b = [0.199293275701, 0.482645235674, 0.680614886256e-1, 0.25]
             ros = @inferred RosenbrockMethod(Γ, A, b)
 
@@ -1456,7 +1456,7 @@ using Aqua: Aqua
             # not fifth-order accurate
             series_exact = @inferred ExactSolution(series_integrator)
             @test mapreduce(isapprox, &, values(series_integrator), values(series_exact)) ==
-                false
+                  false
         end
 
         @testset "van Veldhuizen (1984)" begin
@@ -1489,14 +1489,14 @@ using Aqua: Aqua
                  -8 0 0 0;
                  -8 -1 0 0;
                  1//2 -1//2 2 0]
-            γ = 1//2
+            γ = 1 // 2
             Γ = inv(I / γ - C)
             A = [0 0 0 0;
                  2 0 0 0;
                  7//4 1//4 0 0;
                  7//4 1//4 0 0]
             A = A * Γ
-            b = [4//3, 2//3, -4//3, 4//3]
+            b = [4 // 3, 2 // 3, -4 // 3, 4 // 3]
             b = (b' * Γ)'
             ros = @inferred RosenbrockMethod(Γ, A, b)
 
@@ -1507,7 +1507,7 @@ using Aqua: Aqua
             # not fifth-order accurate
             series_exact = @inferred ExactSolution(series_integrator)
             @test mapreduce(isapprox, &, values(series_integrator), values(series_exact)) ==
-                false
+                  false
         end
     end # @testset "Rosenbrock methods interface"
 
