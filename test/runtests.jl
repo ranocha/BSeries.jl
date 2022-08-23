@@ -1454,7 +1454,8 @@ using Aqua: Aqua
 
         # not fifth-order accurate
         series_exact = @inferred ExactSolution(series_integrator)
-        @test mapreduce(isapprox, &, values(series_integrator), values(series_exact)) == false
+        @test mapreduce(isapprox, &, values(series_integrator), values(series_exact)) ==
+              false
     end # @testset "Rosenbrock methods interface"
 
     @testset "multirate infinitesimal split methods interface" begin
