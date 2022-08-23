@@ -91,6 +91,58 @@ order_of_accuracy(series)
   Springer, 2002.
 
 
+## B-series for Rosenbrock methods
+
+[BSeries.jl](https://github.com/ranocha/BSeries.jl) and
+[RootedTrees.jl](https://github.com/SciML/RootedTrees.jl) also support
+Rosenbrock (Rosenbrock-Wanner, ROW) methods via the wrapper
+[`RosebrockMethod`](@ref). For example, a classical ROW method of
+Kaps and Rentrop (1979) can be parameterized as follows.
+
+
+
+```@example ex:ROW
+using BSeries
+
+γ = [0.395 0 0 0;
+     -0.767672395484 0.395 0 0;
+     -0.851675323742 0.522967289188 0.395 0;
+     0.288463109545 0.880214273381e-1 -0.337389840627 0.395]
+A = [0 0 0 0;
+     0.438 0 0 0;
+     0.796920457938 0.730795420615e-1 0 0;
+     0.796920457938 0.730795420615e-1 0 0]
+b = [0.199293275701, 0.482645235674, 0.680614886256e-1, 0.25]
+ros = RosenbrockMethod(γ, A, b)
+```
+
+We can create the B-series as usual, truncated to order 5.
+
+```@example ex:ROW
+series = bseries(ark, 5)
+```
+
+Again, we can check the order of accuracy by comparing the coefficients to
+the exact solution.
+
+```@example ex:ROW
+series - ExactSolution(series)
+```
+
+```@example ex:ROW
+order_of_accuracy(series)
+```
+
+
+### References
+
+- Peter Kaps and Peter Rentrop.
+  "Generalized Runge-Kutta methods of order four with stepsize control for
+  stiff ordinary differential equations."
+  Numerische Mathematik 33, no. 1 (1979): 55-68.
+  [DOI: 10.1007/BF01396495](https://doi.org/10.1007/BF01396495)
+
+
 ## [B-series for the average vector field method](@id tutorial-bseries-creation-AVF)
 
 Consider the autonomous ODE
