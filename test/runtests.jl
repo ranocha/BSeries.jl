@@ -1433,29 +1433,82 @@ using Aqua: Aqua
     end # @testset "additive Runge-Kutta methods interface"
 
     @testset "Rosenbrock methods interface" begin
-        # Kaps, Rentrop (1979)
-        # Generalized Runge-Kutta methods of order four with stepsize control
-        # for stiff ordinary differential equations
-        # https://doi.org/10.1007/BF01396495
-        γ = [0.395 0 0 0;
-             -0.767672395484 0.395 0 0;
-             -0.851675323742 0.522967289188 0.395 0;
-             0.288463109545 0.880214273381e-1 -0.337389840627 0.395]
-        A = [0 0 0 0;
-             0.438 0 0 0;
-             0.796920457938 0.730795420615e-1 0 0;
-             0.796920457938 0.730795420615e-1 0 0]
-        b = [0.199293275701, 0.482645235674, 0.680614886256e-1, 0.25]
-        ros = @inferred RosenbrockMethod(γ, A, b)
+        @testset "Kaps, Rentrop (1979): GRK4A" begin
+            # Kaps, Rentrop (1979)
+            # Generalized Runge-Kutta methods of order four with stepsize control
+            # for stiff ordinary differential equations
+            # https://doi.org/10.1007/BF01396495
+            Γ = [0.395 0 0 0;
+                -0.767672395484 0.395 0 0;
+                -0.851675323742 0.522967289188 0.395 0;
+                0.288463109545 0.880214273381e-1 -0.337389840627 0.395]
+            A = [0 0 0 0;
+                0.438 0 0 0;
+                0.796920457938 0.730795420615e-1 0 0;
+                0.796920457938 0.730795420615e-1 0 0]
+            b = [0.199293275701, 0.482645235674, 0.680614886256e-1, 0.25]
+            ros = @inferred RosenbrockMethod(Γ, A, b)
 
-        # fourth-order accurate
-        series_integrator = @inferred bseries(ros, 5)
-        @test @inferred(order_of_accuracy(series_integrator)) == 4
+            # fourth-order accurate
+            series_integrator = @inferred bseries(ros, 5)
+            @test @inferred(order_of_accuracy(series_integrator)) == 4
 
-        # not fifth-order accurate
-        series_exact = @inferred ExactSolution(series_integrator)
-        @test mapreduce(isapprox, &, values(series_integrator), values(series_exact)) ==
-              false
+            # not fifth-order accurate
+            series_exact = @inferred ExactSolution(series_integrator)
+            @test mapreduce(isapprox, &, values(series_integrator), values(series_exact)) ==
+                false
+        end
+
+        @testset "van Veldhuizen (1984)" begin
+            # van Veldhuizen (1984)
+            # D-stability and Kaps-Rentrop methods
+            # https://doi.org/10.1007/BF02243574
+            # Γ = [1//2 0 0 0;
+            #      -4 1//2 0 0;
+            #      -4 -1//2 1//2 0;
+            #      1//4 -1//4 1 1//2]
+            # A = [0 0 0 0;
+            #      1 0 0 0;
+            #      7//8 1//8 0 0;
+            #      7//8 1//8 0 0]
+            # b = [4//6, 2//6, -4//6, 4//6]
+            # ros = @inferred RosenbrockMethod(Γ, A, b)
+            # However, this does not work directly. Thus, we reverse-engineer
+            # the coefficients as follows.
+            #
+            # Hairer, Wanner
+            # Solving ODEs II
+            # Implementation of Rosenbrock-type methods in Section IV.7.
+            # The coefficients are transformed as
+            # - C = I / γ - inv(Γ)
+            # - A = A / Γ
+            # - b' = b' / Γ
+            # to yield the coefficients used in
+            # http://www.unige.ch/~hairer/prog/stiff/Oldies/ros4.f
+            C = [0 0 0 0;
+                 -8 0 0 0;
+                 -8 -1 0 0;
+                 1//2 -1//2 2 0]
+            γ = 1//2
+            Γ = inv(I / γ - C)
+            A = [0 0 0 0;
+                 2 0 0 0;
+                 7//4 1//4 0 0;
+                 7//4 1//4 0 0]
+            A = A * Γ
+            b = [4//3, 2//3, -4//3, 4//3]
+            b = (b' * Γ)'
+            ros = @inferred RosenbrockMethod(Γ, A, b)
+
+            # fourth-order accurate
+            series_integrator = @inferred bseries(ros, 5)
+            @test @inferred(order_of_accuracy(series_integrator)) == 4
+
+            # not fifth-order accurate
+            series_exact = @inferred ExactSolution(series_integrator)
+            @test mapreduce(isapprox, &, values(series_integrator), values(series_exact)) ==
+                false
+        end
     end # @testset "Rosenbrock methods interface"
 
     @testset "multirate infinitesimal split methods interface" begin
