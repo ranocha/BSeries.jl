@@ -99,8 +99,6 @@ Rosenbrock (Rosenbrock-Wanner, ROW) methods via the wrapper
 [`RosebrockMethod`](@ref). For example, a classical ROW method of
 Kaps and Rentrop (1979) can be parameterized as follows.
 
-
-
 ```@example ex:ROW
 using BSeries
 
@@ -119,7 +117,7 @@ ros = RosenbrockMethod(γ, A, b)
 We can create the B-series as usual, truncated to order 5.
 
 ```@example ex:ROW
-series = bseries(ark, 5)
+series = bseries(ros, 5)
 ```
 
 Again, we can check the order of accuracy by comparing the coefficients to
