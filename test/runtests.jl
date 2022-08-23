@@ -3,6 +3,7 @@ using BSeries
 
 using BSeries.Latexify: latexify
 
+using LinearAlgebra: I
 using StaticArrays: @SArray, @SMatrix, @SVector
 
 using SymEngine: SymEngine
