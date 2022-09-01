@@ -159,10 +159,12 @@ try                                                                       # hide
   results = "```\n" * read(filename, String) * "```\n"                    # hide
   Markdown.parse(results)                                                 # hide
 catch                                                                     # hide
-  if get(ENV, "CI", nothing) != "true"                                    # hide
-    println("We are not running CI so we do not show results here.")      # hide
-  else                                                                    # hide
+  ci = get(ENV, "CI", nothing) != "true" ||                               # hide
+       get(ENV, "GITHUB_REPOSITORY", nothing) != "ranocha/Bseries.jl"     # hide
+  if ci                                                                   # hide
     rethrow()                                                             # hide
+  else                                                                    # hide
+    println("We are not running CI so we do not show results here.")      # hide
   end                                                                     # hide
 end                                                                       # hide
 ````
@@ -198,10 +200,12 @@ try                                                                       # hide
   results = "```\n" * read(filename, String) * "```\n"                    # hide
   Markdown.parse(results)                                                 # hide
 catch                                                                     # hide
-  if get(ENV, "CI", nothing) != "true"                                    # hide
-    println("We are not running CI so we do not show results here.")      # hide
-  else                                                                    # hide
+  ci = get(ENV, "CI", nothing) != "true" ||                               # hide
+       get(ENV, "GITHUB_REPOSITORY", nothing) != "ranocha/Bseries.jl"     # hide
+  if ci                                                                   # hide
     rethrow()                                                             # hide
+  else                                                                    # hide
+    println("We are not running CI so we do not show results here.")      # hide
   end                                                                     # hide
 end                                                                       # hide
 ````
