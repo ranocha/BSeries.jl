@@ -159,8 +159,8 @@ try                                                                       # hide
   results = "```\n" * read(filename, String) * "```\n"                    # hide
   Markdown.parse(results)                                                 # hide
 catch                                                                     # hide
-  ci = get(ENV, "CI", nothing) != "true" ||                               # hide
-       get(ENV, "GITHUB_REPOSITORY", nothing) != "ranocha/Bseries.jl"     # hide
+  ci = get(ENV, "CI", nothing) == "true" &&                               # hide
+       get(ENV, "GITHUB_REPOSITORY", nothing) == "ranocha/Bseries.jl"     # hide
   if ci                                                                   # hide
     rethrow()                                                             # hide
   else                                                                    # hide
@@ -200,8 +200,8 @@ try                                                                       # hide
   results = "```\n" * read(filename, String) * "```\n"                    # hide
   Markdown.parse(results)                                                 # hide
 catch                                                                     # hide
-  ci = get(ENV, "CI", nothing) != "true" ||                               # hide
-       get(ENV, "GITHUB_REPOSITORY", nothing) != "ranocha/Bseries.jl"     # hide
+  ci = get(ENV, "CI", nothing) == "true" &&                               # hide
+       get(ENV, "GITHUB_REPOSITORY", nothing) == "ranocha/Bseries.jl"     # hide
   if ci                                                                   # hide
     rethrow()                                                             # hide
   else                                                                    # hide
