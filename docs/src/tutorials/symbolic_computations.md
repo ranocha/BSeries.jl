@@ -140,6 +140,7 @@ Symbolics.@variables h
 latexify(series / h, cdot=false) |> println
 ```
 
+
 ## Working with rational coefficients
 
 High-order Runge-Kutta methods are often given in terms of rational coefficients that have large denominators.
@@ -155,3 +156,23 @@ b = Rational{Int128}[(1081252805//134140608),(2639189439//74522560),(33646441//4
 ```
 
 If even `Int128` is not enough, one can specify the type `BigInt`, which has adjustable precision.
+
+
+## Setting up symbolic B-series
+
+You can also create purely symbolic B-series as starting point of exploratory research, e.g.,
+
+```@example ex:symbolic-series
+using BSeries, SymPy
+
+series = bseries(5) do t, series
+    return symbols("a_$(butcher_representation(t))", real=true)
+end
+```
+
+This B-series can be used as any other B-series, e.g., to compute a 
+modified equation:
+
+```@example ex:symbolic-series
+modified_equation(series)
+```
