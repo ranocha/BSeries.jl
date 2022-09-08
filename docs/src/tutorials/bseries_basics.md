@@ -56,6 +56,20 @@ coeffs4
 In this form, the rooted trees are printed as level sequences.
 The corresponding coefficients are on the right.
 
+You can use the function `RootedTrees.set_printing_style` to change the
+printing style globally. For example, you can use the notation of Butcher
+as follows.
+```@example bseries-basics
+RootedTrees.set_printing_style("butcher")
+coeffs4
+```
+To use the level sequence representation, you need to change the printing style
+again.
+```@example bseries-basics
+RootedTrees.set_printing_style("sequence")
+coeffs4
+```
+
 
 ## Exact series and local error
 
