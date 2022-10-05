@@ -31,13 +31,7 @@ Butcher's book. The rooted trees written in this way can be rendered in LaTeX
 using the package [`forest`](https://ctan.org/pkg/forest); unfortunately,
 there is no easy way to render them in the browser. Nevertheless, you can render
 them using LaTeX with an appropriate preamble, see the docstring of
-`RootedTrees.latexify`.
-
-````@example bseries-basics
-@doc RootedTrees.latexify
-````
-
-The rendered output looks like this:
+`RootedTrees.latexify`. The rendered output looks like this:
 
 ![bseries_creation_eq1-1](https://user-images.githubusercontent.com/12693098/193994163-e53d24a8-f74e-4f95-b07d-225ebde83f70.png)
 
