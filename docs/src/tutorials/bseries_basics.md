@@ -33,9 +33,9 @@ there is no easy way to render them in the browser. Nevertheless, you can render
 them using LaTeX with an appropriate preamble, see the docstring of
 `RootedTrees.latexify`.
 
-```@example bseries-basics
+````@example bseries-basics
 @doc RootedTrees.latexify
-```
+````
 
 The rendered output looks like this:
 
