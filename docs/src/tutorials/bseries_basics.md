@@ -26,16 +26,28 @@ coeffs2 = bseries(A, b, c, 3)
 latexify(coeffs2, cdot=false)
 ```
 
+The rooted trees are printed as nested lists, essentially in the form used in
+Butcher's book. The rooted trees written in this way can be rendered in LaTeX
+using the package [`forest`](https://ctan.org/pkg/forest); unfortunately,
+there is no easy way to render them in the browser. Nevertheless, you can render
+them using LaTeX with an appropriate preamble, see the docstring of
+`RootedTrees.latexify`.
+
+```@example bseries-basics
+@doc RootedTrees.latexify
+```
+
+The rendered output looks like this:
+
+![bseries_creation_eq1-1](https://user-images.githubusercontent.com/12693098/193994163-e53d24a8-f74e-4f95-b07d-225ebde83f70.png)
+
 We have generated the B-series up to terms of order $h^3$.  The terms $F_f()$
 represent elementary differentials, which are products of derivatives of the
 ODE right-hand side.  Since we haven't specified an ODE, these are indicated
-simply by the associated rooted tree.  The rooted trees are printed as nested
-lists, essentially in the form used in Butcher's book.  The rooted trees written
-in this way can be rendered in LaTeX using the package [`forest`](https://ctan.org/pkg/forest); unfortunately,
-there is no easy way to render them in the browser.
+simply by the associated rooted tree.
+
 
 Here is a B-series for the classical 4th-order method, expanded up to 5th-order terms:
-
 
 ```@example bseries-basics
 A = [0 0 0 0; 1//2 0 0 0; 0 1//2 0 0; 0 0 1 0];
@@ -45,6 +57,8 @@ c = [0, 1//2, 1//2, 1];
 coeffs4 = bseries(A, b, c, 5)
 latexify(coeffs4, cdot=false)
 ```
+
+![bseries_creation_eq2-1](https://user-images.githubusercontent.com/12693098/193994166-a9178001-702d-4f9b-a3f6-6a89251ddb7f.png)
 
 We can also print out the B-series coefficients this way:
 
@@ -59,12 +73,15 @@ The corresponding coefficients are on the right.
 You can use the function `RootedTrees.set_printing_style` to change the
 printing style globally. For example, you can use the notation of Butcher
 as follows.
+
 ```@example bseries-basics
 RootedTrees.set_printing_style("butcher")
 coeffs4
 ```
+
 To use the level sequence representation, you need to change the printing style
 again.
+
 ```@example bseries-basics
 RootedTrees.set_printing_style("sequence")
 coeffs4
@@ -85,13 +102,15 @@ coeffs_ex = ExactSolution(coeffs4)
 latexify(coeffs_ex, cdot=false)
 ```
 
-We can find the local error by subtracting the exact solution B-series from the RK method B-series:
+![bseries_creation_eq3-1](https://user-images.githubusercontent.com/12693098/193994175-22356d01-edb9-44b6-afd3-4354a3daffc6.png)
 
+We can find the local error by subtracting the exact solution B-series from the RK method B-series:
 
 ```@example bseries-basics
 latexify(coeffs4-coeffs_ex, cdot=false)
 ```
 
+![bseries_creation_eq4-1](https://user-images.githubusercontent.com/12693098/193994179-7ffcced2-6760-46fc-829a-d6c5814d543f.png)
 
 This confirms that the method is of 4th order, since all terms involving
 smaller powers of $h$ vanish exactly.  We don't see the $h^6$ and higher
@@ -114,6 +133,8 @@ with the following leading error terms:
 ```@example bseries-basics
 latexify(coeffs2-coeffs_ex, cdot=false)
 ```
+
+![bseries_creation_eq5-1](https://user-images.githubusercontent.com/12693098/193994181-108aa3a7-e2fb-4247-a770-9647ebe861c8.png)
 
 This confirms again the accuracy of the method, and shows us that we
 can eliminate one of the leading error terms completely if we take

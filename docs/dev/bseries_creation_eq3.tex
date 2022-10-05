@@ -1,0 +1,56 @@
+\documentclass[
+  preview,
+  border={0pt 1pt 0pt 1pt}, % left bottom right top
+]{standalone}
+
+% Butcher trees, cf. https://tex.stackexchange.com/questions/283343/butcher-trees-in-tikz
+\usepackage{forest}
+\forestset{
+  */.style={
+    delay+={append={[]},}
+  },
+  rooted tree/.style={
+    for tree={
+      grow'=90,
+      parent anchor=center,
+      child anchor=center,
+      s sep=2.5pt,
+      if level=0{
+        baseline
+      }{},
+      delay={
+        if content={*}{
+          content=,
+          append={[]}
+        }{}
+      }
+    },
+    before typesetting nodes={
+      for tree={
+        circle,
+        fill,
+        minimum width=3pt,
+        inner sep=0pt,
+        child anchor=center,
+      },
+    },
+    before computing xy={
+      for tree={
+        l=5pt,
+      }
+    }
+  }
+}
+\DeclareDocumentCommand\rootedtree{o}{\Forest{rooted tree [#1]}}
+
+\usepackage{amssymb}
+
+\begin{document}
+
+\(\displaystyle
+F_{f}\mathopen{}\left( \varnothing \right)\mathclose{} + h F_{f}\mathopen{}\left( \rootedtree[] \right)\mathclose{} + \frac{1}{2} h^{2} F_{f}\mathopen{}\left( \rootedtree[[]] \right)\mathclose{} + \frac{1}{6} h^{3} F_{f}\mathopen{}\left( \rootedtree[[[]]] \right)\mathclose{} + \frac{1}{6} h^{3} F_{f}\mathopen{}\left( \rootedtree[[][]] \right)\mathclose{} + \frac{1}{24} h^{4} F_{f}\mathopen{}\left( \rootedtree[[[[]]]] \right)\mathclose{} + \frac{1}{24} h^{4} F_{f}\mathopen{}\left( \rootedtree[[[][]]] \right)\mathclose{} + \frac{1}{8} h^{4} F_{f}\mathopen{}\left( \rootedtree[[[]][]] \right)\mathclose{} + \frac{1}{24} h^{4} F_{f}\mathopen{}\left( \rootedtree[[][][]] \right)\mathclose{} + \frac{1}{120} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[[[]]]]] \right)\mathclose{} + \frac{1}{120} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[[][]]]] \right)\mathclose{} + \frac{1}{40} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[[]][]]] \right)\mathclose{} + \frac{1}{30} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[[]]][]] \right)\mathclose{} + \frac{1}{120} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[][][]]] \right)\mathclose{} + \frac{1}{30} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[][]][]] \right)\mathclose{} + \frac{1}{40} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[]][[]]] \right)\mathclose{} + \frac{1}{20} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[]][][]] \right)\mathclose{} + \frac{1}{120} h^{5} F_{f}\mathopen{}\left( \rootedtree[[][][][]] \right)\mathclose{}
+\)
+
+\end{document}
+
+% pdftoppm -png -rx 300 -ry 300 -f 1 -l 1 bseries_creation_eq3.pdf bseries_creation_eq3
