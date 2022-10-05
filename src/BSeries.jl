@@ -1,5 +1,5 @@
 module BSeries
- 
+
 @doc read(joinpath(dirname(@__DIR__), "README.md"), String) BSeries
 
 import Base: +, -, *, /, \
