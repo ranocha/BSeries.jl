@@ -1,0 +1,56 @@
+\documentclass[
+  preview,
+  border={0pt 1pt 0pt 1pt}, % left bottom right top
+]{standalone}
+
+% Butcher trees, cf. https://tex.stackexchange.com/questions/283343/butcher-trees-in-tikz
+\usepackage{forest}
+\forestset{
+  */.style={
+    delay+={append={[]},}
+  },
+  rooted tree/.style={
+    for tree={
+      grow'=90,
+      parent anchor=center,
+      child anchor=center,
+      s sep=2.5pt,
+      if level=0{
+        baseline
+      }{},
+      delay={
+        if content={*}{
+          content=,
+          append={[]}
+        }{}
+      }
+    },
+    before typesetting nodes={
+      for tree={
+        circle,
+        fill,
+        minimum width=3pt,
+        inner sep=0pt,
+        child anchor=center,
+      },
+    },
+    before computing xy={
+      for tree={
+        l=5pt,
+      }
+    }
+  }
+}
+\DeclareDocumentCommand\rootedtree{o}{\Forest{rooted tree [#1]}}
+
+\usepackage{amssymb}
+
+\begin{document}
+
+\(\displaystyle
+\frac{-1}{120} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[[[]]]]] \right)\mathclose{} + \frac{1}{480} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[[][]]]] \right)\mathclose{} + \frac{-1}{240} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[[]][]]] \right)\mathclose{} + \frac{1}{120} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[[]]][]] \right)\mathclose{} + \frac{-1}{720} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[][][]]] \right)\mathclose{} + \frac{-1}{480} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[][]][]] \right)\mathclose{} + \frac{1}{160} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[]][[]]] \right)\mathclose{} + \frac{1}{480} h^{5} F_{f}\mathopen{}\left( \rootedtree[[[]][][]] \right)\mathclose{} + \frac{1}{2880} h^{5} F_{f}\mathopen{}\left( \rootedtree[[][][][]] \right)\mathclose{}
+\)
+
+\end{document}
+
+% pdftoppm -png -rx 300 -ry 300 -f 1 -l 1 bseries_creation_eq4.pdf bseries_creation_eq4
