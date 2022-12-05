@@ -35,10 +35,10 @@ API documentation.
 
 !!! note
 
-    Please note that B-series analysis is most conveniently applied to the 
+    Please note that B-series analysis is most conveniently applied to the
     autonomous form of ordinary differential equations (ODEs). Thus, BSeries.jl and
     RootedTrees.jl usually assume that time integration methods give the same
-    result, independent of whether an ODE is written in an autonomous or a 
+    result, independent of whether an ODE is written in an autonomous or a
     non-autonomous form. For Runge-Kutta methods, this means that the usual row-sum
     assumption is used.
 
@@ -68,11 +68,13 @@ If you use
 [BSeries.jl](https://github.com/ranocha/BSeries.jl)
 for your research, please cite it using the bibtex entry
 ```bibtex
-@online{ketcheson2021computing,
+@article{ketcheson2022computing,
   title={Computing with {B}-series},
   author={Ketcheson, David I and Ranocha, Hendrik},
-  year={2021},
-  month={11},
+  journal={ACM Transactions on Mathematical Software},
+  year={2022},
+  month={12},
+  doi={10.1145/3573384},
   eprint={2111.11680},
   eprinttype={arXiv},
   eprintclass={math.NA}
