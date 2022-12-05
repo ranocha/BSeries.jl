@@ -51,6 +51,9 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
         env:
           PYTHON: ""
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
       - name: Run Python benchmarks
         run: |
           # Install pybs and run benchmark
