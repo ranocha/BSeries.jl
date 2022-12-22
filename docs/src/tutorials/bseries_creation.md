@@ -12,6 +12,13 @@ ways to obtain the B-series of different time integration methods.
 the type `RungeKuttaMethod` as wrapper of Butcher coefficients `A, b, c` of
 Runge-Kutta methods.
 
+```@docs
+RungeKuttaMethod
+```
+
+For example, you can create the classical explicit, fourth-order Runge-Kutta
+method as follows.
+
 ```@example ex:RK4
 using BSeries
 
@@ -25,8 +32,8 @@ rk = RungeKuttaMethod(A, b)
 ```
 
 Instead of passing the Butcher coefficients explicitly
-to [`bseries`](@ref), you can also pass the wrapper struct. In fact, this is
-the preferred method.
+to [`bseries`](@ref), you can also pass the wrapper struct `rk`. In fact,
+this is the preferred method.
 
 ```@example ex:RK4
 series = bseries(rk, 5)
@@ -47,9 +54,14 @@ order_of_accuracy(series)
 
 [BSeries.jl](https://github.com/ranocha/BSeries.jl) and
 [RootedTrees.jl](https://github.com/SciML/RootedTrees.jl) also support additive
-Runge-Kutta methods via the wrapper `AdditiveRungeKuttaMethod`. For example,
-we can write the Störmer-Verlet method as additive Runge-Kutta method following
-Table II.2.1 of Hairer, Lubich, and Wanner (2002).
+Runge-Kutta methods via the wrapper `AdditiveRungeKuttaMethod`.
+
+```@docs
+AdditiveRungeKuttaMethod
+```
+
+For example, we can write the Störmer-Verlet method as additive Runge-Kutta
+method following Table II.2.1 of Hairer, Lubich, and Wanner (2002).
 
 ```@example ex:SV
 using BSeries
@@ -83,12 +95,12 @@ series - ExactSolution(series)
 order_of_accuracy(series)
 ```
 
-
 ### References
 
 - Ernst Hairer, Gerhard Wanner, Christian Lubich.
   Geometric numerical integration.
   Springer, 2002.
+  [DOI: 10.1007/3-540-30666-8](https://doi.org/10.1007/3-540-30666-8)
 
 
 ## B-series for Rosenbrock methods
@@ -96,8 +108,14 @@ order_of_accuracy(series)
 [BSeries.jl](https://github.com/ranocha/BSeries.jl) and
 [RootedTrees.jl](https://github.com/SciML/RootedTrees.jl) also support
 Rosenbrock (Rosenbrock-Wanner, ROW) methods via the wrapper
-`RosebrockMethod`. For example, a classical ROW method of
-Kaps and Rentrop (1979) can be parameterized as follows.
+`RosebrockMethod`.
+
+```@docs
+RosebrockMethod
+```
+
+For example, a classical ROW method of Kaps and Rentrop (1979) can be
+parameterized as follows.
 
 ```@example ex:ROW
 using BSeries
@@ -130,7 +148,6 @@ series - ExactSolution(series)
 ```@example ex:ROW
 order_of_accuracy(series)
 ```
-
 
 ### References
 
@@ -167,7 +184,8 @@ b([t_1, ..., t_n]) &= b(t_1)...b(t_n) / (n + 1).
 ```
 
 by Celledoni, McLachlan, McLaren, Owren, Quispel, and Wright (2009). We can
-implement this up to order 5 in BSeries.jl as follows.
+implement this up to order 5 in [BSeries.jl](https://github.com/ranocha/BSeries.jl)
+as follows.
 
 ```@example ex:AVF
 using BSeries
@@ -298,7 +316,6 @@ order_of_accuracy(series)
 ```@example ex:compose
 series - ExactSolution(series)
 ```
-
 
 ### References
 
