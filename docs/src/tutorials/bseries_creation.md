@@ -13,6 +13,7 @@ the type `RungeKuttaMethod` as wrapper of Butcher coefficients `A, b, c` of
 Runge-Kutta methods.
 
 ```@example
+using BSeries #hide
 @doc RungeKuttaMethod #hide
 ```
 
@@ -57,6 +58,7 @@ order_of_accuracy(series)
 Runge-Kutta methods via the wrapper `AdditiveRungeKuttaMethod`.
 
 ```@example
+using BSeries #hide
 @doc AdditiveRungeKuttaMethod #hide
 ```
 
@@ -111,6 +113,7 @@ Rosenbrock (Rosenbrock-Wanner, ROW) methods via the wrapper
 `RosebrockMethod`.
 
 ```@example
+using BSeries #hide
 @doc RosebrockMethod #hide
 ```
 
