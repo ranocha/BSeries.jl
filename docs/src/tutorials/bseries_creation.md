@@ -12,8 +12,8 @@ ways to obtain the B-series of different time integration methods.
 the type `RungeKuttaMethod` as wrapper of Butcher coefficients `A, b, c` of
 Runge-Kutta methods.
 
-```@docs
-RungeKuttaMethod
+```@example
+@doc RungeKuttaMethod #hide
 ```
 
 For example, you can create the classical explicit, fourth-order Runge-Kutta
@@ -56,8 +56,8 @@ order_of_accuracy(series)
 [RootedTrees.jl](https://github.com/SciML/RootedTrees.jl) also support additive
 Runge-Kutta methods via the wrapper `AdditiveRungeKuttaMethod`.
 
-```@docs
-AdditiveRungeKuttaMethod
+```@example
+@doc AdditiveRungeKuttaMethod #hide
 ```
 
 For example, we can write the Störmer-Verlet method as additive Runge-Kutta
@@ -110,8 +110,8 @@ order_of_accuracy(series)
 Rosenbrock (Rosenbrock-Wanner, ROW) methods via the wrapper
 `RosebrockMethod`.
 
-```@docs
-RosebrockMethod
+```@example
+@doc RosebrockMethod #hide
 ```
 
 For example, a classical ROW method of Kaps and Rentrop (1979) can be
