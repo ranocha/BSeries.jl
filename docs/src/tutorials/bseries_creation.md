@@ -9,13 +9,13 @@ ways to obtain the B-series of different time integration methods.
 
 [BSeries.jl](https://github.com/ranocha/BSeries.jl) and
 [RootedTrees.jl](https://github.com/SciML/RootedTrees.jl) provide
-the type `RungeKuttaMethod` as wrapper of Butcher coefficients `A, b, c` of
-Runge-Kutta methods.
+the type [`RungeKuttaMethod`](@ref BSeries.RootedTrees.RungeKuttaMethod)
+as wrapper of Butcher coefficients `A, b, c` of Runge-Kutta methods.
 
-```@example
+````@example
 using BSeries #hide
 @doc RungeKuttaMethod #hide
-```
+````
 
 For example, you can create the classical explicit, fourth-order Runge-Kutta
 method as follows.
