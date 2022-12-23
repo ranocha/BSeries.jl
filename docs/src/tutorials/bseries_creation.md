@@ -99,7 +99,7 @@ order_of_accuracy(series)
 [BSeries.jl](https://github.com/ranocha/BSeries.jl) and
 [RootedTrees.jl](https://github.com/SciML/RootedTrees.jl) also support
 Rosenbrock (Rosenbrock-Wanner, ROW) methods via the wrapper
-[`RosebrockMethod`](@ref BSeries.RootedTrees.RosebrockMethod).
+[`RosenbrockMethod`](@ref BSeries.RootedTrees.RosenbrockMethod).
 For example, a classical ROW method of Kaps and Rentrop (1979) can be
 parameterized as follows.
 
