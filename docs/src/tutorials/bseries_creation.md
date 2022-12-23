@@ -11,12 +11,6 @@ ways to obtain the B-series of different time integration methods.
 [RootedTrees.jl](https://github.com/SciML/RootedTrees.jl) provide
 the type [`RungeKuttaMethod`](@ref BSeries.RootedTrees.RungeKuttaMethod)
 as wrapper of Butcher coefficients `A, b, c` of Runge-Kutta methods.
-
-````@example
-using BSeries #hide
-@doc RungeKuttaMethod #hide
-````
-
 For example, you can create the classical explicit, fourth-order Runge-Kutta
 method as follows.
 
@@ -55,13 +49,8 @@ order_of_accuracy(series)
 
 [BSeries.jl](https://github.com/ranocha/BSeries.jl) and
 [RootedTrees.jl](https://github.com/SciML/RootedTrees.jl) also support additive
-Runge-Kutta methods via the wrapper `AdditiveRungeKuttaMethod`.
-
-```@example
-using BSeries #hide
-@doc AdditiveRungeKuttaMethod #hide
-```
-
+Runge-Kutta methods via the wrapper 
+[`AdditiveRungeKuttaMethod`](@ref BSeries.RootedTrees.AdditiveRungeKuttaMethod).
 For example, we can write the Störmer-Verlet method as additive Runge-Kutta
 method following Table II.2.1 of Hairer, Lubich, and Wanner (2002).
 
@@ -110,13 +99,7 @@ order_of_accuracy(series)
 [BSeries.jl](https://github.com/ranocha/BSeries.jl) and
 [RootedTrees.jl](https://github.com/SciML/RootedTrees.jl) also support
 Rosenbrock (Rosenbrock-Wanner, ROW) methods via the wrapper
-`RosebrockMethod`.
-
-```@example
-using BSeries #hide
-@doc RosebrockMethod #hide
-```
-
+[`RosebrockMethod`](@ref BSeries.RootedTrees.RosebrockMethod).
 For example, a classical ROW method of Kaps and Rentrop (1979) can be
 parameterized as follows.
 
