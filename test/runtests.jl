@@ -1084,7 +1084,7 @@ using Aqua: Aqua
                                                                                                          f[i]) /
                                                                                                         f[i]))),
                                                                        dt => 0))
-                @test isequal(s3, s3_reference)
+                @test iszero(Symbolics.expand(s3 - s3_reference))
             end
 
             s5_reference = 6 // 5 * s3_reference^2 +
