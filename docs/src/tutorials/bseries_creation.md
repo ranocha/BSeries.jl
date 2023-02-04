@@ -49,7 +49,7 @@ order_of_accuracy(series)
 
 [BSeries.jl](https://github.com/ranocha/BSeries.jl) and
 [RootedTrees.jl](https://github.com/SciML/RootedTrees.jl) also support additive
-Runge-Kutta methods via the wrapper 
+Runge-Kutta methods via the wrapper
 [`AdditiveRungeKuttaMethod`](@ref BSeries.RootedTrees.AdditiveRungeKuttaMethod).
 For example, we can write the Störmer-Verlet method as additive Runge-Kutta
 method following Table II.2.1 of Hairer, Lubich, and Wanner (2002).
@@ -85,6 +85,19 @@ series - ExactSolution(series)
 ```@example ex:SV
 order_of_accuracy(series)
 ```
+
+We can also create LaTeX code for this B-series as follows.
+
+```@example ex:SV
+using Latexify
+latexify(series)
+```
+
+When compiled using the preamble code shown in the docstring of
+`RootedTrees.latexify`, the output looks as follows.
+
+![bseries-SV](https://user-images.githubusercontent.com/12693098/216765237-0ec1138f-e3bb-45e4-bc81-9de6a3904e46.jpg)
+
 
 ### References
 

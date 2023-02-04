@@ -1,5 +1,5 @@
 
-struct LatexifyElementaryDifferential{T <: RootedTree}
+struct LatexifyElementaryDifferential{T <: AbstractRootedTree}
     t::T
     f::String
 end
