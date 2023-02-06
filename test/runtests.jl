@@ -118,9 +118,11 @@ using Aqua: Aqua
         series_integrator = bseries(A, b, c, 2)
 
         # These are mostly simple smoke tests
-        @test_nowarn begin @test isempty(empty(series_integrator,
-                                               RootedTrees.RootedTree{Int32, Vector{Int32}},
-                                               Rational{Int32})) end
+        @test_nowarn begin
+            @test isempty(empty(series_integrator,
+                                RootedTrees.RootedTree{Int32, Vector{Int32}},
+                                Rational{Int32}))
+        end
         empty!(series_integrator)
         @test isempty(series_integrator)
         @test isempty(keys(series_integrator))
@@ -557,75 +559,87 @@ using Aqua: Aqua
         end
     end # @testset "modified_equation"
 
-    @testset "elementary differentials" begin @testset "Bicolored trees" begin @testset "Lotka-Volterra" begin
-    # Verified with Mathematica
-    # u = {q, p};
-    # f1 = {q * (p - 1), 0};
-    # f2 = {0, p * (2 - q)};
-    #
-    # f1p = Simplify@D[f1, {u}];
-    # f2p = Simplify@D[f2, {u}];
-    #
-    # f1pp = Simplify@D[f1, {u, 2}];
-    # f2pp = Simplify@D[f2, {u, 2}];
-    #
-    # (* Trees of order 2 *)
-    # Map[InputForm, f1p.f1]
-    # Map[InputForm, f2p.f1]
-    # Map[InputForm, f1p.f2]
-    # Map[InputForm, f2p.f2]
-    #
-    # (* Tall trees of order 3 *)
-    # Map[InputForm, f1p.(f1p.f1)]
-    # Map[InputForm, f2p.(f1p.f1)]
-    # Map[InputForm, f1p.(f2p.f1)]
-    # Map[InputForm, f2p.(f2p.f1)]
-    # Map[InputForm, f1p.(f1p.f2)]
-    # Map[InputForm, f2p.(f1p.f2)]
-    # Map[InputForm, f1p.(f2p.f2)]
-    # Map[InputForm, f2p.(f2p.f2)]
-    #
-    # (* Bushy trees of order 3 *)
-    # Map[InputForm, f1pp.f1.f1]
-    # Map[InputForm, f2pp.f1.f1]
-    # Map[InputForm, f1pp.f2.f1]
-    # Map[InputForm, f2pp.f2.f1]
-    # (* The other choice of colors of the leaves is redundant *)
-    # Map[InputForm, f1pp.f2.f2]
-    # Map[InputForm, f2pp.f2.f2]
-    @testset "SymEngine" begin
-        q, p = u = SymEngine.symbols("q, p")
-        f = ([q * (p - 1), 0], [0, p * (2 - q)])
-        differentials = elementary_differentials(f, u, 3)
-        @test differentials[rootedtree(Int64[], Bool[])] == [1, 1]
-        @test differentials[rootedtree([1], Bool[0])] == [q * (p - 1), 0]
-        @test differentials[rootedtree([1], Bool[1])] == [0, p * (2 - q)]
-        @test differentials[rootedtree([1, 2], Bool[0, 0])] == [(-1 + p)^2 * q, 0]
-        @test differentials[rootedtree([1, 2], Bool[1, 0])] == [0, -((-1 + p) * p * q)]
-        @test differentials[rootedtree([1, 2], Bool[0, 1])] == [p * (2 - q) * q, 0]
-        @test differentials[rootedtree([1, 2], Bool[1, 1])] == [0, p * (2 - q)^2]
-        @test differentials[rootedtree([1, 2, 3], Bool[0, 0, 0])] == [(-1 + p)^3 * q, 0]
-        @test differentials[rootedtree([1, 2, 3], Bool[1, 0, 0])] ==
-              [0, -((-1 + p)^2 * p * q)]
-        @test differentials[rootedtree([1, 2, 3], Bool[0, 1, 0])] ==
-              [-((-1 + p) * p * q^2), 0]
-        @test differentials[rootedtree([1, 2, 3], Bool[1, 1, 0])] ==
-              [0, -((-1 + p) * p * (2 - q) * q)]
-        @test differentials[rootedtree([1, 2, 3], Bool[0, 0, 1])] ==
-              [(-1 + p) * p * (2 - q) * q, 0]
-        @test differentials[rootedtree([1, 2, 3], Bool[1, 0, 1])] ==
-              [0, -(p^2 * (2 - q) * q)]
-        @test differentials[rootedtree([1, 2, 3], Bool[0, 1, 1])] == [p * (2 - q)^2 * q, 0]
-        @test differentials[rootedtree([1, 2, 3], Bool[1, 1, 1])] == [0, p * (2 - q)^3]
-        @test differentials[rootedtree([1, 2, 2], Bool[0, 0, 0])] == [0, 0]
-        @test differentials[rootedtree([1, 2, 2], Bool[1, 0, 0])] == [0, 0]
-        @test differentials[rootedtree([1, 2, 2], Bool[0, 1, 0])] ==
-              [(-1 + p) * p * (2 - q) * q, 0]
-        @test differentials[rootedtree([1, 2, 2], Bool[1, 1, 0])] ==
-              [0, -((-1 + p) * p * (2 - q) * q)]
-        @test differentials[rootedtree([1, 2, 2], Bool[0, 1, 1])] == [0, 0]
-        @test differentials[rootedtree([1, 2, 2], Bool[1, 1, 1])] == [0, 0]
-    end end end end # @testset "elementary differentials"
+    @testset "elementary differentials" begin
+        @testset "Bicolored trees" begin
+            @testset "Lotka-Volterra" begin
+                # Verified with Mathematica
+                # u = {q, p};
+                # f1 = {q * (p - 1), 0};
+                # f2 = {0, p * (2 - q)};
+                #
+                # f1p = Simplify@D[f1, {u}];
+                # f2p = Simplify@D[f2, {u}];
+                #
+                # f1pp = Simplify@D[f1, {u, 2}];
+                # f2pp = Simplify@D[f2, {u, 2}];
+                #
+                # (* Trees of order 2 *)
+                # Map[InputForm, f1p.f1]
+                # Map[InputForm, f2p.f1]
+                # Map[InputForm, f1p.f2]
+                # Map[InputForm, f2p.f2]
+                #
+                # (* Tall trees of order 3 *)
+                # Map[InputForm, f1p.(f1p.f1)]
+                # Map[InputForm, f2p.(f1p.f1)]
+                # Map[InputForm, f1p.(f2p.f1)]
+                # Map[InputForm, f2p.(f2p.f1)]
+                # Map[InputForm, f1p.(f1p.f2)]
+                # Map[InputForm, f2p.(f1p.f2)]
+                # Map[InputForm, f1p.(f2p.f2)]
+                # Map[InputForm, f2p.(f2p.f2)]
+                #
+                # (* Bushy trees of order 3 *)
+                # Map[InputForm, f1pp.f1.f1]
+                # Map[InputForm, f2pp.f1.f1]
+                # Map[InputForm, f1pp.f2.f1]
+                # Map[InputForm, f2pp.f2.f1]
+                # (* The other choice of colors of the leaves is redundant *)
+                # Map[InputForm, f1pp.f2.f2]
+                # Map[InputForm, f2pp.f2.f2]
+                @testset "SymEngine" begin
+                    q, p = u = SymEngine.symbols("q, p")
+                    f = ([q * (p - 1), 0], [0, p * (2 - q)])
+                    differentials = elementary_differentials(f, u, 3)
+                    @test differentials[rootedtree(Int64[], Bool[])] == [1, 1]
+                    @test differentials[rootedtree([1], Bool[0])] == [q * (p - 1), 0]
+                    @test differentials[rootedtree([1], Bool[1])] == [0, p * (2 - q)]
+                    @test differentials[rootedtree([1, 2], Bool[0, 0])] ==
+                          [(-1 + p)^2 * q, 0]
+                    @test differentials[rootedtree([1, 2], Bool[1, 0])] ==
+                          [0, -((-1 + p) * p * q)]
+                    @test differentials[rootedtree([1, 2], Bool[0, 1])] ==
+                          [p * (2 - q) * q, 0]
+                    @test differentials[rootedtree([1, 2], Bool[1, 1])] ==
+                          [0, p * (2 - q)^2]
+                    @test differentials[rootedtree([1, 2, 3], Bool[0, 0, 0])] ==
+                          [(-1 + p)^3 * q, 0]
+                    @test differentials[rootedtree([1, 2, 3], Bool[1, 0, 0])] ==
+                          [0, -((-1 + p)^2 * p * q)]
+                    @test differentials[rootedtree([1, 2, 3], Bool[0, 1, 0])] ==
+                          [-((-1 + p) * p * q^2), 0]
+                    @test differentials[rootedtree([1, 2, 3], Bool[1, 1, 0])] ==
+                          [0, -((-1 + p) * p * (2 - q) * q)]
+                    @test differentials[rootedtree([1, 2, 3], Bool[0, 0, 1])] ==
+                          [(-1 + p) * p * (2 - q) * q, 0]
+                    @test differentials[rootedtree([1, 2, 3], Bool[1, 0, 1])] ==
+                          [0, -(p^2 * (2 - q) * q)]
+                    @test differentials[rootedtree([1, 2, 3], Bool[0, 1, 1])] ==
+                          [p * (2 - q)^2 * q, 0]
+                    @test differentials[rootedtree([1, 2, 3], Bool[1, 1, 1])] ==
+                          [0, p * (2 - q)^3]
+                    @test differentials[rootedtree([1, 2, 2], Bool[0, 0, 0])] == [0, 0]
+                    @test differentials[rootedtree([1, 2, 2], Bool[1, 0, 0])] == [0, 0]
+                    @test differentials[rootedtree([1, 2, 2], Bool[0, 1, 0])] ==
+                          [(-1 + p) * p * (2 - q) * q, 0]
+                    @test differentials[rootedtree([1, 2, 2], Bool[1, 1, 0])] ==
+                          [0, -((-1 + p) * p * (2 - q) * q)]
+                    @test differentials[rootedtree([1, 2, 2], Bool[0, 1, 1])] == [0, 0]
+                    @test differentials[rootedtree([1, 2, 2], Bool[1, 1, 1])] == [0, 0]
+                end
+            end
+        end
+    end # @testset "elementary differentials"
 
     @testset "modified_equation with elementary differentials" begin
         @testset "SymEngine.jl" begin
@@ -1102,67 +1116,70 @@ using Aqua: Aqua
         end
     end # @testset "modifying_integrator with elementary differentials"
 
-    @testset "nonlinear oscillator" begin @testset "SymEngine.jl" begin
-        dt = SymEngine.symbols("dt")
-        u = SymEngine.symbols("u_1, u_2")
-        f = [-u[2], u[1]] / (u[1]^2 + u[2]^2)
+    @testset "nonlinear oscillator" begin
+        @testset "SymEngine.jl" begin
+            dt = SymEngine.symbols("dt")
+            u = SymEngine.symbols("u_1, u_2")
+            f = [-u[2], u[1]] / (u[1]^2 + u[2]^2)
 
-        # explicit midpoint method
-        A = @SArray [0 0; 1//2 0]
-        b = @SArray [0, 1 // 1]
-        c = @SArray [0, 1 // 2]
+            # explicit midpoint method
+            A = @SArray [0 0; 1//2 0]
+            b = @SArray [0, 1 // 1]
+            c = @SArray [0, 1 // 2]
 
-        # tested with Mathematica using
-        # ```
-        # ClearAll["Global`*"];
-        #
-        # solution[t_,
-        #   u0_] := {u0[[1]]*Cos[t/(u0[[1]]^2 + u0[[2]]^2)] -
-        #   u0[[2]]*Sin[t/(u0[[1]]^2 + u0[[2]]^2)],
-        #   u0[[2]]*Cos[t/(u0[[1]]^2 + u0[[2]]^2)] +
-        #   u0[[1]]*Sin[t/(u0[[1]]^2 + u0[[2]]^2)]}
-        #
-        # factorF2[u_] := 1/(12*(u[[1]]^2 + u[[2]]^2)^2)
-        # (*factorF2[u_]:=ff2*)
-        # factorF4[u_] := 1/(20*(u[[1]]^2 + u[[2]]^2)^4)
-        # (*factorF4[u_]:=ff4*)
-        # factorF6[u_] := 127/(2016*(u[[1]]^2 + u[[2]]^2)^6)
-        # (*factorF6[u_]:=ff6*)
-        # factorF8[u_] := 1513/(12960*(u[[1]]^2 + u[[2]]^2)^8)
-        # (*factorF8[u_]:=ff8*)
-        #
-        # factorU3[u_] := 0
-        # (*factorU3[u_]:=fu3*)
-        # factorU5[u_] := 1/(48*(u[[1]]^2 + u[[2]]^2)^6)
-        # (*factorU5[u_]:=fu5*)
-        # factorU7[u_] := 31/(640*(u[[1]]^2 + u[[2]]^2)^8)
-        # (*factorU7[u_]:=fu7*)
-        # factorU9[u_] := 8969/(80640*(u[[1]]^2 + u[[2]]^2)^10)
-        # (*factorU9[u_]:=fu9*)
-        #
-        # newModifiedF[
-        #   u_] :=
-        # (1 + factorF2[u]*h^2 + factorF4[u]*h^4 + factorF6[u]*h^6)*
-        #   originalF[
-        #     u] + (factorU3[u]*h^3 + factorU5[u]*h^5 + factorU7[u]*h^7)*u
-        #
-        # u0 = {u01, u02};
-        # f = newModifiedF;
-        # y2 = u0 + h/2*f[u0];
-        # unew = u0 + h*f[y2];
-        # difference = Simplify@Series[unew - solution[h, u0], {h, 0, 10}];
-        #
-        # Simplify[difference[[1]]]
-        # Simplify[difference[[2]]]
-        # ```
-        series = modifying_integrator(f, u, dt, A, b, c, 10)
-        terms = SymEngine.subs.(series, (Dict(u[1] => 1 // 1, u[2] => 0 // 1),))
+            # tested with Mathematica using
+            # ```
+            # ClearAll["Global`*"];
+            #
+            # solution[t_,
+            #   u0_] := {u0[[1]]*Cos[t/(u0[[1]]^2 + u0[[2]]^2)] -
+            #   u0[[2]]*Sin[t/(u0[[1]]^2 + u0[[2]]^2)],
+            #   u0[[2]]*Cos[t/(u0[[1]]^2 + u0[[2]]^2)] +
+            #   u0[[1]]*Sin[t/(u0[[1]]^2 + u0[[2]]^2)]}
+            #
+            # factorF2[u_] := 1/(12*(u[[1]]^2 + u[[2]]^2)^2)
+            # (*factorF2[u_]:=ff2*)
+            # factorF4[u_] := 1/(20*(u[[1]]^2 + u[[2]]^2)^4)
+            # (*factorF4[u_]:=ff4*)
+            # factorF6[u_] := 127/(2016*(u[[1]]^2 + u[[2]]^2)^6)
+            # (*factorF6[u_]:=ff6*)
+            # factorF8[u_] := 1513/(12960*(u[[1]]^2 + u[[2]]^2)^8)
+            # (*factorF8[u_]:=ff8*)
+            #
+            # factorU3[u_] := 0
+            # (*factorU3[u_]:=fu3*)
+            # factorU5[u_] := 1/(48*(u[[1]]^2 + u[[2]]^2)^6)
+            # (*factorU5[u_]:=fu5*)
+            # factorU7[u_] := 31/(640*(u[[1]]^2 + u[[2]]^2)^8)
+            # (*factorU7[u_]:=fu7*)
+            # factorU9[u_] := 8969/(80640*(u[[1]]^2 + u[[2]]^2)^10)
+            # (*factorU9[u_]:=fu9*)
+            #
+            # newModifiedF[
+            #   u_] :=
+            # (1 + factorF2[u]*h^2 + factorF4[u]*h^4 + factorF6[u]*h^6)*
+            #   originalF[
+            #     u] + (factorU3[u]*h^3 + factorU5[u]*h^5 + factorU7[u]*h^7)*u
+            #
+            # u0 = {u01, u02};
+            # f = newModifiedF;
+            # y2 = u0 + h/2*f[u0];
+            # unew = u0 + h*f[y2];
+            # difference = Simplify@Series[unew - solution[h, u0], {h, 0, 10}];
+            #
+            # Simplify[difference[[1]]]
+            # Simplify[difference[[2]]]
+            # ```
+            series = modifying_integrator(f, u, dt, A, b, c, 10)
+            terms = SymEngine.subs.(series, (Dict(u[1] => 1 // 1, u[2] => 0 // 1),))
 
-        @test isequal(terms[1], 1 // 48 * dt^5 + 31 // 640 * dt^7 + 8969 // 80640 * dt^9)
-        @test isequal(terms[2],
-                      1 + 1 // 12 * dt^2 + 1 // 20 * dt^4 + 127 // 2016 * dt^6 +
-                      1513 // 12960 * dt^8)
-    end end # @testset "nonlinear oscillator"
+            @test isequal(terms[1],
+                          1 // 48 * dt^5 + 31 // 640 * dt^7 + 8969 // 80640 * dt^9)
+            @test isequal(terms[2],
+                          1 + 1 // 12 * dt^2 + 1 // 20 * dt^4 + 127 // 2016 * dt^6 +
+                          1513 // 12960 * dt^8)
+        end
+    end # @testset "nonlinear oscillator"
 
     @testset "integer coefficients" begin
         # reported by David Ketcheson on 2021-12-09
