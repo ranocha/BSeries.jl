@@ -63,6 +63,11 @@ Latexify.@latexrecipe function _(series::TruncatedBSeries;
             end
         end
     end
+
+    if isempty(expressions)
+        return 0
+    end
+
     result = expressions[1]
     for i in 2:length(expressions)
         result = :($result + $(expressions[i]))

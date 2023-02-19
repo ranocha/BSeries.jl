@@ -30,6 +30,7 @@ using Aqua: Aqua
         @test_nowarn latexify(series_integrator)
         @test_nowarn latexify(series_integrator, cdot = false)
         @test_nowarn latexify(series_integrator, dt = SymEngine.symbols("h"))
+        @test_nowarn latexify(series_integrator - series_integrator)
 
         @testset "SymEngine.jl" begin
             @testset "Symbolic coefficients" begin
