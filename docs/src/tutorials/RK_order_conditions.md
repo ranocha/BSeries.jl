@@ -48,21 +48,6 @@ error = rk3 - exact
 ```
 
 
-
-
-    TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Sym} with 9 entries:
-      ∅       => 0
-      τ       => b1 + b2 + b3 + b4 - 1
-      [τ]     => a21*b2 + b3*(a31 + a32) + b4*(a41 + a42 + a43) - 1/2
-      [[τ]]   => a21*a32*b3 + b4*(a21*a42 + a43*(a31 + a32)) - 1/6
-      [τ²]    => a21^2*b2 + b3*(a31 + a32)^2 + b4*(a41 + a42 + a43)^2 - 1/3
-      [[[τ]]] => a21*a32*a43*b4 - 1/24
-      [[τ²]]  => a21^2*a32*b3 + b4*(a21^2*a42 + a43*(a31 + a32)^2) - 1/12
-      [[τ]τ]  => a21*a32*b3*(a31 + a32) + b4*(a21*a42 + a43*(a31 + a32))*(a41 + a42…
-      [τ³]    => a21^3*b2 + b3*(a31 + a32)^3 + b4*(a41 + a42 + a43)^3 - 1/4
-
-
-
 The output above is truncated in the Jupyter notebook.  We can see the full expressions as follows:
 
 
