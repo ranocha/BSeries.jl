@@ -48,7 +48,7 @@ error = rk3 - exact
 ```
 
 
-The output above is truncated in the Jupyter notebook.  We can see the full expressions as follows:
+The output above is truncated.  We can see the full expressions as follows:
 
 
 ```@example bseries-RK-order-conditions
