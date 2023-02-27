@@ -20,12 +20,12 @@ truncation_error = rk22 - exact
 Next we set up the ODE of interest, and evaluate the B-series with that right-hand side.
 
 
-```julia
-@variables h
-@variables p q
+```@example code-generation
+@variables h # time step size
+@variables p q # variables of the ODE
 f = [p * (2 - q), q * (p - 1)]
 
-du = evaluate(f,[p,q],h,RK22-exact)
+du = evaluate(f, [p, q], h, truncation_error)
 ```
 
 Finally, we generate a C function that evaluates the expressions above.
