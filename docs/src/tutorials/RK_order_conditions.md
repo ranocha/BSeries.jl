@@ -5,15 +5,15 @@ In this tutorial, we generate order conditions for a generic explicit Runge-Kutt
 First, we create symbolic coefficient arrays with the appropriate structure.
 
 
-```julia
+```@example bseries-RK-order-conditions
 using BSeries, SymPy, Latexify
 
 s = 4  # Stages
 p = 4  # Desired order of accuracy
 
-A = Array{Sym,2}(undef,s,s)
-b = Array{Sym,1}(undef,s)
-c = Array{Sym,1}(undef,s);
+A = Array{Sym,2}(undef, s, s)
+b = Array{Sym,1}(undef, s)
+c = Array{Sym,1}(undef, s);
 ```
 
 
