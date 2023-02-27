@@ -31,8 +31,8 @@ du = evaluate(f, [p, q], h, truncation_error)
 Finally, we generate a C function that evaluates the expressions above.
 
 
-```julia
-build_function(du, α, p, q, h, target=Symbolics.CTarget())
+```@example code-generation
+build_function(du, α, p, q, h, target = Symbolics.CTarget())
 ```
 
 The [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl) routine `build_function` can also generate code in Julia, MATLAB, and Stan; see the [documentation](https://symbolics.juliasymbolics.org/stable/manual/build_function/#build_function) for details and other options.
