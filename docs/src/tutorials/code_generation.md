@@ -1,7 +1,7 @@
 # Code generation
 This tutorial shows how to generate C code to compute expressions found using [BSeries.jl](https://github.com/ranocha/BSeries.jl).  Although [BSeries.jl](https://github.com/ranocha/BSeries.jl) is compatible with three [symbolic backends](https://ranocha.de/BSeries.jl/dev/tutorials/symbolic_computations/), it's currently easiest to perform code generation using [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl).
 
-First, we generate the B-series that we want work with.  Here we take a generics 2nd-order RK method and generate terms only up to 3rd order, in order to work with the leading truncation error.
+First, we generate the B-series that we want work with.  Here we take a generic 2nd-order RK method and generate terms only up to 3rd order, in order to work with the leading truncation error.
 
 
 ```julia
