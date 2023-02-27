@@ -39,10 +39,11 @@ end
 Next we generate the B-series for the RK method and the exact solution, and take their difference.
 
 
-```julia
-RK3 = bseries(A, b, c, p)
-exact = ExactSolution(RK3)
-error = RK3-exact
+```@example bseries-RK-order-conditions
+
+rk3 = bseries(A, b, c, p)
+exact = ExactSolution(rk3)
+error = rk3 - exact
 ```
 
 
