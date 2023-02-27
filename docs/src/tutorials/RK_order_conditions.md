@@ -1,4 +1,4 @@
-# Runge-Kutta Order conditions
+# Runge-Kutta order conditions
 
 In this tutorial, we generate order conditions for a generic explicit Runge-Kutta method.
 
