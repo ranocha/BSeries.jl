@@ -17,21 +17,21 @@ c = Array{Sym,1}(undef, s);
 ```
 
 
-```julia
-for i = 1:s
-    b[i] = symbols("b$i", real=true)
-    for j = 1:i-1
-        A[i,j] = symbols("a$i$j", real=true)
+```@example bseries-RK-order-conditions
+for i in 1:s
+    b[i] = symbols("b$i", real = true)
+    for j in 1:i-1
+        A[i, j] = symbols("a$i$j", real = true)
     end
-    for j = i:s
-        A[i,j] = 0
+    for j in i:s
+        A[i, j] = 0
     end
 end
 
-for i = 1:s
+for i in 1:s
     c[i] = 0
-    for j = 1:i-1
-        c[i] += A[i,j]
+    for j in 1:i-1
+        c[i] += A[i, j]
     end
 end
 ```
