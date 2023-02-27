@@ -4,15 +4,17 @@ This tutorial shows how to generate C code to compute expressions found using [B
 First, we generate the B-series that we want work with.  Here we take a generic 2nd-order RK method and generate terms only up to 3rd order, in order to work with the leading truncation error.
 
 
-```julia
+```@example code-generation
 using BSeries, Latexify, Symbolics
 
 @variables α
-A = [0 0; 1/(2*α) 0]; b = [1-α, α]; c = [0, 1/(2*α)]
+A = [0 0; 1/(2*α) 0]
+b = [1-α, α]
+c = [0, 1/(2*α)]
 
-RK22 = bseries(A, b, c, 3)
-exact = ExactSolution(RK22)
-truncation_error = RK22-exact
+rk22 = bseries(A, b, c, 3)
+exact = ExactSolution(rk22)
+truncation_error = rk22 - exact
 ```
 
 Next we set up the ODE of interest, and evaluate the B-series with that right-hand side.
