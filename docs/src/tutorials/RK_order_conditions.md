@@ -3,6 +3,7 @@
 In this tutorial, we generate order conditions for a generic explicit Runge-Kutta method.
 
 First, we create symbolic coefficient arrays with the appropriate structure.
+There are several symbolic packages you can use. Here, we will use SymPy.jl.
 
 
 ```@example bseries-RK-order-conditions
