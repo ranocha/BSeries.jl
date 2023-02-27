@@ -65,19 +65,9 @@ error = rk3 - exact
 The output above is truncated in the Jupyter notebook.  We can see the full expressions as follows:
 
 
-```julia
-for (tree,order_condition) in error
+```@example bseries-RK-order-conditions
+for (tree, order_condition) in error
     println(order_condition)
 end
 ```
-
-    0
-    b1 + b2 + b3 + b4 - 1
-    a21*b2 + b3*(a31 + a32) + b4*(a41 + a42 + a43) - 1/2
-    a21*a32*b3 + b4*(a21*a42 + a43*(a31 + a32)) - 1/6
-    a21^2*b2 + b3*(a31 + a32)^2 + b4*(a41 + a42 + a43)^2 - 1/3
-    a21*a32*a43*b4 - 1/24
-    a21^2*a32*b3 + b4*(a21^2*a42 + a43*(a31 + a32)^2) - 1/12
-    a21*a32*b3*(a31 + a32) + b4*(a21*a42 + a43*(a31 + a32))*(a41 + a42 + a43) - 1/8
-    a21^3*b2 + b3*(a31 + a32)^3 + b4*(a41 + a42 + a43)^3 - 1/4
 
