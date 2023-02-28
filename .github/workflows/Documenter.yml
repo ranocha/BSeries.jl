@@ -88,11 +88,10 @@ jobs:
           cd orderconditions
           git checkout 01af16fa823414f47e3bffdc2975ca02d3d115e6
           python --version
-          python ../docs/src/benchmark_python_bseries.py
-          ls
+          python ../docs/src/benchmark_python_orderconditions.py
+          ls -R
           pwd
-          ls ../docs
-          ls ../docs/src
+          ls -R ../docs
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         env:
