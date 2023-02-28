@@ -129,6 +129,7 @@ simple performance comparisons. Again, we just use (the equivalent of) `@time`
 twice to get an idea of the performance after compilation, allowing us to
 compare orders of magnitude.
 
+### Python package `BSeries`
 
 First, we start with the Python package
 [`BSeries`](https://github.com/ketch/BSeries)
@@ -169,6 +170,7 @@ catch                                                                     # hide
 end                                                                       # hide
 ````
 
+## Python package `pybs`
 
 Next, we look at the Python package
 [`pybs`](https://github.com/henriksu/pybs)
@@ -210,6 +212,49 @@ catch                                                                     # hide
 end                                                                       # hide
 ````
 
+## Python package `orderconditions`
+
+Next, we look at the Python package
+[`orderconditions`](https://gitlab.com/v_dallerit/orderconditions)
+of Valentin Dallerit
+and the following benchmark script.
+
+````@example
+using BSeries, Markdown                                                   # hide
+filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
+  "benchmark_python_orderconditions.py")                                  # hide
+script = "```python\n"                                                    # hide
+for line in Iterators.drop(readlines(filename), 4)                        # hide
+  startswith(line, "with") && continue                                    # hide
+  line = replace(line, "  print" => "print")                              # hide
+  global script                                                           # hide
+  script = script * replace(line, ", file=io" => "") * "\n"               # hide
+end                                                                       # hide
+script = script * "```\n"                                                 # hide
+Markdown.parse(script)                                                    # hide
+````
+
+The results are as follows.
+
+````@example
+using BSeries, Markdown                                                   # hide
+filename = joinpath(pathof(BSeries) |> dirname |> dirname, "docs", "src", # hide
+  "benchmark_python_orderconditions.txt")                                 # hide
+try                                                                       # hide
+  results = "```\n" * read(filename, String) * "```\n"                    # hide
+  Markdown.parse(results)                                                 # hide
+catch                                                                     # hide
+  ci = get(ENV, "CI", nothing) == "true" &&                               # hide
+       get(ENV, "GITHUB_REPOSITORY", nothing) == "ranocha/Bseries.jl"     # hide
+  if ci                                                                   # hide
+    rethrow()                                                             # hide
+  else                                                                    # hide
+    println("We are not running CI so we do not show results here.")      # hide
+  end                                                                     # hide
+end                                                                       # hide
+````
+
+### This Julia package BSeries.jl
 
 Finally, we perform the same task using
 [BSeries.jl](https://github.com/ranocha/BSeries.jl)
