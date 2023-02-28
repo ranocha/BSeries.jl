@@ -91,6 +91,8 @@ jobs:
           python ../docs/src/benchmark_python_bseries.py
           ls
           pwd
+          ls ../docs
+          ls ../docs/src
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         env:
