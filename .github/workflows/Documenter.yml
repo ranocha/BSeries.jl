@@ -82,6 +82,21 @@ jobs:
           pip list
           python --version
           python docs/src/benchmark_python_bseries.py
+          #
+          # Install orderconditions and run benchmark
+          git clone https://gitlab.com/v_dallerit/orderconditions.git
+          cd orderconditions
+          git checkout 01af16fa823414f47e3bffdc2975ca02d3d115e6
+          python --version
+          cp ../docs/src/benchmark_python_orderconditions.py ./
+          pip install IPython
+          pip install graphviz
+          pip list
+          python benchmark_python_orderconditions.py
+          cp ./benchmark_python_orderconditions.txt ../docs/src/
+          ls -R
+          pwd
+          ls -R ../docs
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         env:
