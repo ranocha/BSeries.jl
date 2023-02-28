@@ -15,10 +15,6 @@ p = 4  # Desired order of accuracy
 A = Array{Sym,2}(undef, s, s)
 b = Array{Sym,1}(undef, s)
 c = Array{Sym,1}(undef, s);
-```
-
-
-```@example bseries-RK-order-conditions
 for i in 1:s
     b[i] = symbols("b$i", real = true)
     for j in 1:i-1
