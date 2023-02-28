@@ -170,7 +170,7 @@ catch                                                                     # hide
 end                                                                       # hide
 ````
 
-## Python package `pybs`
+### Python package `pybs`
 
 Next, we look at the Python package
 [`pybs`](https://github.com/henriksu/pybs)
@@ -212,7 +212,7 @@ catch                                                                     # hide
 end                                                                       # hide
 ````
 
-## Python package `orderconditions`
+### Python package `orderconditions`
 
 Next, we look at the Python package
 [`orderconditions`](https://gitlab.com/v_dallerit/orderconditions)
