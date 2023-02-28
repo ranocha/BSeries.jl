@@ -18,7 +18,7 @@ with open(io_file, 'a') as io:
   print("\nModified equation", file=io)
 
 start_time = time.time()
-set_order(up_to_order)
+BSeries.set_order(up_to_order)
 Y1 = BSeries.y() + midpoint_method.A[1,0] * BSeries.hf()
 rk2 = BSeries.y() + midpoint_method.b[0] * BSeries.hf() + midpoint_method.b[1] * BSeries.compo_hf(Y1)
 series = BSeries.modified_equation(rk2)
@@ -29,7 +29,7 @@ with open(io_file, 'a') as io:
   print("", end_time - start_time, "seconds", file=io)
 
 start_time = time.time()
-set_order(up_to_order)
+BSeries.set_order(up_to_order)
 Y1 = BSeries.y() + midpoint_method.A[1,0] * BSeries.hf()
 rk2 = BSeries.y() + midpoint_method.b[0] * BSeries.hf() + midpoint_method.b[1] * BSeries.compo_hf(Y1)
 series = BSeries.modified_equation(rk2)
@@ -43,7 +43,7 @@ with open(io_file, 'a') as io:
 print("\nModifying integrator")
 
 start_time = time.time()
-set_order(up_to_order)
+BSeries.set_order(up_to_order)
 Y1 = BSeries.y() + midpoint_method.A[1,0] * BSeries.hf()
 rk2 = BSeries.y() + midpoint_method.b[0] * BSeries.hf() + midpoint_method.b[1] * BSeries.compo_hf(Y1)
 series = BSeries.modifying_integrator(rk2)
@@ -54,7 +54,7 @@ with open(io_file, 'a') as io:
   print("", end_time - start_time, "seconds", file=io)
 
 start_time = time.time()
-set_order(up_to_order)
+BSeries.set_order(up_to_order)
 Y1 = BSeries.y() + midpoint_method.A[1,0] * BSeries.hf()
 rk2 = BSeries.y() + midpoint_method.b[0] * BSeries.hf() + midpoint_method.b[1] * BSeries.compo_hf(Y1)
 series = BSeries.modifying_integrator(rk2)
