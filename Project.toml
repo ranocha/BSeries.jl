@@ -13,7 +13,7 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 RootedTrees = "47965b36-3f3e-11e9-0dcf-4570dfd42a8c"
 
 [compat]
-Latexify = "0.15"
+Latexify = "0.15, 0.16"
 OrderedCollections = "1"
 Polynomials = "2.0.23, 3"
 Reexport = "1"
