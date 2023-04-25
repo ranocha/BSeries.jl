@@ -11,7 +11,9 @@ using RootedTrees: AbstractRootedTree
 
 @reexport using OrderedCollections: OrderedDict
 
-using Requires: @require
+if !isdefined(Base, :get_extension)
+    using Requires: @require
+end
 
 using Latexify: Latexify, LaTeXString
 
@@ -1322,36 +1324,13 @@ if these packages are loaded (via Requires.jl).
 """
 function compute_derivative end
 
-function __init__()
-    @require SymEngine="123dc426-2d89-5057-bbad-38513e3affd8" begin
-        using .SymEngine: SymEngine
+@static if !isdefined(Base, :get_extension)
+    function __init__()
+        @require Symbolics="0c5d862f-8b57-4792-8d23-62f2024744c7" begin include("../ext/SymbolicsExt.jl") end
 
-        function compute_derivative(expression::SymEngine.Basic, variable::SymEngine.Basic)
-            SymEngine.diff(expression, variable)
-        end
+        @require SymEngine="123dc426-2d89-5057-bbad-38513e3affd8" begin include("../ext/SymEngineExt.jl") end
 
-        latexify_default_dt(::Type{SymEngine.Basic}) = SymEngine.symbols("h")
-    end
-
-    @require SymPy="24249f21-da20-56a4-8eb1-6a02cf4ae2e6" begin
-        using .SymPy: SymPy
-
-        function compute_derivative(expression::SymPy.Sym, variable::SymPy.Sym)
-            SymPy.diff(expression, variable)
-        end
-
-        latexify_default_dt(::Type{SymPy.Sym}) = SymPy.symbols("h", real = true)
-    end
-
-    @require Symbolics="0c5d862f-8b57-4792-8d23-62f2024744c7" begin
-        using .Symbolics: Symbolics
-
-        function compute_derivative(expression::Symbolics.Num, variable::Symbolics.Num)
-            Symbolics.expand_derivatives(Symbolics.Differential(variable)(expression))
-        end
-
-        # nested macro calls do not work so we need to define this part in another file
-        include("latexify_symbolics.jl")
+        @require SymPy="24249f21-da20-56a4-8eb1-6a02cf4ae2e6" begin include("../ext/SymPyExt.jl") end
     end
 end
 
