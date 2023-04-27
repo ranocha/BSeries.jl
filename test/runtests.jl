@@ -1887,7 +1887,7 @@ using Aqua: Aqua
                       # ])
                       )
 
-        # No Base and as extra test for the reson described above
+        # No Base and as extra test for the reason described above
         @testset "ambiguities" begin Aqua.test_ambiguities([BSeries]) end
     end
 end # @testset "BSeries"
