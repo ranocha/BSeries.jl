@@ -318,7 +318,7 @@ end
 Determine the order of accuracy of the B-series `series`. By default, the
 comparison with the coefficients of the exact solution is performed using
 `isequal`. If keyword arguments such as absolute/relative tolerances `atol`/`rtol`
-are given or floating point numbers are used, the comparison is perfomed using
+are given or floating point numbers are used, the comparison is performed using
 `isapprox` and the keyword arguments `kwargs...` are forwarded.
 
 See also [`order`](@ref), [`ExactSolution`](@ref).
@@ -678,7 +678,7 @@ end
 """
     substitute(b, a, t::AbstractRootedTree)
 
-Compute the coefficient correspoding to the tree `t` of the B-series that is
+Compute the coefficient corresponding to the tree `t` of the B-series that is
 formed by substituting the B-series `b` into the B-series `a`. It is assumed
 that the B-series `b` has the coefficient zero of the empty tree.
 
@@ -741,7 +741,7 @@ end
 """
     compose(b, a, t::RootedTree)
 
-Compute the coefficient correspoding to the tree `t` of the B-series that is
+Compute the coefficient corresponding to the tree `t` of the B-series that is
 formed by composing the B-series `a` with the B-series `b`. It is assumed that
 the B-series `b` has the coefficient unity of the empty tree.
 
@@ -868,7 +868,7 @@ are supported.
 The powers of `dt` can be controlled by `reduce_order_by` to make them different
 from the usual `order(t)` for a rooted tree `t`. This can be useful in the
 context of [`modified_equation`](@ref)s or [`modifying_integrator`](@ref)s,
-where the B-series coeffcients are those of ``h fₕ``, i.e., they contain an
+where the B-series coefficients are those of ``h fₕ``, i.e., they contain an
 additional power of `dt`. In this case, the B-series of the vector field can
 be obtained using `reduce_order_by = 1`.
 
@@ -951,7 +951,7 @@ function _modified_equation(series_integrator, ::EagerEvaluation)
     # We could just use the lazy version
     #   series_ex = ExactSolution{V}()
     # However, we need to access elements of `series_ex` more than once in the
-    # subsitution below. Thus, it's cheaper to compute every entry only once and
+    # substitution below. Thus, it's cheaper to compute every entry only once and
     # re-use it later.
     series_ex = ExactSolution(series_integrator)
 
