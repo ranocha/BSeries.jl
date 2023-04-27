@@ -236,33 +236,33 @@ using Aqua: Aqua
         #   Numerical integrators based on modified differential equations
         #   [DOI: 10.1090/S0025-5718-07-01967-9](https://doi.org/10.1090/S0025-5718-07-01967-9)
 
-        ba = @inferred substitute(b, a)
+        b_a = @inferred substitute(b, a)
         t = rootedtree(Int[])
-        @test isequal(ba[t], a[t])
+        @test isequal(b_a[t], a[t])
 
         t = rootedtree([1])
         coef = a1 * b1
         @inferred substitute(b, a, t)
         @test isequal(substitute(b, a, t), coef)
-        @test isequal(ba[t], coef)
+        @test isequal(b_a[t], coef)
 
         t = rootedtree([1, 2])
         coef = a1 * b2 + a2 * b1^2
         @inferred substitute(b, a, t)
         @test isequal(substitute(b, a, t), coef)
-        @test isequal(ba[t], coef)
+        @test isequal(b_a[t], coef)
 
         t = rootedtree([1, 2, 2])
         coef = a1 * b31 + 2 * a2 * b1 * b2 + a31 * b1^3
         @inferred substitute(b, a, t)
         @test isequal(substitute(b, a, t), coef)
-        @test isequal(ba[t], coef)
+        @test isequal(b_a[t], coef)
 
         t = rootedtree([1, 2, 3])
         coef = a1 * b32 + 2 * a2 * b1 * b2 + a32 * b1^3
         @inferred substitute(b, a, t)
         @test isequal(substitute(b, a, t), coef)
-        @test isequal(ba[t], coef)
+        @test isequal(b_a[t], coef)
     end # @testset "substitute"
 
     @testset "compose" begin
