@@ -1,57 +1,37 @@
+#This code is based on the Theorem 2 of the paper "Energy-Preserving Integrators and the Structure of B-series" (link: https://link.springer.com/article/10.1007/s10208-010-9073-1).
+#Functions to run: EnergyPreserving(A,b,s), EnergyPreservingAVF(s), BSeries_Energy_Preserving(series)
 # Load the packages we will use.
-# These must first be installed using: import Pkg; Pkg.add("package_name")
-#import Pkg; Pkg.add("BSeries")
 using BSeries
-using Latexify  # Only needed for some pretty-printing cells below using `latexify`
 import SymPy; sp=SymPy;
-using LightGraphs
 using Combinatorics
 using RootedTrees
 using LinearAlgebra
 
-#Parametros iniciales
-#stisfies for order <5, and not for 5.
-A = [ 0 0 0 
-1//3 0 0
--5//48 15//16 0
-]
-b = [1//10, 1//2, 2//5]
-
-
-#up to order 3
-A = [  
-0 0 
-2//3 0 
-]
-b = [1//4, 3//4]
-
-#RK method
-A = [0//1  0//1  0//1  0//1
- 1//2  0//1  0//1  0//1
- 0//1  1//2  0//1  0//1
- 0//1  0//1  1//1  0//1]
- b =  [1//6, 1//3, 1//3, 1//6]
 
 #this function checks whether a method is energy Preserving for a given order s
 function EnergyPreserving(A,b,s)
     rka = RungeKuttaMethod(A, b)
 #generate bseries 
     series_a = modified_equation(bseries(rka, s))
+    #save all the coefficients in an array
     coefficients = collect(values(series_a))
+    #save all the RootedTrees in another array: 
+    #we need only the level sequence
     atrees = collect(keys(series_a))
-# Create an empty vector to store the converted trees
+# Create an empty vector to store the converted trees into arrays
     trees = Vector{Vector{Int}}(undef, length(series_a))
-# Convert the trees and store them in the trees vector
+# Convert the trees and store them in the 'trees' vector
     for i in 1:length(series_a)
-        #comment: check Rooted tree object
-        generate_arrays_from_rootedtree = root_converter(atrees[i])
-        if isempty(generate_arrays_from_rootedtree)
+        levelsequence = atrees[i].level_sequence
+        if isempty(levelsequence)
             trees[i] = Int[]
         else
-            trees[i] = generate_arrays_from_rootedtree
+            trees[i] = levelsequence
         end
     end
-    coefficients = symfact_normalization(coefficients,trees)  
+    #normalize the coefficients multiplying by the symmetry factor 
+    coefficients = symfact_normalization(coefficients,trees) 
+    #check if it is energy Preserving 
     signal = IsEnergyPreserving(trees,coefficients)  
     if signal == false
         println("Condition Not Satisfied")
@@ -60,12 +40,45 @@ function EnergyPreserving(A,b,s)
     end
 end
 
-function get_t_arrays(a)
+#this function checks if the modified_equation of a BSeries is Energy Preserving or not
+function BSeries_Energy_Preserving(bseries)
+    series_a = modified_equation(bseries)
+    #save all the coefficients in an array
+    coefficients = collect(values(series_a))
+    #save all the RootedTrees in another array: 
+    #we need only the level sequence
+    atrees = collect(keys(series_a))
+# Create an empty vector to store the converted trees into arrays
+    trees = Vector{Vector{Int}}(undef, length(series_a))
+# Convert the trees and store them in the 'trees' vector
+    for i in 1:length(series_a)
+        levelsequence = atrees[i].level_sequence
+        if isempty(levelsequence)
+            trees[i] = Int[]
+        else
+            trees[i] = levelsequence
+        end
+    end
+    #normalize the coefficients multiplying by the symmetry factor 
+    coefficients = symfact_normalization(coefficients,trees) 
+    #check if it is energy Preserving 
+    signal = IsEnergyPreserving(trees,coefficients)  
+    if signal == false
+        println("Condition Not Satisfied")
+    else
+        println("Condition Satisfied")
+    end
+end
+
+function get_leafs(a)
     t_dict = Dict{Int, Array}()
+    #we need to save the final nnumber in the level_sequence because this is the final leaf of the spine
     k = a[end]
+    #we need to look for the last last_j_occurrence of every integer in [1,k-1]
     for j in 1:k-1
         last_j_occurrence = findlast(x -> x == j, a)
         last_jplus1_occurrence = findlast(x -> x == j+1, a)
+        #consider the empty leafs
         if isnothing(last_j_occurrence) || isnothing(last_jplus1_occurrence)
             t_dict[j] = []
         else
@@ -75,24 +88,39 @@ function get_t_arrays(a)
     return t_dict
 end
 
+#it is not enough to generate the leafs and swap them. The level_sequences must be modified 
+#with corrections to the numbers inside: the numbers will decrease if the leaf is moved to a 
+#lower position, and they will increase if they move to an upper position.
 function modify_t_sub(a)
-    t_dict = get_t_arrays(a)
+    #we obtain the leafs via 'get_leafs'
+    #save them in 't_dict'
+    t_dict = get_leafs(a)
     m = num_leafs(a)
+    #create another dict for the modified indexes
     modified_t_dict = Dict{Int, Vector{Int}}()
     mid_tree = (m+1)/2
+    #we check if the number of leafs is odd:
+    #in that case, the middle one remains the same
     for j in 1:m
         if m % 2 == 1 && j == mid_tree
             modified_t_dict[j] = t_dict[j]
+            #now, go for the odd m case:
+            #if the original leaf is low (with respect to the middle position), we use the formula
+            # n+m-2j+1 for every number in the level_sequence
         elseif m % 2 == 1 && j < mid_tree
             new_arr = [n+m-2j+1 for n in t_dict[j]]
             modified_t_dict[j] = new_arr
+            #if it is high, use m + n - 2*(j) + 1
         elseif m % 2 == 1 && j > mid_tree
             new_arr = [m + n - 2*(j) + 1 for n in t_dict[j]]
             modified_t_dict[j] = new_arr
+            #even m case
         elseif m % 2 == 0
+            #for low: n+m-2j+1
             if j <= m/2
                 new_arr = [n+m-2j+1 for n in t_dict[j]]
                 modified_t_dict[j] = new_arr
+                #for high: m + n - 2*(j) + 1
             elseif j > m/2
                 new_arr = [m + n - 2*(j) + 1  for n in t_dict[j]]
                 modified_t_dict[j] = new_arr
@@ -102,6 +130,7 @@ function modify_t_sub(a)
     return modified_t_dict
 end
 
+#this functions checks if the level_sequence is a bush
 function bush_detector(tree)
     bush = false
     if tree != [1]
@@ -121,19 +150,21 @@ end
 function eliminate_repeated_subarrays(M)
     unique_M = []
     for arr in M
-        if !(arr in unique_M)
+        if arr in unique_M
+        else
             push!(unique_M, arr)
         end
     end
     return unique_M
 end
 
-
 #this function swaps the trees
 function permuta(a::Vector{Int})
+    #generate all the leafs via 'modify_t_sub'
     diccionario = modify_t_sub(a)
     m = num_leafs(a)
     ad_dict = Dict{Int, Vector{Int}}()
+    #we swap every leaf j for the (m-j+1)
     for j in 1:m
         ad_dict[j] = diccionario[m-j+1]
     end
@@ -141,11 +172,17 @@ function permuta(a::Vector{Int})
 end
 
 
-
+#this function returns the adjoint level sequence for a given tree (the input also in level-sequence form)
+#the adoint is calculated with respect to the right-most spine
 function adjoint(a::Vector{Int})
+    #we want to generate all the leafs with respect to the rightmost spine
     ad_dict = permuta(a)
+    #we obtain the number of leafs the right-most spine has
+    #the Theorem 2 in the article requires to know if m is odd or even
     m = num_leafs(a)
+    #we create an array from 1 to m plus another node for the final leaf of the rightmost spine
     adjunto = collect(1:m+1)
+    #then, we insert every level_sequence from ad_dict
     for j in 1:m
         last_j_occurrence = findlast(x -> x == j, adjunto)
         last_jplus1_occurrence = findlast(x -> x == j+1, adjunto)
@@ -156,35 +193,29 @@ function adjoint(a::Vector{Int})
     return adjunto
 end
 
-function root_converter(t::RootedTree{Int64, Vector{Int64}})
-    str = string(t) 
-    arr_str = match(r"\[(.*?)\]", str).captures[1]
-    if isempty(arr_str) || all(iswhitespace, arr_str)
-        return Int[]
-    end
-    arr = parse.(Int, split(arr_str, ","))
-    return arr
-end
-#this function reorders the tree in the same way as the Bseries output does
+#this function rearranges the level sequence in the same way as the Bseries output does
+#
 function canonicalarray(tree)
     t = rootedtree(tree)
-    trees = root_converter(t)
+    trees = t.level_sequence
     return trees
 end
 
-#this functions receives
+#this functions receives as inputs an array-of-arrays and one of its elements.
+#the output is the index of this array 'arbol' 
 function indexator(trees,arbol)
-    variable = 0
-    for i in 1:length(trees)
+    theindex = 0
+    l = length(trees)
+    for i in 1:l
         if trees[i] == arbol
-            variable = i
+            theindex = i
         end
     end
-    return variable
+    return theindex
 end
 
 iswhitespace(c::Char) = isspace(c)
-
+#this function is the BMinus operator as described in B-Series papers
 function BMinus(array)
     m = 1
     for i in array
@@ -193,11 +224,11 @@ function BMinus(array)
         end
     end
     contador = 0
-    #aqui almacenamos los 
+    #we save the trees here
     auxiliar = Array{Int64}(undef, m)
     longitud = length(array)
     auxiliar[m] = longitud
-    #numero de subtrees
+    #the number of subtrees
     n = m-1
     subtrees = Vector{Any}(undef, n)
     for i in 2:longitud
@@ -215,71 +246,58 @@ function BMinus(array)
     push!(subtrees[n],array[longitud])
     return subtrees
 end
-
-#println(BMinus(array))
-
-
-#this function returns a Hamiltonian H matriz of nxn
-
-
-              
-#funcion generadora de arboles simetricos
-function symmetries(tree)
-    subtrees = BMinus(tree)
-    #first order symmetries
-    perms = collect(permutations(subtrees))
-    l = length(perms)
-    for i in 1:l
-        perms[i] = reduce(vcat, perms[i])
-    end
-    result = add_one_to_left(perms)
-    return(result)
-end
+         
 
 #generates all equivalent trees
 function equivalent_trees(array)
     tree = rootedtree(array)
     l = length(array)
+    #we get the permutations of the array
     superarray = get_permutations(array)
     lperm = length(superarray)
+    #eliminate all the arrays except for those for which the first element is equal to 1
     for i in reverse(1:lperm) 
         if superarray[i][1] != 1
             splice!(superarray, i)
         end
     end
     lperm = length(superarray)
-    flag = false
+    #now, check if the levelsequence is the level sequence represents a RootedTree:
+    #the condition is that each number m cannot be followed by a number n such that
+    #n-m > 1. If that's the case, eliminate this array with 'splice!'
+    RTree_array = true
     for i in reverse(1:lperm)
         for j in 1:(l-1)
             if (superarray[i][j+1] - superarray[i][j]) > 1
-                flag = true
+                RTree_array = false
             end
         end
-        if flag == true
+        if RTree_array == false
             splice!(superarray, i)
         end
-        flag = false
+        RTree_array = true
     end
     lperm = length(superarray)
     for i in reverse(1:lperm)
         arbol = rootedtree(superarray[i])
-        bandera = arbol == tree
-        if bandera == false
+        isthesame_tree = arbol == tree
+        if isthesame_tree == false
             splice!(superarray, i)
         end
     end
-    bandera = false
+    repeated_tree = false
     lperm = length(superarray)
+    #we delete any repeated tree
     for i in reverse(1:lperm)
         for j in 1:(i-1)
             if superarray[i] == superarray[j]
-                bandera = true
+                repeated_tree = true
             end
         end 
-        if bandera == true
+        if repeated_tree == true
             splice!(superarray, i)
         end
-        bandera = false
+        repeated_tree = false
     end
 
     return superarray
@@ -296,7 +314,8 @@ function num_leafs(a)
 end
 
 function add_one_to_left(arrays)
-    for i in 1:length(arrays)
+    l = length(arrays)
+    for i in 1:l
         arrays[i] = vcat([1], arrays[i])
     end
     return arrays
@@ -307,6 +326,8 @@ function symfact_normalization(coef,thetrees)
     l = length(coef)
     for i in 1:l
         factor = 0
+        #because of the librarys we are using, some packages are repeated
+        #Then, we specify that the symmetry function comes from RootedTrees
         factor = RootedTrees.symmetry(RootedTree(thetrees[i]))
         coef[i] = coef[i]*(1//factor)
     end
@@ -316,9 +337,9 @@ end
 #this function tells up to what order a method is Energy Preserving
 function OrderMethod(A,b)
     s = 1
-    flag = false
+    energy_preserving = false
     rka = RungeKuttaMethod(A, b)
-    while flag == false 
+    while energy_preserving == false 
 #generate bseries 
         series_a = modified_equation(bseries(rka, s))
         coefficients = collect(values(series_a))
@@ -327,7 +348,7 @@ function OrderMethod(A,b)
         trees = Vector{Vector{Int}}(undef, length(series_a))
 # Convert the trees and store them in the trees vector
         for i in 1:length(series_a)
-            array_from_RTree = root_converter(atrees[i])
+            array_from_RTree = atrees[i].level_sequence
             if isempty(array_from_RTree)
                 trees[i] = Int[]
             else
@@ -335,10 +356,8 @@ function OrderMethod(A,b)
             end
         end
         coefficients = symfact_normalization(coefficients,trees)  
-        #println(trees)
-        #println(coefficients)
-        if IsEnergyPreserving(trees,coefficients) == true
-            flag = true
+        if IsEnergyPreserving(trees,coefficients) == false
+            energy_preserving = true
         end
         s = s + 1
     end
@@ -367,7 +386,7 @@ function EnergyPreservingAVF(s)
     trees = Vector{Vector{Int}}(undef, length(series_a))
 # Convert the trees and store them in the trees vector
     for i in 1:length(series_a)
-        array_from_RTree = root_converter(atrees[i])
+        array_from_RTree = atrees[i].level_sequence
        if isempty(array_from_RTree)
             trees[i] = Int[]
         else
@@ -388,8 +407,8 @@ end
 #runs infty
 function OrderAVF() 
     s = 1
-    flag = false
-    while flag == false 
+    condition_satisfied = false
+    while condition_satisfied == false 
         series = bseries(s) do t, series
             if order(t) in (0, 1)
                 return 1 // 1
@@ -412,7 +431,7 @@ function OrderAVF()
         trees = Vector{Vector{Int}}(undef, length(series_a))
 # Convert the trees and store them in the trees vector
         for i in 1:length(series_a)
-            array_from_RTree = root_converter(atrees[i])
+            array_from_RTree = atrees[i].level_sequence
             if isempty(array_from_RTree)
                 trees[i] = Int[]
             else
@@ -423,7 +442,7 @@ function OrderAVF()
         #println(trees)
         #println(coefficients)
         if IsEnergyPreserving(trees,coefficients) == false
-            flag = true
+            condition_satisfied = true
         end
         s = s + 1
     end
@@ -431,27 +450,29 @@ function OrderAVF()
     println("Energy Preserving for order < ", s-1)    
 end
 
-
- 
 function IsEnergyPreserving(trees, coefficients)
-    #obtain the adjoint and check if it exists
+    #for every tree, obtain the adjoint and check if it exists
     numero_de_coef = length(trees)
+    #provided that a tree can have several adjoints, for every tree t we need to check if there is a linear combination of the coefficients 
+    #of its adjoints such that this linear combination is equal to the coefficient of t. 
+    #For this purpose, we cretae a MatrizEP to store all the information
     MatrizEP = Vector{Int64}[]
-    signal = false
-    #bigflag = false
-    #bandera_array = false
+    error_searcher = false
     for t in trees
         if !isempty(t) 
+            #save the index of the level_sequence: this will be used for creating the matrix EP
             indice_mayor = indexator(trees,t)
-            #println(indice_mayor)
+            #check if the level_sequence corresponds to a bush
             bushflag = bush_detector(t)
+            #if it does, then the coefficient must be equal to zero.
             if bushflag == true
                 if coefficients[indice_mayor] != 0
-                    signal = true
+                    error_searcher = true
                 end
-                #println("bush")
             else
+                #if the tree is not a bush, then generate all the equivalent trees
                 equiv_set = equivalent_trees(t)
+                #this flag checks if the tree is self-adjoint
                 bandera_ad = false
                 for arbol in equiv_set
                 #j-th canonical vector
@@ -460,16 +481,17 @@ function IsEnergyPreserving(trees, coefficients)
                 #continue
                     m = num_leafs(arbol)
                     t_ad = adjoint(arbol)
-                #revisamos si hay self-adjoint
+                #check if the tree t is self-adjoint
                     if (rootedtree(t_ad) == rootedtree(arbol))
                         bandera_ad = true
                     end
                     ek = zeros(Int64, numero_de_coef) 
+                    #check if an adjoint is in the set of trees
                     if t_ad in trees 
-                    #bandera_array = true
-                    #k-th canonical vector
+                    #generate a k-th canonical vector
                         ek[indexator(trees,t_ad)] = 1*(-1)^m
                     #println(ek)
+                    #sum ej + ek and push it into MatrizEP
                         ej = ej + ek
                         #println(ej)
                         push!(MatrizEP, ej)
@@ -478,23 +500,25 @@ function IsEnergyPreserving(trees, coefficients)
             end
         end
     end
-    #eliminamos las columnas vacías
+    #we filter the empty columns (those full of zeros)
     filter!(x -> any(y -> y != 0, x), MatrizEP)
-    #eliminamos las columnas repetidas
+    #we filter repeated columns
     MatrizEP = eliminate_repeated_subarrays(MatrizEP)
     #println(MatrizEP)
     #println("Longitud de M: ", length(MatrizEP))
+    #because the components of MatrizEP is supposed to be columns, we traspose the matrix
     M = hcat(MatrizEP...)
     rank_M = rank(M)
+    #we also create an extended matrix for which we append the vector of coefficients
     rank_MV = rank([M coefficients])
     #println(rank_M == rank_MV)
     #X = find_vector_X(M,coefficients)
     #println(X)
     println("All the trees have been checked:")
-    if signal == true
+    if error_searcher == true
         println("Condition Not Satisfied")
-    else
-        println("Condition Satisfied")
+        error
     end
+    #if the rank of M is equal to the rank of the extended MV, then the system is energy-Preserving
     return rank_M == rank_MV
 end
