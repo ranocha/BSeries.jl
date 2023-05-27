@@ -1879,15 +1879,23 @@ using Aqua: Aqua
                       # of https://github.com/JuliaTesting/Aqua.jl/issues/79
                       # Thus, we do not test for ambiguities here but run an additional test
                       # below excluding ambiguity tests with Base.
-                      ambiguities = false
+                      ambiguities = false,
                       # ambiguities=(; exclude=[
                       #   isapprox, Base.var"#isapprox##kw", # with Polynomials.jl
                       #   getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
                       #   /, # https://github.com/jump-dev/MutableArithmetics.jl/issues/161
                       # ])
+                      # We would like to test the Project.toml formatting but there are some
+                      # CI issues, see https://github.com/ranocha/BSeries.jl/pull/119
+                      project_toml_formatting = false
                       )
 
         # No Base and as extra test for the reason described above
         @testset "ambiguities" begin Aqua.test_ambiguities([BSeries]) end
+
+        # Project.toml formatting only on newer versions of Julia
+        if VERSION >= v"1.9"
+            Aqua.test_project_toml_formatting(BSeries)
+        end
     end
 end # @testset "BSeries"
