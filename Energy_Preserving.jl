@@ -4,8 +4,9 @@
 using BSeries
 import SymPy; sp=SymPy;
 using Combinatorics
-using RootedTrees
+#using RootedTrees
 using LinearAlgebra
+import RootedTrees; rt=RootedTrees
 
 
 #this function checks whether a method is energy Preserving for a given order s
@@ -33,16 +34,12 @@ function EnergyPreserving(A,b,s)
     coefficients = symfact_normalization(coefficients,trees) 
     #check if it is energy Preserving 
     signal = IsEnergyPreserving(trees,coefficients)  
-    if signal == false
-        println("Condition Not Satisfied")
-    else
-        println("Condition Satisfied")
-    end
+    return signal
 end
 
 #this function checks if the modified_equation of a BSeries is Energy Preserving or not
-function BSeries_Energy_Preserving(bseries)
-    series_a = modified_equation(bseries)
+function is_energy_preserving(series)
+    series_a = modified_equation(series)
     #save all the coefficients in an array
     coefficients = collect(values(series_a))
     #save all the RootedTrees in another array: 
@@ -63,11 +60,7 @@ function BSeries_Energy_Preserving(bseries)
     coefficients = symfact_normalization(coefficients,trees) 
     #check if it is energy Preserving 
     signal = IsEnergyPreserving(trees,coefficients)  
-    if signal == false
-        println("Condition Not Satisfied")
-    else
-        println("Condition Satisfied")
-    end
+    return signal
 end
 
 function get_leafs(a)
@@ -136,9 +129,11 @@ function bush_detector(tree)
     if tree != [1]
         l = length(tree)
         bush = true
+        initial_index = tree[1]
+        initial_plus_one = initial_index + 1
         if l > 1
             for i in 2:l
-                if tree[i] != 2
+                if tree[i] != initial_plus_one
                     bush = false
                 end
             end
@@ -146,6 +141,7 @@ function bush_detector(tree)
     end
     return bush
 end
+
 #this function eliminates repeated subarrays
 function eliminate_repeated_subarrays(M)
     unique_M = []
@@ -172,9 +168,9 @@ function permuta(a::Vector{Int})
 end
 
 
-#this function returns the adjoint level sequence for a given tree (the input also in level-sequence form)
+#this function returns the rightmost_energy_preserving_tree level sequence for a given tree (the input also in level-sequence form)
 #the adoint is calculated with respect to the right-most spine
-function adjoint(a::Vector{Int})
+function rightmost_energy_preserving_tree(a::Vector{Int})
     #we want to generate all the leafs with respect to the rightmost spine
     ad_dict = permuta(a)
     #we obtain the number of leafs the right-most spine has
@@ -202,12 +198,12 @@ function canonicalarray(tree)
 end
 
 #this functions receives as inputs an array-of-arrays and one of its elements.
-#the output is the index of this array 'arbol' 
-function indexator(trees,arbol)
+#the output is the index of this array 'onetree' 
+function indexator(trees,onetree)
     theindex = 0
     l = length(trees)
     for i in 1:l
-        if trees[i] == arbol
+        if trees[i] == onetree
             theindex = i
         end
     end
@@ -223,19 +219,19 @@ function BMinus(array)
             m = m + 1
         end
     end
-    contador = 0
+    counter = 0
     #we save the trees here
     auxiliar = Array{Int64}(undef, m)
-    longitud = length(array)
-    auxiliar[m] = longitud
+    l = length(array)
+    auxiliar[m] = l
     #the number of subtrees
     n = m-1
     subtrees = Vector{Any}(undef, n)
-    for i in 2:longitud
+    for i in 2:l
         if array[i] == 2
-            contador += 1
-            auxiliar[contador] = i
-            if contador == n
+            counter += 1
+            auxiliar[counter] = i
+            if counter == n
                 break
             end
         end
@@ -243,7 +239,7 @@ function BMinus(array)
     for i in 1:n
         subtrees[i] = array[auxiliar[i]:(auxiliar[i+1]-1)]
     end
-    push!(subtrees[n],array[longitud])
+    push!(subtrees[n],array[l])
     return subtrees
 end
          
@@ -279,8 +275,8 @@ function equivalent_trees(array)
     end
     lperm = length(superarray)
     for i in reverse(1:lperm)
-        arbol = rootedtree(superarray[i])
-        isthesame_tree = arbol == tree
+        onetree = rootedtree(superarray[i])
+        isthesame_tree = onetree == tree
         if isthesame_tree == false
             splice!(superarray, i)
         end
@@ -328,7 +324,7 @@ function symfact_normalization(coef,thetrees)
         factor = 0
         #because of the librarys we are using, some packages are repeated
         #Then, we specify that the symmetry function comes from RootedTrees
-        factor = RootedTrees.symmetry(RootedTree(thetrees[i]))
+        factor = rt.symmetry(RootedTree(thetrees[i]))
         coef[i] = coef[i]*(1//factor)
     end
     return coef
@@ -452,7 +448,7 @@ end
 
 function IsEnergyPreserving(trees, coefficients)
     #for every tree, obtain the adjoint and check if it exists
-    numero_de_coef = length(trees)
+    length_coeff = length(trees)
     #provided that a tree can have several adjoints, for every tree t we need to check if there is a linear combination of the coefficients 
     #of its adjoints such that this linear combination is equal to the coefficient of t. 
     #For this purpose, we cretae a MatrizEP to store all the information
@@ -461,32 +457,32 @@ function IsEnergyPreserving(trees, coefficients)
     for t in trees
         if !isempty(t) 
             #save the index of the level_sequence: this will be used for creating the matrix EP
-            indice_mayor = indexator(trees,t)
+            highindex = indexator(trees,t)
             #check if the level_sequence corresponds to a bush
             bushflag = bush_detector(t)
             #if it does, then the coefficient must be equal to zero.
             if bushflag == true
-                if coefficients[indice_mayor] != 0
+                if coefficients[highindex] != 0
                     error_searcher = true
                 end
             else
                 #if the tree is not a bush, then generate all the equivalent trees
                 equiv_set = equivalent_trees(t)
                 #this flag checks if the tree is self-adjoint
-                bandera_ad = false
-                for arbol in equiv_set
+                #flag_ad = false
+                for onetree in equiv_set
                 #j-th canonical vector
-                    ej = zeros(Int64, numero_de_coef)
-                    ej[indice_mayor] = 1
+                    ej = zeros(Int64, length_coeff)
+                    ej[highindex] = 1
                 #continue
-                    m = num_leafs(arbol)
-                    t_ad = adjoint(arbol)
+                    m = num_leafs(onetree)
+                    t_ad = rightmost_energy_preserving_tree(onetree)
                 #check if the tree t is self-adjoint
-                    if (rootedtree(t_ad) == rootedtree(arbol))
-                        bandera_ad = true
-                    end
-                    ek = zeros(Int64, numero_de_coef) 
-                    #check if an adjoint is in the set of trees
+                    #if (rootedtree(t_ad) == rootedtree(onetree))
+                    #    flag_ad = true
+                    #end
+                    ek = zeros(Int64, length_coeff) 
+                    #check if an rightmost_energy_preserving_tree is in the set of trees
                     if t_ad in trees 
                     #generate a k-th canonical vector
                         ek[indexator(trees,t_ad)] = 1*(-1)^m
@@ -514,11 +510,12 @@ function IsEnergyPreserving(trees, coefficients)
     #println(rank_M == rank_MV)
     #X = find_vector_X(M,coefficients)
     #println(X)
-    println("All the trees have been checked:")
+    #println("All the trees have been checked:")
     if error_searcher == true
-        println("Condition Not Satisfied")
-        error
+        result = false
+    else
+        result = rank_M == rank_MV
     end
     #if the rank of M is equal to the rank of the extended MV, then the system is energy-Preserving
-    return rank_M == rank_MV
+    return result
 end
