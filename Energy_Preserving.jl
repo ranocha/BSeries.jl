@@ -3,7 +3,7 @@
 # Load the packages we will use.
 using BSeries
 import SymPy; sp=SymPy;
-using Combinatorics
+using Combinatorics: permutations
 #using RootedTrees
 using LinearAlgebra
 import RootedTrees; rt=RootedTrees
@@ -43,8 +43,8 @@ function is_energy_preserving(series)
     #save all the coefficients in an array
     coefficients = collect(values(series_a))
     #save all the RootedTrees in another array: 
-    #we need only the level sequence
     atrees = collect(keys(series_a))
+    #we need only the level sequence
 # Create an empty vector to store the converted trees into arrays
     trees = Vector{Vector{Int}}(undef, length(series_a))
 # Convert the trees and store them in the 'trees' vector
@@ -57,7 +57,7 @@ function is_energy_preserving(series)
         end
     end
     #normalize the coefficients multiplying by the symmetry factor 
-    coefficients = symfact_normalization(coefficients,trees) 
+    coefficients = symfact_normalization(coefficients,atrees) 
     #check if it is energy Preserving 
     signal = IsEnergyPreserving(trees,coefficients)  
     return signal
@@ -324,7 +324,7 @@ function symfact_normalization(coef,thetrees)
         factor = 0
         #because of the librarys we are using, some packages are repeated
         #Then, we specify that the symmetry function comes from RootedTrees
-        factor = rt.symmetry(RootedTree(thetrees[i]))
+        factor = symmetry(thetrees[i])
         coef[i] = coef[i]*(1//factor)
     end
     return coef
