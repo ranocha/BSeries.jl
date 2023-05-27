@@ -1887,8 +1887,7 @@ using Aqua: Aqua
                       # ])
                       # We would like to test the Project.toml formatting but there are some
                       # CI issues, see https://github.com/ranocha/BSeries.jl/pull/119
-                      project_toml_formatting = false
-                      )
+                      project_toml_formatting = false)
 
         # No Base and as extra test for the reason described above
         @testset "ambiguities" begin Aqua.test_ambiguities([BSeries]) end
