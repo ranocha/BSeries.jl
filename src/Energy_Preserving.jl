@@ -21,7 +21,6 @@ for a given order s.
     Output:
         True/False
 """
-#this function checks whether a method is energy Preserving for a given order s
 function is_energy_preserving(A,b,s)
     rka = RungeKuttaMethod(A, b)
 #generate bseries 
