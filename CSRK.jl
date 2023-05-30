@@ -5,6 +5,9 @@ import SymPy; sp=SymPy; sm = Sym();
 using LightGraphs
 using Combinatorics
 using LinearAlgebra
+using PyCall
+@pyimport sympy as sp
+
 
 M = [1 2 0 1 1;
      4 5 6 4 5;
@@ -16,13 +19,13 @@ M = [ 1 2 3;
      2 3 4;
      1 0 2]
 
-function Elementary_Weights(M)
+function Elementary_Weights(M,tree)
 
 end
 
 """
         PolinomialA(M,t,z)
-        
+
 This function generates the polinomial A_{t,z}.
 The inputs are a square matrix M and two Char "t".
     Parameters:
@@ -39,6 +42,7 @@ function PolinomialA(M,t,z)
     #we need variables to work with
     variable1 = Sym(t)
     variable2 = Sym(z)
+    variable1 = conjugate(variable1)
     #generate the components of the polinomial with powers of t
     poli_z = Array{SymPy.Sym}(undef, s)
     for i in 1:s
@@ -52,11 +56,11 @@ function PolinomialA(M,t,z)
     #multiply matrix times vector
     result = M * poli_z
     #use dot product for the two vectors
-    #result = dot(poli_t,result)
+    result = dot(poli_t,result)
     #create a dict so that its keys are the components of 'result' and its values are
     #t^n
-    components_of_A = Dict(result[i] => poli_t[i] for i in eachindex(result))
-    return components_of_A
+    #components_of_A = Dict(result[i] => poli_t[i] for i in eachindex(result))
+    return result
 end
 
 """
