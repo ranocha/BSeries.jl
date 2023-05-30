@@ -1,16 +1,28 @@
 #This code is based on the Theorem 2 of the paper "Energy-Preserving Integrators and the Structure of B-series" (link: https://link.springer.com/article/10.1007/s10208-010-9073-1).
 #Functions to run: EnergyPreserving(A,b,s), EnergyPreservingAVF(s), BSeries_Energy_Preserving(series)
 # Load the packages we will use.
+#I write this line here in order to remember how to fix the githube issues: echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
 using BSeries
 import SymPy; sp=SymPy;
 using Combinatorics: permutations
 #using RootedTrees
 using LinearAlgebra
-import RootedTrees; rt=RootedTrees
+using RootedTrees
 
+"""
+        is_energy_preserving(A,b,s)
 
+This function checks whether a method is energy preserving 
+for a given order s. 
+    Inputs: 
+        A: square matrix
+        b: vector of Butcher array
+        s: integer, the order
+    Output:
+        True/False
+"""
 #this function checks whether a method is energy Preserving for a given order s
-function EnergyPreserving(A,b,s)
+function is_energy_preserving(A,b,s)
     rka = RungeKuttaMethod(A, b)
 #generate bseries 
     series_a = modified_equation(bseries(rka, s))
@@ -31,13 +43,20 @@ function EnergyPreserving(A,b,s)
         end
     end
     #normalize the coefficients multiplying by the symmetry factor 
-    coefficients = symfact_normalization(coefficients,trees) 
+    coefficients = renormalize_bseries(coefficients,atrees) 
     #check if it is energy Preserving 
-    signal = IsEnergyPreserving(trees,coefficients)  
-    return signal
+    return energy_preserving_trees_test(trees,coefficients)  
 end
 
-#this function checks if the modified_equation of a BSeries is Energy Preserving or not
+"""
+        is_energy_preserving(A,b,s)
+
+This function checks whether a method is energy preserving. 
+    Input: 
+        a bseries
+    Output:
+        True/False
+"""
 function is_energy_preserving(series)
     series_a = modified_equation(series)
     #save all the coefficients in an array
@@ -57,13 +76,20 @@ function is_energy_preserving(series)
         end
     end
     #normalize the coefficients multiplying by the symmetry factor 
-    coefficients = symfact_normalization(coefficients,atrees) 
+    coefficients = renormalize_bseries(coefficients,atrees) 
     #check if it is energy Preserving 
-    signal = IsEnergyPreserving(trees,coefficients)  
-    return signal
+    return energy_preserving_trees_test(trees,coefficients)  
+    
 end
 
-function get_leafs(a)
+"""
+        remove_spine(a)
+
+This function returns the forest of level_sequences 
+obtained after removing the rightmost spine of a given
+level_sequence.
+"""
+function remove_spine(a)
     t_dict = Dict{Int, Array}()
     #we need to save the final nnumber in the level_sequence because this is the final leaf of the spine
     k = a[end]
@@ -81,13 +107,17 @@ function get_leafs(a)
     return t_dict
 end
 
-#it is not enough to generate the leafs and swap them. The level_sequences must be modified 
-#with corrections to the numbers inside: the numbers will decrease if the leaf is moved to a 
-#lower position, and they will increase if they move to an upper position.
+"""
+        modify_t_sub()
+
+It is not enough to generate the leafs and swap them. The level_sequences must be modified 
+with corrections to the numbers inside: the numbers will decrease if the leaf is moved to a 
+lower position, and they will increase if they move to an upper position.
+"""
 function modify_t_sub(a)
-    #we obtain the leafs via 'get_leafs'
+    #we obtain the leafs via 'remove_spine'
     #save them in 't_dict'
-    t_dict = get_leafs(a)
+    t_dict = remove_spine(a)
     m = num_leafs(a)
     #create another dict for the modified indexes
     modified_t_dict = Dict{Int, Vector{Int}}()
@@ -123,7 +153,9 @@ function modify_t_sub(a)
     return modified_t_dict
 end
 
-#this functions checks if the level_sequence is a bush
+"""
+This functions checks if the level_sequence is a bush.
+"""
 function bush_detector(tree)
     bush = false
     if tree != [1]
@@ -167,9 +199,10 @@ function permuta(a::Vector{Int})
     return ad_dict
 end
 
-
-#this function returns the rightmost_energy_preserving_tree level sequence for a given tree (the input also in level-sequence form)
-#the adoint is calculated with respect to the right-most spine
+"""
+This function returns the rightmost_energy_preserving_tree level_sequence 
+for a given tree (the input also in level-sequence form).
+"""
 function rightmost_energy_preserving_tree(a::Vector{Int})
     #we want to generate all the leafs with respect to the rightmost spine
     ad_dict = permuta(a)
@@ -189,16 +222,23 @@ function rightmost_energy_preserving_tree(a::Vector{Int})
     return adjunto
 end
 
-#this function rearranges the level sequence in the same way as the Bseries output does
-#
+"""
+This function rearranges the level sequence in 
+the same way as the Bseries output does
+"""
 function canonicalarray(tree)
     t = rootedtree(tree)
     trees = t.level_sequence
     return trees
 end
 
-#this functions receives as inputs an array-of-arrays and one of its elements.
-#the output is the index of this array 'onetree' 
+"""
+        indexator(trees,onetree)
+This functions receives as inputs an array-of-arrays and 
+one of its elements.
+
+The output is the index of this array 'onetree'.
+"""
 function indexator(trees,onetree)
     theindex = 0
     l = length(trees)
@@ -211,40 +251,12 @@ function indexator(trees,onetree)
 end
 
 iswhitespace(c::Char) = isspace(c)
-#this function is the BMinus operator as described in B-Series papers
-function BMinus(array)
-    m = 1
-    for i in array
-        if i == 2
-            m = m + 1
-        end
-    end
-    counter = 0
-    #we save the trees here
-    auxiliar = Array{Int64}(undef, m)
-    l = length(array)
-    auxiliar[m] = l
-    #the number of subtrees
-    n = m-1
-    subtrees = Vector{Any}(undef, n)
-    for i in 2:l
-        if array[i] == 2
-            counter += 1
-            auxiliar[counter] = i
-            if counter == n
-                break
-            end
-        end
-    end
-    for i in 1:n
-        subtrees[i] = array[auxiliar[i]:(auxiliar[i+1]-1)]
-    end
-    push!(subtrees[n],array[l])
-    return subtrees
-end
-         
+   
 
-#generates all equivalent trees
+"""
+This function generates all the equivalent trees 
+for a given level_sequence
+"""
 function equivalent_trees(array)
     tree = rootedtree(array)
     l = length(array)
@@ -318,135 +330,45 @@ function add_one_to_left(arrays)
 end
 
 #this function multplies the coefficient for its symmetry factor
-function symfact_normalization(coef,thetrees)
-    l = length(coef)
+function renormalize_bseries(coefficient_array,thetrees)
+    l = length(coefficient_array)
     for i in 1:l
         factor = 0
         #because of the librarys we are using, some packages are repeated
         #Then, we specify that the symmetry function comes from RootedTrees
         factor = symmetry(thetrees[i])
-        coef[i] = coef[i]*(1//factor)
+        coefficient_array[i] = coefficient_array[i]*(1//factor)
     end
-    return coef
+    return coefficient_array
 end
 
-#this function tells up to what order a method is Energy Preserving
+"""
+This function tells up to what order a method is Energy Preserving.
+"""
 function OrderMethod(A,b)
-    s = 1
-    energy_preserving = false
-    rka = RungeKuttaMethod(A, b)
-    while energy_preserving == false 
+    s = 0
+    not_energy_preserving = false
+    while not_energy_preserving == false 
 #generate bseries 
-        series_a = modified_equation(bseries(rka, s))
-        coefficients = collect(values(series_a))
-        atrees = collect(keys(series_a))
-# Create an empty vector to store the converted trees
-        trees = Vector{Vector{Int}}(undef, length(series_a))
-# Convert the trees and store them in the trees vector
-        for i in 1:length(series_a)
-            array_from_RTree = atrees[i].level_sequence
-            if isempty(array_from_RTree)
-                trees[i] = Int[]
-            else
-                trees[i] = array_from_RTree
-            end
-        end
-        coefficients = symfact_normalization(coefficients,trees)  
-        if IsEnergyPreserving(trees,coefficients) == false
-            energy_preserving = true
+        if is_energy_preserving(A,b,s+1) == false
+            not_energy_preserving = true
         end
         s = s + 1
     end
-    println("Energy Preserving for order < ", s-1)
+    return s-1
 end
 
-#this function checks if an AVF method is energy Preserving for a given order s
-function EnergyPreservingAVF(s) 
-    series = bseries(s) do t, series
-        if order(t) in (0, 1)
-            return 1 // 1
-        else
-            v = 1 // 1
-            n = 0
-            for subtree in SubtreeIterator(t)
-                v *= series[subtree]
-                n += 1
-            end
-            return v / (n + 1)
-        end
-    end
-#generate bseries 
-    series_a = modified_equation(series)
-    coefficients = collect(values(series_a))
-    atrees = collect(keys(series_a))
-    trees = Vector{Vector{Int}}(undef, length(series_a))
-# Convert the trees and store them in the trees vector
-    for i in 1:length(series_a)
-        array_from_RTree = atrees[i].level_sequence
-       if isempty(array_from_RTree)
-            trees[i] = Int[]
-        else
-            trees[i] = array_from_RTree
-        end
-    end
-    coefficients = symfact_normalization(coefficients,trees)  
-    signal = IsEnergyPreserving(trees,coefficients)  
-    if signal == false
-        println("Condition Not Satisfied")
-    else
-        println("Condition Satisfied")
-    end
-    #series_a
-end
+"""
+        energy_preserving_trees_test(trees,coefficients)
 
-#do not run this function 
-#runs infty
-function OrderAVF() 
-    s = 1
-    condition_satisfied = false
-    while condition_satisfied == false 
-        series = bseries(s) do t, series
-            if order(t) in (0, 1)
-                return 1 // 1
-            else
-                v = 1 // 1
-                n = 0
-                for subtree in SubtreeIterator(t)
-                    v *= series[subtree]
-                    n += 1
-                end
-                return v / (n + 1)
-            end
-        end
-#generate bseries 
-        series_a = modified_equation(series)
-        
-        coefficients = collect(values(series_a))
-        atrees = collect(keys(series_a))
-# Create an empty vector to store the converted trees
-        trees = Vector{Vector{Int}}(undef, length(series_a))
-# Convert the trees and store them in the trees vector
-        for i in 1:length(series_a)
-            array_from_RTree = atrees[i].level_sequence
-            if isempty(array_from_RTree)
-                trees[i] = Int[]
-            else
-                trees[i] = array_from_RTree
-            end
-        end
-        coefficients = symfact_normalization(coefficients,trees)  
-        #println(trees)
-        #println(coefficients)
-        if IsEnergyPreserving(trees,coefficients) == false
-            condition_satisfied = true
-        end
-        s = s + 1
-    end
-    #println("bandera", s)
-    println("Energy Preserving for order < ", s-1)    
-end
-
-function IsEnergyPreserving(trees, coefficients)
+this function is the applcation of  Theorem 2 of the paper 
+"Energy-Preserving Integrators and the Structure of B-series". 
+It takes an array 'trees' of level_sequences and the array 
+of coefficients. 
+Checks whether the sets of energy_preserving_tree satisfify the
+energy_preserving condition. 
+"""
+function energy_preserving_trees_test(trees, coefficients)
     #for every tree, obtain the adjoint and check if it exists
     length_coeff = length(trees)
     #provided that a tree can have several adjoints, for every tree t we need to check if there is a linear combination of the coefficients 

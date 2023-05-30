@@ -1890,4 +1890,65 @@ using Aqua: Aqua
         # No Base and as extra test for the reason described above
         @testset "ambiguities" begin Aqua.test_ambiguities([BSeries]) end
     end
+    #We test the code Energy_Preserving.jl using the function 'OrderMethod(A,b) for a given
+    #matrix A and a vector b. The output will be the order up to which the method is energy preserving.
+    @testset "Energy Preserving" begin
+        @testset "First example" begin
+            A = [ 0 0 0 
+            1//3 0 0
+            -5//48 15//16 0
+            ]
+            b = [1//10, 1//2, 2//5]
+            #Ths method is E-P up to order 4
+            @test OrderMethod(A,b) == 4
+        end
+        @testset "Second example" begin
+            A = [  
+            0 0 
+            2//3 0 
+            ]
+            b = [1//4, 3//4]
+            #Ths method is E-P up to order 3
+            @test OrderMethod(A,b) == 3
+        end
+        @testset "RK Method" begin
+            A = [0//1  0//1  0//1  0//1
+            1//2  0//1  0//1  0//1
+            0//1  1//2  0//1  0//1
+            0//1  0//1  1//1  0//1]
+            b =  [1//6, 1//3, 1//3, 1//6]
+            #Ths method is E-P up to order 4
+            @test OrderMethod(A,b) == 4
+        end
+        @testset "Another RK Method" begin
+            A = [ 0 0 0 0 0
+            1//5 0 0 0 0
+            0 2//5 0 0 0
+            3//16 0 5//16 0 0
+            1//4 0 -5//4 2 0]
+
+            b = [1//6, 0,0, 2//3,1//6]
+            #Ths method is E-P up to order 4
+            @test OrderMethod(A,b) == 4
+        end
+        @testset "Test for AVF Method up to s order" begin
+            #select order s
+            s = 5
+            series = bseries(s) do t, series
+                if order(t) in (0, 1)
+                    return 1 // 1
+                else
+                    v = 1 // 1
+                    n = 0
+                    for subtree in SubtreeIterator(t)
+                        v *= series[subtree]
+                        n += 1
+                    end
+                    return v / (n + 1)
+                end
+            end
+            #generate bseries 
+            @test is_energy_preserving(series) == true
+        end
+    end
 end # @testset "BSeries"
