@@ -1,5 +1,5 @@
 module BSeries
-
+    include("Energy_Preserving.jl")
 @doc read(joinpath(dirname(@__DIR__), "README.md"), String) BSeries
 
 import Base: +, -, *, /, \
