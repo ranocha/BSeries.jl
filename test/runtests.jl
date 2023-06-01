@@ -1,6 +1,6 @@
 using Test
 using BSeries
-
+include("../src/Energy_Preserving.jl")
 using BSeries.Latexify: latexify
 
 using LinearAlgebra: I
@@ -1947,7 +1947,7 @@ using Aqua: Aqua
                     return v / (n + 1)
                 end
             end
-            #generate bseries 
+            #generate bseries
             @test is_energy_preserving(series) == true
         end
     end
