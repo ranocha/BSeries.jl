@@ -13,6 +13,16 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 RootedTrees = "47965b36-3f3e-11e9-0dcf-4570dfd42a8c"
 
+[weakdeps]
+SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
+SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
+Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
+
+[extensions]
+SymEngineExt = "SymEngine"
+SymPyExt = "SymPy"
+SymbolicsExt = "Symbolics"
+
 [compat]
 Latexify = "0.15, 0.16"
 OrderedCollections = "1"
@@ -25,17 +35,7 @@ SymPy = "1"
 Symbolics = "4, 5"
 julia = "1.6"
 
-[extensions]
-SymEngineExt = "SymEngine"
-SymPyExt = "SymPy"
-SymbolicsExt = "Symbolics"
-
 [extras]
-SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
-SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
-Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
-
-[weakdeps]
 SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
 SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
