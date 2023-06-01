@@ -1,3 +1,4 @@
+module Energy_Preserving
 #This code is based on the Theorem 2 of the paper "Energy-Preserving Integrators and the Structure of B-series" (link: https://link.springer.com/article/10.1007/s10208-010-9073-1).
 #Functions to run: EnergyPreserving(A,b,s), EnergyPreservingAVF(s), BSeries_Energy_Preserving(series)
 # Load the packages we will use.
@@ -8,6 +9,9 @@ using Combinatorics: permutations
 #using RootedTrees
 using LinearAlgebra
 using RootedTrees
+
+export is_energy_preserving
+export OrderMethod
 
 """
         is_energy_preserving(A,b,s)
@@ -439,4 +443,5 @@ function energy_preserving_trees_test(trees, coefficients)
     end
     #if the rank of M is equal to the rank of the extended MV, then the system is energy-Preserving
     return result
+end
 end

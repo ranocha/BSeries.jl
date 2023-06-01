@@ -17,6 +17,8 @@ end
 
 using Latexify: Latexify, LaTeXString
 
+using Energy_Preserving
+
 @reexport using Polynomials: Polynomials, Polynomial
 
 export TruncatedBSeries, ExactSolution
@@ -30,6 +32,8 @@ export modified_equation, modifying_integrator
 export elementary_differentials
 
 export MultirateInfinitesimalSplitMethod
+
+export Energy_Preserving.OrderMethod
 
 # Types used for traits
 # These traits may decide between different algorithms based on the
