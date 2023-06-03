@@ -32,6 +32,7 @@ export elementary_differentials
 
 export MultirateInfinitesimalSplitMethod
 
+export is_energy_preserving, OrderMethod
 # Types used for traits
 # These traits may decide between different algorithms based on the
 # corresponding complexity etc.
