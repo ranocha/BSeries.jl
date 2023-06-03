@@ -1450,10 +1450,10 @@ end
 
 
 """
-        is_energy_preserving(A,b,s)
+        is_energy_preserving(rka::RungeKuttaMethod,s)
 
-This function checks whether a method is energy preserving 
-for a given order s. 
+This function checks whether a Runge-Kutta method is energy 
+preserving for a given order s. 
     Inputs: 
         A: square matrix
         b: vector of Butcher array
@@ -1461,41 +1461,24 @@ for a given order s.
     Output:
         True/False
 """
-function is_energy_preserving(A,b,s)
-    rka = RungeKuttaMethod(A, b)
+function is_energy_preserving(rka::RungeKuttaMethod,s)
 #generate bseries 
-    series_a = modified_equation(bseries(rka, s))
-    #save all the coefficients in an array
-    coefficients = collect(values(series_a))
-    #save all the RootedTrees in another array: 
-    #we need only the level sequence
-    atrees = collect(keys(series_a))
-# Create an empty vector to store the converted trees into arrays
-    trees = Vector{Vector{Int}}(undef, length(series_a))
-# Convert the trees and store them in the 'trees' vector
-    for i in 1:length(series_a)
-        levelsequence = atrees[i].level_sequence
-        if isempty(levelsequence)
-            trees[i] = Int[]
-        else
-            trees[i] = levelsequence
-        end
-    end
-    #normalize the coefficients multiplying by the symmetry factor 
-    coefficients = renormalize_bseries(coefficients,atrees) 
-    #check if it is energy Preserving 
-    return energy_preserving_trees_test(trees,coefficients)  
+    series = bseries(rka, s)
+    #pass it to the main functoin 'is_energy_preserving'
+    is_energy_preserving(series)
 end
 
 """
-        is_energy_preserving(A,b,s)
 
-This function checks whether a method is energy preserving. 
-    Input: 
-        a bseries
-    Output:
-        True/False
+        is_energy_preserving(series)::Bool
+This function checks whether the B-series `series` of a time integration
+method is energy preserving for Hamiltonian systems - up to the
+[`order`](@ref) of the `series`.
 """
+#References:
+#This code is based on the Theorem 2 of the paper "Energy-Preserving 
+#Integrators and the Structure of B-series".
+# (link: https://link.springer.com/article/10.1007/s10208-010-9073-1).
 function is_energy_preserving(series)
     series_a = modified_equation(series)
     #save all the coefficients in an array
