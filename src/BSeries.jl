@@ -16,7 +16,7 @@ if !isdefined(Base, :get_extension)
 end
 
 using Latexify: Latexify, LaTeXString
-
+using Combinatorics: permutations
 
 @reexport using Polynomials: Polynomials, Polynomial
 
@@ -32,7 +32,7 @@ export elementary_differentials
 
 export MultirateInfinitesimalSplitMethod
 
-export is_energy_preserving, OrderMethod
+export is_energy_preserving, energy_preserving_order
 # Types used for traits
 # These traits may decide between different algorithms based on the
 # corresponding complexity etc.
@@ -1462,9 +1462,9 @@ preserving for a given order s.
     Output:
         True/False
 """
-function is_energy_preserving(rka::RungeKuttaMethod,s)
+function is_energy_preserving(rka::RungeKuttaMethod,p)
 #generate bseries 
-    series = bseries(rka, s)
+    series = bseries(rka, p)
     #pass it to the main functoin 'is_energy_preserving'
     is_energy_preserving(series)
 end
@@ -1768,17 +1768,17 @@ end
 """
 This function tells up to what order a method is Energy Preserving.
 """
-function OrderMethod(A,b)
-    s = 0
+function energy_preserving_order(A,b)
+    p = 0
     not_energy_preserving = false
     while not_energy_preserving == false 
 #generate bseries 
-        if is_energy_preserving(A,b,s+1) == false
+        if is_energy_preserving(A,b,p+1) == false
             not_energy_preserving = true
         end
-        s = s + 1
+        p = p + 1
     end
-    return s-1
+    return p-1
 end
 
 """
