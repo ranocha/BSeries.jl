@@ -1283,7 +1283,9 @@ using Aqua: Aqua
                     end
                 end
 
-                @testset "modifying_integrator" begin mod_int = @inferred modifying_integrator(series_integrator) end
+                @testset "modifying_integrator" begin
+                    mod_int = @inferred modifying_integrator(series_integrator)
+                end
             end
         end
 
@@ -1890,7 +1892,9 @@ using Aqua: Aqua
                       project_toml_formatting = false)
 
         # No Base and as extra test for the reason described above
-        @testset "ambiguities" begin Aqua.test_ambiguities([BSeries]) end
+        @testset "ambiguities" begin
+            Aqua.test_ambiguities([BSeries])
+        end
 
         # Project.toml formatting only on newer versions of Julia
         if VERSION >= v"1.9"
