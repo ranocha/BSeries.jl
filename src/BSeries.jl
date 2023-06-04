@@ -17,6 +17,7 @@ end
 
 using Latexify: Latexify, LaTeXString
 using Combinatorics: permutations
+using LinearAlgebra: rank
 
 @reexport using Polynomials: Polynomials, Polynomial
 
@@ -1475,11 +1476,11 @@ end
 This function checks whether the B-series `series` of a time integration
 method is energy preserving for Hamiltonian systems - up to the
 [`order`](@ref) of the `series`.
-"""
-#References:
-#This code is based on the Theorem 2 of the paper "Energy-Preserving 
-#Integrators and the Structure of B-series".
-# (link: https://link.springer.com/article/10.1007/s10208-010-9073-1).
+References:
+This code is based on the Theorem 2 of the paper "Energy-Preserving 
+Integrators and the Structure of B-series".
+ (link: https://link.springer.com/article/10.1007/s10208-010-9073-1)
+ """
 function is_energy_preserving(series)
     series_a = modified_equation(series)
     #save all the coefficients in an array
@@ -1769,11 +1770,12 @@ end
 This function tells up to what order a method is Energy Preserving.
 """
 function energy_preserving_order(A,b)
+    rka = RungeKuttaMethod(A, b)
     p = 0
     not_energy_preserving = false
     while not_energy_preserving == false 
 #generate bseries 
-        if is_energy_preserving(A,b,p+1) == false
+        if is_energy_preserving(rka,p+1) == false
             not_energy_preserving = true
         end
         p = p + 1
