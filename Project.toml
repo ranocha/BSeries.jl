@@ -1,7 +1,7 @@
 name = "BSeries"
 uuid = "ebb8d67c-85b4-416c-b05f-5f409e808f32"
 authors = ["Hendrik Ranocha <mail@ranocha.de> and contributors"]
-version = "0.1.46"
+version = "0.1.47"
 
 [deps]
 Latexify = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
@@ -29,7 +29,7 @@ Polynomials = "2.0.23, 3 - 3.2.8, 3.2.10"
 Reexport = "1"
 Requires = "1"
 RootedTrees = "2.16"
-SymEngine = "0.8"
+SymEngine = "0.8, 0.9.1"
 SymPy = "1"
 Symbolics = "4, 5"
 julia = "1.6"
