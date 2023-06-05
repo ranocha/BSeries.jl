@@ -1458,20 +1458,14 @@ end
 
 
 """
-        is_energy_preserving(rka::RungeKuttaMethod,s)
+        is_energy_preserving(rka::RungeKuttaMethod,order)::Bool
 
-This function checks whether a Runge-Kutta method is energy 
-preserving for a given order s. 
-    Inputs: 
-        A: square matrix
-        b: vector of Butcher array
-        s: integer, the order
-    Output:
-        True/False
+This function checks whether a Runge-Kutta method `rk` is 
+energy-preserving for a given `order`.
 """
-function is_energy_preserving(rka::RungeKuttaMethod,p)
+function is_energy_preserving(rk::RungeKuttaMethod,order)
 #generate bseries 
-    series = bseries(rka, p)
+    series = bseries(rk, order)
     #pass it to the main functoin 'is_energy_preserving'
     is_energy_preserving(series)
 end
@@ -1479,17 +1473,22 @@ end
 """
 
         is_energy_preserving(series)::Bool
-This function checks whether the B-series `series` of a time integration
-method is energy preserving for Hamiltonian systems - up to the
-[`order`](@ref) of the `series`.
-References:
-This code is based on the Theorem 2 of the paper "Energy-Preserving 
-Integrators and the Structure of B-series".
- (link: https://link.springer.com/article/10.1007/s10208-010-9073-1)
+        
+        This function checks whether the B-series `series` of a time integration
+            method is energy-preserving for Hamiltonian systems - up to the
+            [`order`](@ref) of the `series`.
+            # References
+            This code is based on the Theorem 2 of
+            - Elena Celledoni, Robert I. McLachlan, Brynjulf Owren, and G. R. W. Quispel. 
+              "Energy-preserving integrators and the structure of B-series."
+              Foundations of Computational Mathematics 10 (2010): 673-693.
+              [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
  """
 function is_energy_preserving(series)
     series_a = modified_equation(series)
-    #save all the coefficients in an array
+    #save all the coefficients in an array: it is easier
+    #to call an array full of fractions when working with the 
+    #functions 'renormalize_bseries' and 'energy_preserving_trees_test' 
     coefficients = collect(values(series_a))
     #save all the RootedTrees in another array: 
     atrees = collect(keys(series_a))
