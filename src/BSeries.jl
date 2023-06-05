@@ -1329,11 +1329,17 @@ function compute_derivative end
 
 @static if !isdefined(Base, :get_extension)
     function __init__()
-        @require Symbolics="0c5d862f-8b57-4792-8d23-62f2024744c7" begin include("../ext/SymbolicsExt.jl") end
+        @require Symbolics="0c5d862f-8b57-4792-8d23-62f2024744c7" begin
+            include("../ext/SymbolicsExt.jl")
+        end
 
-        @require SymEngine="123dc426-2d89-5057-bbad-38513e3affd8" begin include("../ext/SymEngineExt.jl") end
+        @require SymEngine="123dc426-2d89-5057-bbad-38513e3affd8" begin
+            include("../ext/SymEngineExt.jl")
+        end
 
-        @require SymPy="24249f21-da20-56a4-8eb1-6a02cf4ae2e6" begin include("../ext/SymPyExt.jl") end
+        @require SymPy="24249f21-da20-56a4-8eb1-6a02cf4ae2e6" begin
+            include("../ext/SymPyExt.jl")
+        end
     end
 end
 
