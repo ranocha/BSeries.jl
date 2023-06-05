@@ -1492,9 +1492,9 @@ function is_energy_preserving(series)
     #save all the RootedTrees in another array: 
     atrees = collect(keys(series_a))
     #we need only the level sequence
-# Create an empty vector to store the converted trees into arrays
+    # Create an empty vector to store the converted trees into arrays
     trees = Vector{Vector{Int}}(undef, length(series_a))
-# Convert the trees and store them in the 'trees' vector
+    # Convert the trees and store them in the 'trees' vector
     for i in 1:length(series_a)
         levelsequence = atrees[i].level_sequence
         if isempty(levelsequence)
