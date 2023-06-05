@@ -1471,18 +1471,17 @@ function is_energy_preserving(rk::RungeKuttaMethod,order)
 end
 
 """
+    is_energy_preserving(series)::Bool
+This function checks whether the B-series `series` of a time integration
+method is energy-preserving for Hamiltonian systems - up to the
+[`order`](@ref) of the `series`.
 
-        is_energy_preserving(series)::Bool
-        
-        This function checks whether the B-series `series` of a time integration
-            method is energy-preserving for Hamiltonian systems - up to the
-            [`order`](@ref) of the `series`.
-            # References
-            This code is based on the Theorem 2 of
-            - Elena Celledoni, Robert I. McLachlan, Brynjulf Owren, and G. R. W. Quispel. 
-              "Energy-preserving integrators and the structure of B-series."
-              Foundations of Computational Mathematics 10 (2010): 673-693.
-              [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
+# References
+This code is based on the Theorem 2 of
+- Elena Celledoni, Robert I. McLachlan, Brynjulf Owren, and G. R. W. Quispel. 
+  "Energy-preserving integrators and the structure of B-series."
+  Foundations of Computational Mathematics 10 (2010): 673-693.
+  [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
  """
 function is_energy_preserving(series)
     series_a = modified_equation(series)
