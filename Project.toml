@@ -24,6 +24,7 @@ SymPyExt = "SymPy"
 SymbolicsExt = "Symbolics"
 
 [compat]
+Combinatorics = "1"
 Latexify = "0.15, 0.16"
 OrderedCollections = "1"
 Polynomials = "2.0.23, 3 - 3.2.8, 3.2.10"
@@ -34,7 +35,6 @@ SymEngine = "0.8, 0.9.1"
 SymPy = "1"
 Symbolics = "4, 5"
 julia = "1.6"
-Combinatorics = "1"
 
 [extras]
 SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
