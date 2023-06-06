@@ -1496,12 +1496,7 @@ function is_energy_preserving(series)
     trees = Vector{Vector{Int}}(undef, length(series_a))
     # Convert the trees and store them in the 'trees' vector
     for i in 1:length(series_a)
-        levelsequence = atrees[i].level_sequence
-        if isempty(levelsequence)
-            trees[i] = Int[]
-        else
-            trees[i] = levelsequence
-        end
+        trees[i] = atrees[i].level_sequence
     end
     #normalize the coefficients multiplying by the symmetry factor 
     coefficients = renormalize_bseries(coefficients,atrees) 
@@ -1510,13 +1505,13 @@ function is_energy_preserving(series)
     
 end
 
-"""
-        remove_spine(a)
 
-This function returns the forest of level_sequences 
-obtained after removing the rightmost spine of a given
-level_sequence.
-"""
+#        remove_spine(a)
+
+#This function returns the forest of level_sequences 
+#obtained after removing the rightmost spine of a given
+#level_sequence.
+
 function remove_spine(a)
     t_dict = Dict{Int, Array}()
     #we need to save the final nnumber in the level_sequence because this is the final leaf of the spine
@@ -1535,13 +1530,13 @@ function remove_spine(a)
     return t_dict
 end
 
-"""
-        modify_t_sub()
 
-It is not enough to generate the leafs and swap them. The level_sequences must be modified 
-with corrections to the numbers inside: the numbers will decrease if the leaf is moved to a 
-lower position, and they will increase if they move to an upper position.
-"""
+#        modify_t_sub()
+
+#It is not enough to generate the leafs and swap them. The level_sequences must be modified 
+#with corrections to the numbers inside: the numbers will decrease if the leaf is moved to a 
+#lower position, and they will increase if they move to an upper position.
+
 function modify_t_sub(a)
     #we obtain the leafs via 'remove_spine'
     #save them in 't_dict'
@@ -1581,9 +1576,9 @@ function modify_t_sub(a)
     return modified_t_dict
 end
 
-"""
-This functions checks if the level_sequence is a bush.
-"""
+
+#This functions checks if the level_sequence is a bush.
+
 function bush_detector(tree)
     bush = false
     if tree != [1]
@@ -1627,10 +1622,10 @@ function permuta(a::Vector{Int})
     return ad_dict
 end
 
-"""
-This function returns the rightmost_energy_preserving_tree level_sequence 
-for a given tree (the input also in level-sequence form).
-"""
+
+#This function returns the rightmost_energy_preserving_tree level_sequence 
+#for a given tree (the input also in level-sequence form).
+
 function rightmost_energy_preserving_tree(a::Vector{Int})
     #we want to generate all the leafs with respect to the rightmost spine
     ad_dict = permuta(a)
@@ -1650,23 +1645,23 @@ function rightmost_energy_preserving_tree(a::Vector{Int})
     return adjunto
 end
 
-"""
-This function rearranges the level sequence in 
-the same way as the Bseries output does
-"""
+
+#This function rearranges the level sequence in 
+#the same way as the Bseries output does
+
 function canonicalarray(tree)
     t = rootedtree(tree)
     trees = t.level_sequence
     return trees
 end
 
-"""
-        indexator(trees,onetree)
-This functions receives as inputs an array-of-arrays and 
-one of its elements.
 
-The output is the index of this array 'onetree'.
-"""
+#        indexator(trees,onetree)
+#This functions receives as inputs an array-of-arrays and 
+#one of its elements.
+
+#The output is the index of this array 'onetree'.
+
 function indexator(trees,onetree)
     theindex = 0
     l = length(trees)
@@ -1678,13 +1673,13 @@ function indexator(trees,onetree)
     return theindex
 end
 
-iswhitespace(c::Char) = isspace(c)
+#iswhitespace(c::Char) = isspace(c)
    
 
-"""
-This function generates all the equivalent trees 
-for a given level_sequence
-"""
+
+#This function generates all the equivalent trees 
+#for a given level_sequence
+
 function equivalent_trees(array)
     tree = rootedtree(array)
     l = length(array)
@@ -1770,9 +1765,9 @@ function renormalize_bseries(coefficient_array,thetrees)
     return coefficient_array
 end
 
-"""
-This function tells up to what order a method is Energy Preserving.
-"""
+
+#This function tells up to what order a method is Energy Preserving.
+
 function energy_preserving_order(A,b)
     rka = RungeKuttaMethod(A, b)
     p = 0
@@ -1787,16 +1782,16 @@ function energy_preserving_order(A,b)
     return p-1
 end
 
-"""
-        energy_preserving_trees_test(trees,coefficients)
 
-this function is the applcation of  Theorem 2 of the paper 
-"Energy-Preserving Integrators and the Structure of B-series". 
-It takes an array 'trees' of level_sequences and the array 
-of coefficients. 
-Checks whether the sets of energy_preserving_tree satisfify the
-energy_preserving condition. 
-"""
+#        energy_preserving_trees_test(trees,coefficients)
+
+#this function is the applcation of  Theorem 2 of the paper 
+#"Energy-Preserving Integrators and the Structure of B-series". 
+#It takes an array 'trees' of level_sequences and the array 
+#of coefficients. 
+#Checks whether the sets of energy_preserving_tree satisfify the
+#energy_preserving condition. 
+
 function energy_preserving_trees_test(trees, coefficients)
     #for every tree, obtain the adjoint and check if it exists
     length_coeff = length(trees)
