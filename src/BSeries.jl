@@ -1513,7 +1513,8 @@ end
 #level_sequence.
 
 function remove_spine(a)
-    t_dict = Dict{Int, Array}()
+    m = num_ribs(a)
+    ribs_array = Array{Array}(undef, m)
     #we need to save the final nnumber in the level_sequence because this is the final leaf of the spine
     k = a[end]
     #we need to look for the last last_j_occurrence of every integer in [1,k-1]
@@ -1522,127 +1523,73 @@ function remove_spine(a)
         last_jplus1_occurrence = findlast(x -> x == j+1, a)
         #consider the empty leafs
         if isnothing(last_j_occurrence) || isnothing(last_jplus1_occurrence)
-            t_dict[j] = []
+            ribs_array[j] = []
         else
-            t_dict[j] = a[last_j_occurrence+1:last_jplus1_occurrence-1]
+            ribs_array[j] = a[last_j_occurrence+1:last_jplus1_occurrence-1]
         end
     end
-    return t_dict
+    return ribs_array
 end
 
 
-#        modify_t_sub()
+#        get_ribs()
 
 #It is not enough to generate the leafs and swap them. The level_sequences must be modified 
 #with corrections to the numbers inside: the numbers will decrease if the leaf is moved to a 
 #lower position, and they will increase if they move to an upper position.
 
-function modify_t_sub(a)
+function get_ribs(a)
     #we obtain the leafs via 'remove_spine'
-    #save them in 't_dict'
-    t_dict = remove_spine(a)
-    m = num_leafs(a)
+    #save them in 'ribs_array'
+    ribs_array = remove_spine(a)
+    m = num_ribs(a)
     #create another dict for the modified indexes
-    modified_t_dict = Dict{Int, Vector{Int}}()
+    ribs = Array{Array}(undef, m)
     mid_tree = (m+1)/2
     #we check if the number of leafs is odd:
     #in that case, the middle one remains the same
     for j in 1:m
         if m % 2 == 1 && j == mid_tree
-            modified_t_dict[j] = t_dict[j]
+            ribs[j] = ribs_array[j]
             #now, go for the odd m case:
             #if the original leaf is low (with respect to the middle position), we use the formula
             # n+m-2j+1 for every number in the level_sequence
-        elseif m % 2 == 1 && j < mid_tree
-            new_arr = [n+m-2j+1 for n in t_dict[j]]
-            modified_t_dict[j] = new_arr
-            #if it is high, use m + n - 2*(j) + 1
-        elseif m % 2 == 1 && j > mid_tree
-            new_arr = [m + n - 2*(j) + 1 for n in t_dict[j]]
-            modified_t_dict[j] = new_arr
-            #even m case
-        elseif m % 2 == 0
-            #for low: n+m-2j+1
-            if j <= m/2
-                new_arr = [n+m-2j+1 for n in t_dict[j]]
-                modified_t_dict[j] = new_arr
-                #for high: m + n - 2*(j) + 1
-            elseif j > m/2
-                new_arr = [m + n - 2*(j) + 1  for n in t_dict[j]]
-                modified_t_dict[j] = new_arr
-            end
+        else
+            ribs[j] = [n+m-2j+1 for n in ribs_array[j]]
         end
     end
-    return modified_t_dict
+    return reverse(ribs)
 end
 
 
 #This functions checks if the level_sequence is a bush.
 
-function bush_detector(tree)
-    bush = false
-    if tree != [1]
-        l = length(tree)
-        bush = true
-        initial_index = tree[1]
-        initial_plus_one = initial_index + 1
-        if l > 1
-            for i in 2:l
-                if tree[i] != initial_plus_one
-                    bush = false
-                end
-            end
-        end
-    end
-    return bush
+function is_bushy(tree)
+    return maximum(tree) <= tree[1] + 1
 end
 
-#this function eliminates repeated subarrays
-function eliminate_repeated_subarrays(M)
-    unique_M = []
-    for arr in M
-        if arr in unique_M
-        else
-            push!(unique_M, arr)
-        end
-    end
-    return unique_M
-end
-
-#this function swaps the trees
-function permuta(a::Vector{Int})
-    #generate all the leafs via 'modify_t_sub'
-    diccionario = modify_t_sub(a)
-    m = num_leafs(a)
-    ad_dict = Dict{Int, Vector{Int}}()
-    #we swap every leaf j for the (m-j+1)
-    for j in 1:m
-        ad_dict[j] = diccionario[m-j+1]
-    end
-    return ad_dict
-end
 
 
 #This function returns the rightmost_energy_preserving_tree level_sequence 
 #for a given tree (the input also in level-sequence form).
-
+#ribs
 function rightmost_energy_preserving_tree(a::Vector{Int})
     #we want to generate all the leafs with respect to the rightmost spine
-    ad_dict = permuta(a)
+    ad_dict = get_ribs(a)
     #we obtain the number of leafs the right-most spine has
     #the Theorem 2 in the article requires to know if m is odd or even
-    m = num_leafs(a)
+    m = num_ribs(a)
     #we create an array from 1 to m plus another node for the final leaf of the rightmost spine
-    adjunto = collect(1:m+1)
+    #energy_preserving_partner
+    EP_tree = collect(1:m+1)
     #then, we insert every level_sequence from ad_dict
     for j in 1:m
-        last_j_occurrence = findlast(x -> x == j, adjunto)
-        last_jplus1_occurrence = findlast(x -> x == j+1, adjunto)
-        adjunto = vcat(adjunto[1:last_j_occurrence], ad_dict[j], adjunto[last_jplus1_occurrence:end])
+        last_j_occurrence = findlast(x -> x == j, EP_tree)
+        last_jplus1_occurrence = findlast(x -> x == j+1, EP_tree)
+        EP_tree = vcat(EP_tree[1:last_j_occurrence], ad_dict[j], EP_tree[last_jplus1_occurrence:end])
     end
-    adjunto = canonicalarray(adjunto)
-    #println("Adjoint Array: ", adjunto)
-    return adjunto
+    EP_tree = canonicalarray(EP_tree)
+    return EP_tree
 end
 
 
@@ -1655,26 +1602,6 @@ function canonicalarray(tree)
     return trees
 end
 
-
-#        indexator(trees,onetree)
-#This functions receives as inputs an array-of-arrays and 
-#one of its elements.
-
-#The output is the index of this array 'onetree'.
-
-function indexator(trees,onetree)
-    theindex = 0
-    l = length(trees)
-    for i in 1:l
-        if trees[i] == onetree
-            theindex = i
-        end
-    end
-    return theindex
-end
-
-#iswhitespace(c::Char) = isspace(c)
-   
 
 
 #This function generates all the equivalent trees 
@@ -1739,7 +1666,7 @@ function get_permutations(arr)
     return perms
 end
 
-function num_leafs(a)
+function num_ribs(a)
     k = a[end]
     return k - 1
 end
@@ -1765,9 +1692,10 @@ function renormalize_bseries(coefficient_array,thetrees)
     return coefficient_array
 end
 
-
-#This function tells up to what order a method is Energy Preserving.
-
+"""
+        energy_preserving_order(A,b)
+This function tells up to what order a method is Energy Preserving.
+"""
 function energy_preserving_order(A,b)
     rka = RungeKuttaMethod(A, b)
     p = 0
@@ -1797,19 +1725,18 @@ function energy_preserving_trees_test(trees, coefficients)
     length_coeff = length(trees)
     #provided that a tree can have several adjoints, for every tree t we need to check if there is a linear combination of the coefficients 
     #of its adjoints such that this linear combination is equal to the coefficient of t. 
-    #For this purpose, we cretae a MatrizEP to store all the information
-    MatrizEP = Vector{Int64}[]
-    error_searcher = false
+    #For this purpose, we cretae a energy_preserving_basis to store all the information
+    energy_preserving_basis = Vector{Int64}[]
     for t in trees
         if !isempty(t) 
             #save the index of the level_sequence: this will be used for creating the matrix EP
-            highindex = indexator(trees,t)
-            #check if the level_sequence corresponds to a bush
-            bushflag = bush_detector(t)
-            #if it does, then the coefficient must be equal to zero.
-            if bushflag == true
+            highindex = findfirst(isequal(t), trees)
+            # Check whether the level sequence corresponds to a bushy tree.
+            # If so, we can exit early since the coefficients of bushy trees must be
+            # zero in the modified equation of energy-preserving methods.
+            if length(t) > 1 && is_bushy(t)
                 if coefficients[highindex] != 0
-                    error_searcher = true
+                    return false
                 end
             else
                 #if the tree is not a bush, then generate all the equivalent trees
@@ -1821,7 +1748,7 @@ function energy_preserving_trees_test(trees, coefficients)
                     ej = zeros(Int64, length_coeff)
                     ej[highindex] = 1
                 #continue
-                    m = num_leafs(onetree)
+                    m = num_ribs(onetree)
                     t_ad = rightmost_energy_preserving_tree(onetree)
                 #check if the tree t is self-adjoint
                     #if (rootedtree(t_ad) == rootedtree(onetree))
@@ -1831,25 +1758,26 @@ function energy_preserving_trees_test(trees, coefficients)
                     #check if an rightmost_energy_preserving_tree is in the set of trees
                     if t_ad in trees 
                     #generate a k-th canonical vector
-                        ek[indexator(trees,t_ad)] = 1*(-1)^m
+                        ek[findfirst(isequal(t_ad), trees)] = 1*(-1)^m
                     #println(ek)
-                    #sum ej + ek and push it into MatrizEP
+                    #sum ej + ek and push it into energy_preserving_basis
                         ej = ej + ek
                         #println(ej)
-                        push!(MatrizEP, ej)
+                        push!(energy_preserving_basis, ej)
                     end
                 end
             end
         end
     end
     #we filter the empty columns (those full of zeros)
-    filter!(x -> any(y -> y != 0, x), MatrizEP)
+    filter!(x -> any(y -> y != 0, x), energy_preserving_basis)
     #we filter repeated columns
-    MatrizEP = eliminate_repeated_subarrays(MatrizEP)
-    #println(MatrizEP)
-    #println("Longitud de M: ", length(MatrizEP))
-    #because the components of MatrizEP is supposed to be columns, we traspose the matrix
-    M = hcat(MatrizEP...)
+    sort!(energy_preserving_basis)
+    unique!(energy_preserving_basis)
+    #println(energy_preserving_basis)
+    #println("Longitud de M: ", length(energy_preserving_basis))
+    #because the components of energy_preserving_basis is supposed to be columns, we traspose the matrix
+    M = hcat(energy_preserving_basis...)
     rank_M = rank(M)
     #we also create an extended matrix for which we append the vector of coefficients
     rank_MV = rank([M coefficients])
@@ -1857,11 +1785,7 @@ function energy_preserving_trees_test(trees, coefficients)
     #X = find_vector_X(M,coefficients)
     #println(X)
     #println("All the trees have been checked:")
-    if error_searcher == true
-        result = false
-    else
-        result = rank_M == rank_MV
-    end
+    result = rank_M == rank_MV
     #if the rank of M is equal to the rank of the extended MV, then the system is energy-Preserving
     return result
 end
