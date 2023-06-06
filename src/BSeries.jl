@@ -1503,7 +1503,6 @@ function is_energy_preserving(series)
     coefficients = renormalize_bseries(coefficients,atrees) 
     #check if it is energy Preserving 
     return energy_preserving_trees_test(trees,coefficients)  
-    
 end
 
 
@@ -1516,13 +1515,13 @@ end
 function remove_spine(a)
     m = num_ribs(a)
     ribs_array = Array{Array}(undef, m)
-    #we need to save the final nnumber in the level_sequence because this is the final leaf of the spine
+    #we need to save the final nnumber in the level_sequence because this is the final rib of the spine
     k = a[end]
     #we need to look for the last last_j_occurrence of every integer in [1,k-1]
     for j in 1:k-1
         last_j_occurrence = findlast(x -> x == j, a)
         last_jplus1_occurrence = findlast(x -> x == j+1, a)
-        #consider the empty leafs
+        #consider the empty ribs
         if isnothing(last_j_occurrence) || isnothing(last_jplus1_occurrence)
             ribs_array[j] = []
         else
@@ -1535,26 +1534,25 @@ end
 
 #        get_ribs()
 
-#It is not enough to generate the leafs and swap them. The level_sequences must be modified 
-#with corrections to the numbers inside: the numbers will decrease if the leaf is moved to a 
+#It is not enough to generate the ribs and swap them. The level_sequences must be modified 
+#with corrections to the numbers inside: the numbers will decrease if the rib is moved to a 
 #lower position, and they will increase if they move to an upper position.
 
 function get_ribs(a)
-    #we obtain the leafs via 'remove_spine'
+    #we obtain the ribs via 'remove_spine'
     #save them in 'ribs_array'
     ribs_array = remove_spine(a)
     m = num_ribs(a)
     #create another dict for the modified indexes
     ribs = Array{Array}(undef, m)
-    mid_tree = (m+1)/2
-    #we check if the number of leafs is odd:
+    mid_rib = (m+1)/2
+    #we check if the number of ribs is odd:
     #in that case, the middle one remains the same
     for j in 1:m
-        if m % 2 == 1 && j == mid_tree
+        if m % 2 == 1 && j == mid_rib
             ribs[j] = ribs_array[j]
-            #now, go for the odd m case:
-            #if the original leaf is low (with respect to the middle position), we use the formula
-            # n+m-2j+1 for every number in the level_sequence
+            #we use the formula
+            #n+m-2j+1 for every number in the level_sequence
         else
             ribs[j] = [n+m-2j+1 for n in ribs_array[j]]
         end
@@ -1575,22 +1573,22 @@ end
 #for a given tree (the input also in level-sequence form).
 #ribs
 function rightmost_energy_preserving_tree(a::Vector{Int})
-    #we want to generate all the leafs with respect to the rightmost spine
-    ad_dict = get_ribs(a)
-    #we obtain the number of leafs the right-most spine has
+    #we want to generate all the ribs with respect to the rightmost spine
+    ribs = get_ribs(a)
+    #we obtain the number of ribs the right-most spine has
     #the Theorem 2 in the article requires to know if m is odd or even
     m = num_ribs(a)
-    #we create an array from 1 to m plus another node for the final leaf of the rightmost spine
+    #we create an array from 1 to m plus another node for the final rib of the rightmost spine
     #energy_preserving_partner
-    EP_tree = collect(1:m+1)
-    #then, we insert every level_sequence from ad_dict
+    energy_preserving_partner = collect(1:m+1)
+    #then, we insert every level_sequence from ribs
     for j in 1:m
-        last_j_occurrence = findlast(x -> x == j, EP_tree)
-        last_jplus1_occurrence = findlast(x -> x == j+1, EP_tree)
-        EP_tree = vcat(EP_tree[1:last_j_occurrence], ad_dict[j], EP_tree[last_jplus1_occurrence:end])
+        last_j_occurrence = findlast(x -> x == j, energy_preserving_partner)
+        last_jplus1_occurrence = findlast(x -> x == j+1, energy_preserving_partner)
+        energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence], ribs[j], energy_preserving_partner[last_jplus1_occurrence:end])
     end
-    EP_tree = canonicalarray(EP_tree)
-    return EP_tree
+    energy_preserving_partner = canonicalarray(energy_preserving_partner)
+    return energy_preserving_partner
 end
 
 
@@ -1603,8 +1601,6 @@ function canonicalarray(tree)
     return trees
 end
 
-
-
 #This function generates all the equivalent trees 
 #for a given level_sequence
 
@@ -1612,7 +1608,7 @@ function equivalent_trees(array)
     tree = rootedtree(array)
     l = length(array)
     #we get the permutations of the array
-    superarray = get_permutations(array)
+    superarray = collect(permutations(array))
     lperm = length(superarray)
     #eliminate all the arrays except for those for which the first element is equal to 1
     for i in reverse(1:lperm) 
@@ -1662,10 +1658,6 @@ function equivalent_trees(array)
     return superarray
 end
 
-function get_permutations(arr)
-    perms = collect(permutations(arr))
-    return perms
-end
 
 function num_ribs(a)
     k = a[end]
