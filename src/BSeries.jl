@@ -1457,6 +1457,7 @@ include("latexify.jl")
 end
 
 
+
 """
         is_energy_preserving(rka::RungeKuttaMethod,order)::Bool
 
@@ -1680,12 +1681,16 @@ function add_one_to_left(arrays)
 end
 
 #this function multplies the coefficient for its symmetry factor
-function renormalize_bseries!(coefficients, trees)
-    for i in eachindex(coefficients, trees)
-        factor = symmetry(trees[i])
-        coefficients[i] /= factor
+function renormalize_bseries(coefficient_array,thetrees)
+    l = length(coefficient_array)
+    for i in 1:l
+        factor = 0
+        #because of the librarys we are using, some packages are repeated
+        #Then, we specify that the symmetry function comes from RootedTrees
+        factor = symmetry(thetrees[i])
+        coefficient_array[i] = coefficient_array[i]*(1//factor)
     end
-    return coefficients
+    return coefficient_array
 end
 
 """
