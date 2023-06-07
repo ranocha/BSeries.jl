@@ -1691,12 +1691,16 @@ end
         energy_preserving_order(A,b)
 This function tells up to what order a method is Energy Preserving.
 """
-function energy_preserving_order(A,b)
+function energy_preserving_order(A,b,max_order)
     rka = RungeKuttaMethod(A, b)
     p = 0
     not_energy_preserving = false
-    while not_energy_preserving == false 
-#generate bseries 
+    while not_energy_preserving == false
+        #make sure not to pass the max_order
+        if p > max_order
+            return max_order
+        end
+        #generate bseries 
         if is_energy_preserving(rka,p+1) == false
             not_energy_preserving = true
         end
