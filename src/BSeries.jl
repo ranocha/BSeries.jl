@@ -1688,11 +1688,12 @@ function renormalize_bseries!(series)
 end
 
 """
-        energy_preserving_order(A,b)
-This function tells up to what order a method is Energy Preserving.
+        energy_preserving_order(rk,max_order)
+This function tells up to what order a method 'rk' is Energy Preserving.
+It requires a 'max_order' so that it doesnt blow up if the order up to which 
+the method is energy_preserving is too big or infinite.
 """
-function energy_preserving_order(A,b,max_order)
-    rka = RungeKuttaMethod(A, b)
+function energy_preserving_order(rk,max_order)
     p = 0
     not_energy_preserving = false
     while not_energy_preserving == false
@@ -1701,7 +1702,7 @@ function energy_preserving_order(A,b,max_order)
             return max_order
         end
         #generate bseries 
-        if is_energy_preserving(rka,p+1) == false
+        if is_energy_preserving(rk,p+1) == false
             not_energy_preserving = true
         end
         p = p + 1

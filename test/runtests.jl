@@ -1910,8 +1910,9 @@ using Aqua: Aqua
             -5//48 15//16 0
             ]
             b = [1//10, 1//2, 2//5]
+            rk = RungeKuttaMethod(A, b)
             #Ths method is E-P up to order 4
-            @test energy_preserving_order(A,b) == 4
+            @test energy_preserving_order(rk,10) == 4
         end
         @testset "Second example" begin
             A = [  
@@ -1919,8 +1920,9 @@ using Aqua: Aqua
             2//3 0 
             ]
             b = [1//4, 3//4]
+            rk = RungeKuttaMethod(A, b)
             #Ths method is E-P up to order 3
-            @test energy_preserving_order(A,b) == 3
+            @test energy_preserving_order(rk,10) == 3
         end
         @testset "RK Method" begin
             A = [0//1  0//1  0//1  0//1
@@ -1928,8 +1930,9 @@ using Aqua: Aqua
             0//1  1//2  0//1  0//1
             0//1  0//1  1//1  0//1]
             b =  [1//6, 1//3, 1//3, 1//6]
+            rk = RungeKuttaMethod(A, b)
             #Ths method is E-P up to order 4
-            @test energy_preserving_order(A,b) == 4
+            @test energy_preserving_order(rk,10) == 4
         end
         @testset "Another RK Method" begin
             A = [ 0 0 0 0 0
@@ -1939,8 +1942,9 @@ using Aqua: Aqua
             1//4 0 -5//4 2 0]
 
             b = [1//6, 0,0, 2//3,1//6]
+            rk = RungeKuttaMethod(A, b)
             #Ths method is E-P up to order 4
-            @test energy_preserving_order(A,b) == 4
+            @test energy_preserving_order(rk,10) == 4
         end
         @testset "Test for AVF Method up to p order" begin
             #select order s
