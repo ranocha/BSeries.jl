@@ -33,7 +33,7 @@ export elementary_differentials
 
 export MultirateInfinitesimalSplitMethod
 
-export is_energy_preserving, energy_preserving_order
+export is_energy_preserving, energy_preserving_order, renormalize_bseries!
 # Types used for traits
 # These traits may decide between different algorithms based on the
 # corresponding complexity etc.
@@ -1467,7 +1467,7 @@ energy-preserving for a given `order`.
 function is_energy_preserving(rk::RungeKuttaMethod,order)
 #generate bseries 
     series = bseries(rk, order)
-    #pass it to the main functoin 'is_energy_preserving'
+    #pass it to the main function 'is_energy_preserving'
     is_energy_preserving(series)
 end
 
@@ -1486,9 +1486,11 @@ This code is based on the Theorem 2 of
  """
 function is_energy_preserving(series)
     series_a = modified_equation(series)
+    #renormalize by multiplying by symmetry factor
+    renormalize_bseries!(series_a)
     #save all the coefficients in an array: it is easier
     #to call an array full of fractions when working with the 
-    #functions 'renormalize_bseries' and 'energy_preserving_trees_test' 
+    #functions 'renormalize_bseries!' and 'energy_preserving_trees_test' 
     coefficients = collect(values(series_a))
     #save all the RootedTrees in another array: 
     atrees = collect(keys(series_a))
@@ -1499,8 +1501,6 @@ function is_energy_preserving(series)
     for i in 1:length(series_a)
         trees[i] = atrees[i].level_sequence
     end
-    #normalize the coefficients multiplying by the symmetry factor 
-    coefficients = renormalize_bseries(coefficients,atrees) 
     #check if it is energy Preserving 
     return energy_preserving_trees_test(trees,coefficients)  
 end
@@ -1511,11 +1511,10 @@ end
 #This function returns the forest of level_sequences 
 #obtained after removing the rightmost spine of a given
 #level_sequence.
-
 function remove_spine(a)
     m = num_ribs(a)
     ribs_array = Array{Array}(undef, m)
-    #we need to save the final nnumber in the level_sequence because this is the final rib of the spine
+    #we need to save the final number in the level_sequence because this is the final rib of the spine
     k = a[end]
     #we need to look for the last last_j_occurrence of every integer in [1,k-1]
     for j in 1:k-1
@@ -1536,7 +1535,7 @@ end
 
 #It is not enough to generate the ribs and swap them. The level_sequences must be modified 
 #with corrections to the numbers inside: the numbers will decrease if the rib is moved to a 
-#lower position, and they will increase if they move to an upper position.
+#lower position, and they will increase if they are relocated in an upper position.
 
 function get_ribs(a)
     #we obtain the ribs via 'remove_spine'
@@ -1672,17 +1671,20 @@ function add_one_to_left(arrays)
     return arrays
 end
 
-#this function multplies the coefficient for its symmetry factor
-function renormalize_bseries(coefficient_array,thetrees)
-    l = length(coefficient_array)
+"""
+        renormalize_bseries!(series)
+
+This function receives a 'TruncatedBSeries' and returns
+a new 'TruncatedBseries' which coefficients are multiplied by
+the symmetry factor for every Rooted Tree.
+"""
+function renormalize_bseries!(series)
+    trees_array = collect(keys(series))
+    l = length(trees_array)
     for i in 1:l
-        factor = 0
-        #because of the librarys we are using, some packages are repeated
-        #Then, we specify that the symmetry function comes from RootedTrees
-        factor = symmetry(thetrees[i])
-        coefficient_array[i] = coefficient_array[i]*(1//factor)
+        factor = symmetry(trees_array[i])
+        series[trees_array[i]] = series[trees_array[i]]*(1//factor)
     end
-    return coefficient_array
 end
 
 """
@@ -1706,7 +1708,7 @@ end
 
 #        energy_preserving_trees_test(trees,coefficients)
 
-#this function is the applcation of  Theorem 2 of the paper 
+#this function is the application of  Theorem 2 of the paper 
 #"Energy-Preserving Integrators and the Structure of B-series". 
 #It takes an array 'trees' of level_sequences and the array 
 #of coefficients. 
@@ -1718,7 +1720,7 @@ function energy_preserving_trees_test(trees, coefficients)
     length_coeff = length(trees)
     #provided that a tree can have several adjoints, for every tree t we need to check if there is a linear combination of the coefficients 
     #of its adjoints such that this linear combination is equal to the coefficient of t. 
-    #For this purpose, we cretae a energy_preserving_basis to store all the information
+    #For this purpose, we create a energy_preserving_basis to store all the information
     energy_preserving_basis = Vector{Int64}[]
     for t in trees
         if !isempty(t) 
@@ -1734,24 +1736,17 @@ function energy_preserving_trees_test(trees, coefficients)
             else
                 #if the tree is not a bush, then generate all the equivalent trees
                 equiv_set = equivalent_trees(t)
-                #this flag checks if the tree is self-adjoint
-                #flag_ad = false
                 for onetree in equiv_set
                 #j-th canonical vector
                     ej = zeros(Int64, length_coeff)
                     ej[highindex] = 1
-                #continue
                     m = num_ribs(onetree)
-                    t_ad = rightmost_energy_preserving_tree(onetree)
-                #check if the tree t is self-adjoint
-                    #if (rootedtree(t_ad) == rootedtree(onetree))
-                    #    flag_ad = true
-                    #end
+                    energy_preserving_pair = rightmost_energy_preserving_tree(onetree)
                     ek = zeros(Int64, length_coeff) 
                     #check if an rightmost_energy_preserving_tree is in the set of trees
-                    if t_ad in trees 
+                    if energy_preserving_pair in trees 
                     #generate a k-th canonical vector
-                        ek[findfirst(isequal(t_ad), trees)] = 1*(-1)^m
+                        ek[findfirst(isequal(energy_preserving_pair), trees)] = 1*(-1)^m
                     #println(ek)
                     #sum ej + ek and push it into energy_preserving_basis
                         ej = ej + ek
@@ -1769,7 +1764,7 @@ function energy_preserving_trees_test(trees, coefficients)
     unique!(energy_preserving_basis)
     #println(energy_preserving_basis)
     #println("Longitud de M: ", length(energy_preserving_basis))
-    #because the components of energy_preserving_basis is supposed to be columns, we traspose the matrix
+    #because the components of energy_preserving_basis is supposed to be columns, we transpose the matrix
     M = hcat(energy_preserving_basis...)
     rank_M = rank(M)
     #we also create an extended matrix for which we append the vector of coefficients
