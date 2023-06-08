@@ -1904,34 +1904,44 @@ using Aqua: Aqua
     #We test the code Energy_Preserving.jl using the function 'energy_preserving_order(A,b) for a given
     #matrix A and a vector b. The output will be the order up to which the method is energy preserving.
     @testset "Energy Preserving" begin
-        @testset "First example" begin
+        @testset "Pseudo-energy-preserving order 4" begin
             A = [ 0 0 0 
             1//3 0 0
             -5//48 15//16 0
             ]
             b = [1//10, 1//2, 2//5]
             rk = RungeKuttaMethod(A, b)
-            #Ths method is E-P up to order 4
+            #This method is E-P up to order 4
             @test energy_preserving_order(rk,10) == 4
         end
-        @testset "Second example" begin
+        # References
+        # Celledoni, Elena; McLachlan, Robert I.; McLaren, David I.; Owren, Brynjulf; G. Reinout W. Quispel;
+        # Wright, William M. Energy-preserving Runge-Kutta methods. ESAIM: Mathematical Modelling and Numerical 
+        # Analysis - Modélisation Mathématique et Analyse Numérique, Volume 43 (2009) no. 4, pp. 645-649.
+        # doi : 10.1051/m2an/2009020. http://www.numdam.org/articles/10.1051/m2an/2009020/
+        @testset "Pseudo-energy-preserving order 3" begin
             A = [  
             0 0 
             2//3 0 
             ]
             b = [1//4, 3//4]
             rk = RungeKuttaMethod(A, b)
-            #Ths method is E-P up to order 3
+            #This method is E-P up to order 3
             @test energy_preserving_order(rk,10) == 3
         end
-        @testset "RK Method" begin
+        # References
+        # Celledoni, Elena; McLachlan, Robert I.; McLaren, David I.; Owren, Brynjulf; G. Reinout W. Quispel;
+        # Wright, William M. Energy-preserving Runge-Kutta methods. ESAIM: Mathematical Modelling and Numerical 
+        # Analysis - Modélisation Mathématique et Analyse Numérique, Volume 43 (2009) no. 4, pp. 645-649.
+        # doi : 10.1051/m2an/2009020. http://www.numdam.org/articles/10.1051/m2an/2009020/
+        @testset "Classical RK Method" begin
             A = [0//1  0//1  0//1  0//1
             1//2  0//1  0//1  0//1
             0//1  1//2  0//1  0//1
             0//1  0//1  1//1  0//1]
             b =  [1//6, 1//3, 1//3, 1//6]
             rk = RungeKuttaMethod(A, b)
-            #Ths method is E-P up to order 4
+            #This method is E-P up to order 4
             @test energy_preserving_order(rk,10) == 4
         end
         @testset "Another RK Method" begin
@@ -1943,7 +1953,7 @@ using Aqua: Aqua
 
             b = [1//6, 0,0, 2//3,1//6]
             rk = RungeKuttaMethod(A, b)
-            #Ths method is E-P up to order 4
+            #This method is E-P up to order 4
             @test energy_preserving_order(rk,10) == 4
         end
         @testset "Test for AVF Method up to p order" begin
