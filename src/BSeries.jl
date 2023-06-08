@@ -1503,29 +1503,40 @@ function is_energy_preserving(map_series)
         trees[i] = thetrees[i].level_sequence
     end
     energy_preserving_flag = true
-    #loop over same-order trees
     max_length = length(trees[end])
     l = length(trees)
+    #first, check if the energy_preserving conditon is satisfied
+    #low order (provided that the computational cost at order < 5)
+    # is low. This is because the 'rank' function's behavior
+    # in the test function doesn't works by separate for low orders.
     if low_order_energy_preserving(trees, coefficients) == false
         return false
     end
-    counter = 5
-    while counter <= max_length && energy_preserving_flag == true
+    #loop over same-order trees
+    order = 5
+    while order <= max_length && energy_preserving_flag == true
         same_order_trees = []
         same_order_coeffs = []
+        #we create and fill the arrays of trees and coefficients
+        #corresponding to an 'order'
         for j in 1:l
-            if length(trees[j]) == counter
+            if length(trees[j]) == order
                 push!(same_order_coeffs, coefficients[j])
                 push!(same_order_trees,trees[j])
             end
         end
         energy_preserving_flag = energy_preserving_trees_test(same_order_trees,same_order_coeffs)
-        counter = counter + 1
+        order = order + 1
     end
     return energy_preserving_flag
 end
 
 #       low_order_energy_preserving(trees,coefficients)
+#
+# This function checks whether the set of level_sequences 'trees'
+# and the set of 'coefficients' corresponding to a Bseries is 
+# energy_preserving up to the 'uppermost_order', which we choose 
+# to be 4 for computational optimization
 function low_order_energy_preserving(trees, coefficients)
     #set the limit up to which this function will work
     uppermost_order = 4
