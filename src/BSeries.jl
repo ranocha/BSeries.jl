@@ -1506,57 +1506,57 @@ function is_energy_preserving(series)
 end
 
 
-#        remove_spine(a)
+#        remove_trunk(a)
 
 #This function returns the forest of level_sequences 
-#obtained after removing the rightmost spine of a given
+#obtained after removing the rightmost trunk of a given
 #level_sequence.
-function remove_spine(a)
-    m = num_ribs(a)
-    ribs_array = Array{Array}(undef, m)
-    #we need to save the final number in the level_sequence because this is the final rib of the spine
+function remove_trunk(a)
+    m = num_branchs(a)
+    branchs_array = Array{Array}(undef, m)
+    #we need to save the final number in the level_sequence because this is the final branch of the trunk
     k = a[end]
     #we need to look for the last last_j_occurrence of every integer in [1,k-1]
     for j in 1:k-1
         last_j_occurrence = findlast(x -> x == j, a)
         last_jplus1_occurrence = findlast(x -> x == j+1, a)
-        #consider the empty ribs
+        #consider the empty branchs
         if isnothing(last_j_occurrence) || isnothing(last_jplus1_occurrence)
-            ribs_array[j] = []
+            branchs_array[j] = []
         else
-            ribs_array[j] = a[last_j_occurrence+1:last_jplus1_occurrence-1]
+            branchs_array[j] = a[last_j_occurrence+1:last_jplus1_occurrence-1]
         end
     end
-    return ribs_array
+    return branchs_array
 end
 
 
-#        get_ribs()
+#        get_branchs()
 
-#It is not enough to generate the ribs and swap them. The level_sequences must be modified 
-#with corrections to the numbers inside: the numbers will decrease if the rib is moved to a 
+#It is not enough to generate the branchs and swap them. The level_sequences must be modified 
+#with corrections to the numbers inside: the numbers will decrease if the branch is moved to a 
 #lower position, and they will increase if they are relocated in an upper position.
 
-function get_ribs(a)
-    #we obtain the ribs via 'remove_spine'
-    #save them in 'ribs_array'
-    ribs_array = remove_spine(a)
-    m = num_ribs(a)
+function get_branchs(a)
+    #we obtain the branchs via 'remove_trunk'
+    #save them in 'branchs_array'
+    branchs_array = remove_trunk(a)
+    m = num_branchs(a)
     #create another dict for the modified indexes
-    ribs = Array{Array}(undef, m)
-    mid_rib = (m+1)/2
-    #we check if the number of ribs is odd:
+    branchs = Array{Array}(undef, m)
+    mid_branch = (m+1)/2
+    #we check if the number of branchs is odd:
     #in that case, the middle one remains the same
     for j in 1:m
-        if m % 2 == 1 && j == mid_rib
-            ribs[j] = ribs_array[j]
+        if m % 2 == 1 && j == mid_branch
+            branchs[j] = branchs_array[j]
             #we use the formula
             #n+m-2j+1 for every number in the level_sequence
         else
-            ribs[j] = [n+m-2j+1 for n in ribs_array[j]]
+            branchs[j] = [n+m-2j+1 for n in branchs_array[j]]
         end
     end
-    return reverse(ribs)
+    return reverse(branchs)
 end
 
 
@@ -1570,21 +1570,21 @@ end
 
 #This function returns the rightmost_energy_preserving_tree level_sequence 
 #for a given tree (the input also in level-sequence form).
-#ribs
+#branchs
 function rightmost_energy_preserving_tree(a::Vector{Int})
-    #we want to generate all the ribs with respect to the rightmost spine
-    ribs = get_ribs(a)
-    #we obtain the number of ribs the right-most spine has
+    #we want to generate all the branchs with respect to the rightmost trunk
+    branchs = get_branchs(a)
+    #we obtain the number of branchs the right-most trunk has
     #the Theorem 2 in the article requires to know if m is odd or even
-    m = num_ribs(a)
-    #we create an array from 1 to m plus another node for the final rib of the rightmost spine
+    m = num_branchs(a)
+    #we create an array from 1 to m plus another node for the final branch of the rightmost trunk
     #energy_preserving_partner
     energy_preserving_partner = collect(1:m+1)
-    #then, we insert every level_sequence from ribs
+    #then, we insert every level_sequence from branchs
     for j in 1:m
         last_j_occurrence = findlast(x -> x == j, energy_preserving_partner)
         last_jplus1_occurrence = findlast(x -> x == j+1, energy_preserving_partner)
-        energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence], ribs[j], energy_preserving_partner[last_jplus1_occurrence:end])
+        energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence], branchs[j], energy_preserving_partner[last_jplus1_occurrence:end])
     end
     energy_preserving_partner = canonicalarray(energy_preserving_partner)
     return energy_preserving_partner
@@ -1658,7 +1658,7 @@ function equivalent_trees(array)
 end
 
 
-function num_ribs(a)
+function num_branchs(a)
     k = a[end]
     return k - 1
 end
@@ -1745,7 +1745,7 @@ function energy_preserving_trees_test(trees, coefficients)
                 #j-th canonical vector
                     ej = zeros(Int64, length_coeff)
                     ej[highindex] = 1
-                    m = num_ribs(onetree)
+                    m = num_branchs(onetree)
                     energy_preserving_pair = rightmost_energy_preserving_tree(onetree)
                     ek = zeros(Int64, length_coeff) 
                     #check if an rightmost_energy_preserving_tree is in the set of trees
