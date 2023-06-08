@@ -1472,7 +1472,7 @@ function is_energy_preserving(rk::RungeKuttaMethod,order)
 end
 
 """
-    is_energy_preserving(series)::Bool
+    is_energy_preserving(map_series)::Bool
 This function checks whether the B-series `series` of a time integration
 method is energy-preserving for Hamiltonian systems - up to the
 [`order`](@ref) of the `series`.
@@ -1484,27 +1484,64 @@ This code is based on the Theorem 2 of
   Foundations of Computational Mathematics 10 (2010): 673-693.
   [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
  """
-function is_energy_preserving(series)
-    series_a = modified_equation(series)
+function is_energy_preserving(map_series)
+    flow_series = modified_equation(map_series)
+    #check if the first element is map or flow.
     #renormalize by multiplying by symmetry factor
-    renormalize_bseries!(series_a)
+    renormalize_bseries!(flow_series)
     #save all the coefficients in an array: it is easier
     #to call an array full of fractions when working with the 
     #functions 'renormalize_bseries!' and 'energy_preserving_trees_test' 
-    coefficients = collect(values(series_a))
+    coefficients = collect(values(flow_series))
     #save all the RootedTrees in another array: 
-    atrees = collect(keys(series_a))
+    thetrees = collect(keys(flow_series))
     #we need only the level sequence
     # Create an empty vector to store the converted trees into arrays
-    trees = Vector{Vector{Int}}(undef, length(series_a))
+    trees = Vector{Vector{Int}}(undef, length(flow_series))
     # Convert the trees and store them in the 'trees' vector
-    for i in 1:length(series_a)
-        trees[i] = atrees[i].level_sequence
+    for i in 1:length(flow_series)
+        trees[i] = thetrees[i].level_sequence
     end
-    #check if it is energy Preserving 
-    return energy_preserving_trees_test(trees,coefficients)  
+    energy_preserving_flag = true
+    #loop over same-order trees
+    max_length = length(trees[end])
+    l = length(trees)
+    if low_order_energy_preserving(trees, coefficients) == false
+        return false
+    end
+    counter = 5
+    while counter <= max_length && energy_preserving_flag == true
+        same_order_trees = []
+        same_order_coeffs = []
+        for j in 1:l
+            if length(trees[j]) == counter
+                push!(same_order_coeffs, coefficients[j])
+                push!(same_order_trees,trees[j])
+            end
+        end
+        energy_preserving_flag = energy_preserving_trees_test(same_order_trees,same_order_coeffs)
+        counter = counter + 1
+    end
+    return energy_preserving_flag
 end
 
+#       low_order_energy_preserving(trees,coefficients)
+function low_order_energy_preserving(trees, coefficients)
+    #set the limit up to which this function will work
+    uppermost_order = 4
+    same_order_trees = []
+    same_order_coeffs = []
+    index = 1
+    while length(trees[index]) <= uppermost_order
+        push!(same_order_coeffs, Rational{Int64}(coefficients[index]))
+        push!(same_order_trees,trees[index])
+        index += 1
+        if index > length(trees)
+            break
+        end
+    end
+    return energy_preserving_trees_test(same_order_trees,same_order_coeffs)
+end
 
 #        remove_trunk(a)
 
@@ -1773,7 +1810,7 @@ function energy_preserving_trees_test(trees, coefficients)
     M = hcat(energy_preserving_basis...)
     rank_M = rank(M)
     #we also create an extended matrix for which we append the vector of coefficients
-    rank_MV = rank([M coefficients])
+    rank_MV = rank([M map(x -> Rational{Int64}(x), coefficients)])
     #println(rank_M == rank_MV)
     #X = find_vector_X(M,coefficients)
     #println(X)

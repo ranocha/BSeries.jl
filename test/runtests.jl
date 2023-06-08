@@ -1944,7 +1944,7 @@ using Aqua: Aqua
             #This method is E-P up to order 4
             @test energy_preserving_order(rk,10) == 4
         end
-        @testset "Another RK Method" begin
+        @testset "Effective Order" begin
             A = [ 0 0 0 0 0
             1//5 0 0 0 0
             0 2//5 0 0 0
@@ -1956,9 +1956,14 @@ using Aqua: Aqua
             #This method is E-P up to order 4
             @test energy_preserving_order(rk,10) == 4
         end
+        # References
+        # Butcher, J.C. (1969). The effective order of Runge-Kutta methods.
+        # In: Morris, J.L. (eds) Conference on the Numerical Solution of
+        # Differential Equations. Lecture Notes in Mathematics, vol 109.
+        # Springer, Berlin, Heidelberg. https://doi.org/10.1007/BFb0060019
         @testset "Test for AVF Method up to p order" begin
             #select order s
-            p = 5
+            p = 6
             series = bseries(p) do t, series
                 if order(t) in (0, 1)
                     return 1 // 1
