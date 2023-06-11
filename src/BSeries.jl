@@ -1555,12 +1555,16 @@ function low_order_energy_preserving(trees, coefficients)
     return energy_preserving_trees_test(same_order_trees,same_order_coeffs)
 end
 
-#        branches(a)
 
-#This function returns the forest of level_sequences 
-#obtained after removing the rightmost trunk of a given
-#level_sequence.
-function branches(a)
+#        get_branches()
+
+#It is not enough to generate the branches and swap them. The level_sequences must be modified 
+#with corrections to the numbers inside: the numbers will decrease if the branch is moved to a 
+#lower position, and they will increase if they are relocated in an upper position.
+
+function get_branches(a)
+    #we obtain the branches via 'branches'
+    #save them in 'branches_array'
     m = num_branches(a)
     branches_array = Array{Array}(undef, m)
     #we need to save the final number in the level_sequence because this is the final branch of the trunk
@@ -1576,21 +1580,6 @@ function branches(a)
             branches_array[j] = a[last_j_occurrence+1:last_jplus1_occurrence-1]
         end
     end
-    return branches_array
-end
-
-
-#        get_branches()
-
-#It is not enough to generate the branches and swap them. The level_sequences must be modified 
-#with corrections to the numbers inside: the numbers will decrease if the branch is moved to a 
-#lower position, and they will increase if they are relocated in an upper position.
-
-function get_branches(a)
-    #we obtain the branches via 'branches'
-    #save them in 'branches_array'
-    branches_array = branches(a)
-    m = num_branches(a)
     #create another dict for the modified indexes
     branches = Array{Array}(undef, m)
     mid_branch = (m+1)/2
