@@ -1485,8 +1485,9 @@ This code is based on the Theorem 2 of
   [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
  """
 function is_energy_preserving(map_series)
+    #check if the first element is map or flow
+    @assert typeof(map_series) == TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}}
     flow_series = modified_equation(map_series)
-    #check if the first element is map or flow.
     #renormalize by multiplying by symmetry factor
     renormalize_bseries!(flow_series)
     #save all the coefficients in an array: it is easier
@@ -1505,7 +1506,7 @@ function is_energy_preserving(map_series)
     energy_preserving_flag = true
     max_length = length(trees[end])
     l = length(trees)
-    #first, check if the energy_preserving conditon is satisfied
+    #first, check if the energy_preserving condition is satisfied
     #low order (provided that the computational cost at order < 5)
     # is low. This is because the 'rank' function's behavior
     # in the test function doesn't works by separate for low orders.
@@ -1554,61 +1555,61 @@ function low_order_energy_preserving(trees, coefficients)
     return energy_preserving_trees_test(same_order_trees,same_order_coeffs)
 end
 
-#        remove_trunk(a)
+#        branches(a)
 
 #This function returns the forest of level_sequences 
 #obtained after removing the rightmost trunk of a given
 #level_sequence.
-function remove_trunk(a)
-    m = num_branchs(a)
-    branchs_array = Array{Array}(undef, m)
+function branches(a)
+    m = num_branches(a)
+    branches_array = Array{Array}(undef, m)
     #we need to save the final number in the level_sequence because this is the final branch of the trunk
     k = a[end]
     #we need to look for the last last_j_occurrence of every integer in [1,k-1]
     for j in 1:k-1
         last_j_occurrence = findlast(x -> x == j, a)
         last_jplus1_occurrence = findlast(x -> x == j+1, a)
-        #consider the empty branchs
+        #consider the empty branches
         if isnothing(last_j_occurrence) || isnothing(last_jplus1_occurrence)
-            branchs_array[j] = []
+            branches_array[j] = []
         else
-            branchs_array[j] = a[last_j_occurrence+1:last_jplus1_occurrence-1]
+            branches_array[j] = a[last_j_occurrence+1:last_jplus1_occurrence-1]
         end
     end
-    return branchs_array
+    return branches_array
 end
 
 
-#        get_branchs()
+#        get_branches()
 
-#It is not enough to generate the branchs and swap them. The level_sequences must be modified 
+#It is not enough to generate the branches and swap them. The level_sequences must be modified 
 #with corrections to the numbers inside: the numbers will decrease if the branch is moved to a 
 #lower position, and they will increase if they are relocated in an upper position.
 
-function get_branchs(a)
-    #we obtain the branchs via 'remove_trunk'
-    #save them in 'branchs_array'
-    branchs_array = remove_trunk(a)
-    m = num_branchs(a)
+function get_branches(a)
+    #we obtain the branches via 'branches'
+    #save them in 'branches_array'
+    branches_array = branches(a)
+    m = num_branches(a)
     #create another dict for the modified indexes
-    branchs = Array{Array}(undef, m)
+    branches = Array{Array}(undef, m)
     mid_branch = (m+1)/2
-    #we check if the number of branchs is odd:
+    #we check if the number of branches is odd:
     #in that case, the middle one remains the same
     for j in 1:m
         if m % 2 == 1 && j == mid_branch
-            branchs[j] = branchs_array[j]
+            branches[j] = branches_array[j]
             #we use the formula
             #n+m-2j+1 for every number in the level_sequence
         else
-            branchs[j] = [n+m-2j+1 for n in branchs_array[j]]
+            branches[j] = [n+m-2j+1 for n in branches_array[j]]
         end
     end
-    return reverse(branchs)
+    return reverse(branches)
 end
 
 
-#This functions checks if the level_sequence is a bush.
+#This function checks if the level_sequence is a bush.
 
 function is_bushy(tree)
     return maximum(tree) <= tree[1] + 1
@@ -1618,21 +1619,21 @@ end
 
 #This function returns the rightmost_energy_preserving_tree level_sequence 
 #for a given tree (the input also in level-sequence form).
-#branchs
+#branches
 function rightmost_energy_preserving_tree(a::Vector{Int})
-    #we want to generate all the branchs with respect to the rightmost trunk
-    branchs = get_branchs(a)
-    #we obtain the number of branchs the right-most trunk has
+    #we want to generate all the branches with respect to the rightmost trunk
+    branches = get_branches(a)
+    #we obtain the number of branches the right-most trunk has
     #the Theorem 2 in the article requires to know if m is odd or even
-    m = num_branchs(a)
+    m = num_branches(a)
     #we create an array from 1 to m plus another node for the final branch of the rightmost trunk
     #energy_preserving_partner
     energy_preserving_partner = collect(1:m+1)
-    #then, we insert every level_sequence from branchs
+    #then, we insert every level_sequence from branches
     for j in 1:m
         last_j_occurrence = findlast(x -> x == j, energy_preserving_partner)
         last_jplus1_occurrence = findlast(x -> x == j+1, energy_preserving_partner)
-        energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence], branchs[j], energy_preserving_partner[last_jplus1_occurrence:end])
+        energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence], branches[j], energy_preserving_partner[last_jplus1_occurrence:end])
     end
     energy_preserving_partner = canonicalarray(energy_preserving_partner)
     return energy_preserving_partner
@@ -1706,25 +1707,17 @@ function equivalent_trees(array)
 end
 
 
-function num_branchs(a)
+function num_branches(a)
     k = a[end]
     return k - 1
-end
-
-function add_one_to_left(arrays)
-    l = length(arrays)
-    for i in 1:l
-        arrays[i] = vcat([1], arrays[i])
-    end
-    return arrays
 end
 
 """
         renormalize_bseries!(series)
 
 This function receives a 'TruncatedBSeries' and returns
-a new 'TruncatedBseries' which coefficients are multiplied by
-the symmetry factor for every Rooted Tree.
+a new 'TruncatedBseries' whose coefficients are divided
+by the symmetry of the corresponding tree.
 """
 function renormalize_bseries!(series)
     trees_array = collect(keys(series))
@@ -1793,7 +1786,7 @@ function energy_preserving_trees_test(trees, coefficients)
                 #j-th canonical vector
                     ej = zeros(Int64, length_coeff)
                     ej[highindex] = 1
-                    m = num_branchs(onetree)
+                    m = num_branches(onetree)
                     energy_preserving_pair = rightmost_energy_preserving_tree(onetree)
                     ek = zeros(Int64, length_coeff) 
                     #check if an rightmost_energy_preserving_tree is in the set of trees
