@@ -1887,6 +1887,8 @@ using Aqua: Aqua
                       #   getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
                       #   /, # https://github.com/jump-dev/MutableArithmetics.jl/issues/161
                       # ])
+                      # Requires.jl is not loaded on new versions of Julia
+                      stale_deps = (; ignore = [:Requires]),
                       # We would like to test the Project.toml formatting but there are some
                       # CI issues, see https://github.com/ranocha/BSeries.jl/pull/119
                       project_toml_formatting = false)
