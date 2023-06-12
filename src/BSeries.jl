@@ -1485,9 +1485,9 @@ This code is based on the Theorem 2 of
   [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
  """
 function is_energy_preserving(map_series)
-    #check if the first element is map or flow
-    @assert typeof(map_series) == TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}}
     flow_series = modified_equation(map_series)
+    #check if the first element is map or flow
+    @assert flow_series[rootedtree([1])] == 1
     #renormalize by multiplying by symmetry factor
     renormalize_bseries!(flow_series)
     #save all the coefficients in an array: it is easier
@@ -1556,6 +1556,46 @@ function low_order_energy_preserving(trees, coefficients)
 end
 
 
+"""
+        renormalize_bseries!(series)
+
+This function receives a 'TruncatedBSeries' and returns
+a new 'TruncatedBseries' whose coefficients are divided
+by the symmetry of the corresponding tree.
+"""
+function renormalize_bseries!(series)
+    trees_array = collect(keys(series))
+    l = length(trees_array)
+    for i in 1:l
+        factor = symmetry(trees_array[i])
+        series[trees_array[i]] = series[trees_array[i]]*(1//factor)
+    end
+end
+
+"""
+        energy_preserving_order(rk,max_order)
+This function tells up to what order a method 'rk' is Energy Preserving.
+It requires a 'max_order' so that it doesnt blow up if the order up to which 
+the method is energy_preserving is too big or infinite.
+"""
+function energy_preserving_order(rk,max_order)
+    p = 0
+    not_energy_preserving = false
+    while not_energy_preserving == false
+        #make sure not to pass the max_order
+        if p > max_order
+            return max_order
+        end
+        #generate bseries 
+        if is_energy_preserving(rk,p+1) == false
+            not_energy_preserving = true
+        end
+        p = p + 1
+    end
+    return p-1
+end
+
+
 #        get_branches()
 
 #It is not enough to generate the branches and swap them. The level_sequences must be modified 
@@ -1610,6 +1650,7 @@ end
 #for a given tree (the input also in level-sequence form).
 #branches
 function rightmost_energy_preserving_tree(a::Vector{Int})
+    #println("no_adjoint: ",a)
     #we want to generate all the branches with respect to the rightmost trunk
     branches = get_branches(a)
     #we obtain the number of branches the right-most trunk has
@@ -1624,6 +1665,7 @@ function rightmost_energy_preserving_tree(a::Vector{Int})
         last_jplus1_occurrence = findlast(x -> x == j+1, energy_preserving_partner)
         energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence], branches[j], energy_preserving_partner[last_jplus1_occurrence:end])
     end
+    #println("adjoint: ",energy_preserving_partner)
     energy_preserving_partner = canonicalarray(energy_preserving_partner)
     return energy_preserving_partner
 end
@@ -1640,59 +1682,101 @@ end
 
 #This function generates all the equivalent trees 
 #for a given level_sequence
-
-function equivalent_trees(array)
-    tree = rootedtree(array)
-    l = length(array)
-    #we get the permutations of the array
-    superarray = collect(permutations(array))
-    lperm = length(superarray)
-    #eliminate all the arrays except for those for which the first element is equal to 1
-    for i in reverse(1:lperm) 
-        if superarray[i][1] != 1
-            splice!(superarray, i)
-        end
-    end
-    lperm = length(superarray)
-    #now, check if the levelsequence is the level sequence represents a RootedTree:
-    #the condition is that each number m cannot be followed by a number n such that
-    #n-m > 1. If that's the case, eliminate this array with 'splice!'
-    RTree_array = true
-    for i in reverse(1:lperm)
-        for j in 1:(l-1)
-            if (superarray[i][j+1] - superarray[i][j]) > 1
-                RTree_array = false
+function equivalent_trees(tree)
+    equiv_energy_preserving_set = []
+    l = length(tree)
+    for i in 1:l-1
+        # is this node a leaf
+        if tree[i+1] <= tree[i]
+            # make a copy of 'tree' to cut and paste with
+            graft = copy(tree)
+            leaf_value = graft[i]
+            #println("leaf:   ", leaf_value)
+            #println("new tree:  ", graft)
+            # initialize the length of the subtree we are currently working with
+            length_subtree = l
+            # initialize the initial component from which we will start looping 
+            # in order to cut and paste every subtree at the right of the array
+            initial_component = 1
+            left_index = 0
+            right_index = 0
+            # loop for sending subtrees to the right
+            new_j = i
+            for j in 2:leaf_value
+                #println("looking for:  ", j)
+                #make sure that there are more than one 'j' 
+                #in the current level sequence
+                j_counter = 0
+                for node in initial_component:l
+                   if graft[node] == j
+                        j_counter += 1
+                    end
+                end 
+                if j_counter == 1
+                    continue
+                end
+                # Find the nearest 'j' on the left side
+                for k in new_j:-1:initial_component
+                    if graft[k] == j
+                        left_index = k
+                        break
+                    end
+                end
+                # Find the nearest 'j' on the right side
+                right_flag = false
+                for k in new_j:l
+                    if graft[k] == j
+                        right_flag = true
+                        right_index = k
+                        break
+                    end
+                end
+                if right_flag == false
+                    right_index = l+1
+                end
+                if right_index == 0
+                    continue
+                end
+                #println(left_index,"---",right_index)
+                # get the subtree to be transplanted
+                if left_index == right_index
+                    plantout_subtree = [j]
+                    #println(plantout_subtree)
+                    # remove these componentes from the original tree
+                    splice!(graft, left_index)
+                else
+                    plantout_subtree = graft[left_index:right_index-1]
+                    #println(plantout_subtree)
+                    # remove these componentes from the original tree
+                    splice!(graft, left_index:right_index-1)
+                end
+                length_subtree = length(plantout_subtree)
+                initial_component = l - length_subtree + 1
+                #println("initial component:  ", initial_component)
+                # add the componentes to the right
+                graft = vcat(graft, plantout_subtree)
+                #println("graft:  ", graft)
+                #new_j for finding the reference (red in paper)
+                new_j = l + new_j - length_subtree - left_index + 1
+                #println("new_j:  ", new_j)
+                if new_j == l
+                    break
+                end
             end
-        end
-        if RTree_array == false
-            splice!(superarray, i)
-        end
-        RTree_array = true
-    end
-    lperm = length(superarray)
-    for i in reverse(1:lperm)
-        onetree = rootedtree(superarray[i])
-        isthesame_tree = onetree == tree
-        if isthesame_tree == false
-            splice!(superarray, i)
+            # obtain the energy_preserving_partner of 'graft'
+            # add this to 'equiv__energy_preserving_set'
+            #push!(equiv__energy_preserving_set, rightmost_energy_preserving_tree(graft))
+            push!(equiv_energy_preserving_set, graft)
+            #println(equiv_energy_preserving_set)
+            #println("-----------------------")
         end
     end
-    repeated_tree = false
-    lperm = length(superarray)
-    #we delete any repeated tree
-    for i in reverse(1:lperm)
-        for j in 1:(i-1)
-            if superarray[i] == superarray[j]
-                repeated_tree = true
-            end
-        end 
-        if repeated_tree == true
-            splice!(superarray, i)
-        end
-        repeated_tree = false
-    end
-
-    return superarray
+    #include the original tree
+    push!(equiv_energy_preserving_set, tree)
+    #sort!(equiv_energy_preserving_set)
+    #eliminate repeated
+    unique!(equiv_energy_preserving_set)
+    return equiv_energy_preserving_set
 end
 
 
@@ -1700,46 +1784,6 @@ function num_branches(a)
     k = a[end]
     return k - 1
 end
-
-"""
-        renormalize_bseries!(series)
-
-This function receives a 'TruncatedBSeries' and returns
-a new 'TruncatedBseries' whose coefficients are divided
-by the symmetry of the corresponding tree.
-"""
-function renormalize_bseries!(series)
-    trees_array = collect(keys(series))
-    l = length(trees_array)
-    for i in 1:l
-        factor = symmetry(trees_array[i])
-        series[trees_array[i]] = series[trees_array[i]]*(1//factor)
-    end
-end
-
-"""
-        energy_preserving_order(rk,max_order)
-This function tells up to what order a method 'rk' is Energy Preserving.
-It requires a 'max_order' so that it doesnt blow up if the order up to which 
-the method is energy_preserving is too big or infinite.
-"""
-function energy_preserving_order(rk,max_order)
-    p = 0
-    not_energy_preserving = false
-    while not_energy_preserving == false
-        #make sure not to pass the max_order
-        if p > max_order
-            return max_order
-        end
-        #generate bseries 
-        if is_energy_preserving(rk,p+1) == false
-            not_energy_preserving = true
-        end
-        p = p + 1
-    end
-    return p-1
-end
-
 
 #        energy_preserving_trees_test(trees,coefficients)
 
