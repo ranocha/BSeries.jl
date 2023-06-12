@@ -10,14 +10,22 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         group:
           - Core
         version:
           - '1'
           - '1.6'
+        os:
+          - ubuntu-latest
+        include:
+          - version: '1'
+            os: windows-latest
+        include:
+          - version: '1'
+            os: macOS-latest
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
