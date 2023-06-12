@@ -1603,10 +1603,8 @@ end
 #lower position, and they will increase if they are relocated in an upper position.
 
 function get_branches(a)
-    #we obtain the branches via 'branches'
-    #save them in 'branches_array'
     m = num_branches(a)
-    branches_array = Array{Array}(undef, m)
+    branches = Array{Array}(undef, m)
     #we need to save the final number in the level_sequence because this is the final branch of the trunk
     k = a[end]
     #we need to look for the last last_j_occurrence of every integer in [1,k-1]
@@ -1615,26 +1613,26 @@ function get_branches(a)
         last_jplus1_occurrence = findlast(x -> x == j+1, a)
         #consider the empty branches
         if isnothing(last_j_occurrence) || isnothing(last_jplus1_occurrence)
-            branches_array[j] = []
+            branches[j] = []
         else
-            branches_array[j] = a[last_j_occurrence+1:last_jplus1_occurrence-1]
+            branches[j] = a[last_j_occurrence+1:last_jplus1_occurrence-1]
         end
     end
     #create another dict for the modified indexes
-    branches = Array{Array}(undef, m)
+    modified_branches = Array{Array}(undef, m)
     mid_branch = (m+1)/2
     #we check if the number of branches is odd:
     #in that case, the middle one remains the same
     for j in 1:m
         if m % 2 == 1 && j == mid_branch
-            branches[j] = branches_array[j]
+            modified_branches[j] = branches[j]
             #we use the formula
             #n+m-2j+1 for every number in the level_sequence
         else
-            branches[j] = [n+m-2j+1 for n in branches_array[j]]
+            modified_branches[j] = [n+m-2j+1 for n in branches[j]]
         end
     end
-    return reverse(branches)
+    return reverse(modified_branches)
 end
 
 
@@ -1683,40 +1681,40 @@ end
 #This function generates all the equivalent trees 
 #for a given level_sequence
 function equivalent_trees(tree)
-    equiv_energy_preserving_set = []
+    equivalent_trees_set = []
     l = length(tree)
     for i in 1:l-1
-        # is this node a leaf
+        # For every node check if it is a leaf
         if tree[i+1] <= tree[i]
-            # make a copy of 'tree' to cut and paste with
+            # Make a copy of 'tree' to work with
             graft = copy(tree)
             leaf_value = graft[i]
-            #println("leaf:   ", leaf_value)
-            #println("new tree:  ", graft)
-            # initialize the length of the subtree we are currently working with
+            # Initialize the length of the subtree we are currently working with
             length_subtree = l
-            # initialize the initial component from which we will start looping 
+            # Initialize the initial component from which we will start looping 
             # in order to cut and paste every subtree at the right of the array
             initial_component = 1
             left_index = 0
             right_index = 0
-            # loop for sending subtrees to the right
-            new_j = i
+            # sending subtrees to the right
+            leaf_current_position = i
             for j in 2:leaf_value
-                #println("looking for:  ", j)
-                #make sure that there are more than one 'j' 
-                #in the current level sequence
+                # make sure that there are more than one 'j' 
+                # in the current level sequence
                 j_counter = 0
                 for node in initial_component:l
                    if graft[node] == j
                         j_counter += 1
                     end
                 end 
+                # if there is only one 'j', then it makes no sense
+                # to continue the loop: continue with the next 'j'
                 if j_counter == 1
                     continue
                 end
-                # Find the nearest 'j' on the left side
-                for k in new_j:-1:initial_component
+                # Find the nearest 'j' on the left side, from 'initial_component'
+                # until 'leaf_current_position'
+                for k in leaf_current_position:-1:initial_component
                     if graft[k] == j
                         left_index = k
                         break
@@ -1724,59 +1722,55 @@ function equivalent_trees(tree)
                 end
                 # Find the nearest 'j' on the right side
                 right_flag = false
-                for k in new_j:l
+                for k in leaf_current_position:l
                     if graft[k] == j
                         right_flag = true
                         right_index = k
                         break
                     end
                 end
-                if right_flag == false
-                    right_index = l+1
-                end
                 if right_index == 0
                     continue
                 end
-                #println(left_index,"---",right_index)
+                # consider special case: because we are defining (below) the right limit 
+                # for cutting the tree to be ('right_index' - 1), if the leaf is near to 
+                # right border we must define the right_index to be l+1.
+                if right_flag == false
+                    right_index = l+1
+                end
                 # get the subtree to be transplanted
                 if left_index == right_index
                     plantout_subtree = [j]
-                    #println(plantout_subtree)
                     # remove these componentes from the original tree
                     splice!(graft, left_index)
                 else
                     plantout_subtree = graft[left_index:right_index-1]
-                    #println(plantout_subtree)
                     # remove these componentes from the original tree
                     splice!(graft, left_index:right_index-1)
                 end
                 length_subtree = length(plantout_subtree)
+                # re-define the initial_component from which the subtree
+                # we are working with starts
                 initial_component = l - length_subtree + 1
-                #println("initial component:  ", initial_component)
                 # add the componentes to the right
                 graft = vcat(graft, plantout_subtree)
-                #println("graft:  ", graft)
-                #new_j for finding the reference (red in paper)
-                new_j = l + new_j - length_subtree - left_index + 1
-                #println("new_j:  ", new_j)
-                if new_j == l
+                #refresh the current position of the leaf
+                leaf_current_position = l + leaf_current_position - length_subtree - left_index + 1
+                if leaf_current_position == l
                     break
                 end
             end
             # obtain the energy_preserving_partner of 'graft'
             # add this to 'equiv__energy_preserving_set'
             #push!(equiv__energy_preserving_set, rightmost_energy_preserving_tree(graft))
-            push!(equiv_energy_preserving_set, graft)
-            #println(equiv_energy_preserving_set)
-            #println("-----------------------")
+            push!(equivalent_trees_set, graft)
         end
     end
     #include the original tree
-    push!(equiv_energy_preserving_set, tree)
-    #sort!(equiv_energy_preserving_set)
+    push!(equivalent_trees_set, tree)
     #eliminate repeated
-    unique!(equiv_energy_preserving_set)
-    return equiv_energy_preserving_set
+    unique!(equivalent_trees_set)
+    return equivalent_trees_set
 end
 
 
