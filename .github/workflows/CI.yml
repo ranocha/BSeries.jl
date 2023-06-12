@@ -10,11 +10,11 @@ on:
 
 jobs:
   test:
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} - Julia ${{ matrix.version }} - ${{ github.event_name }}
     strategy:
       fail-fast: false
       matrix:
-        group:
-          - Core
         version:
           - '1'
           - '1.6'
