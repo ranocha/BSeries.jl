@@ -23,7 +23,6 @@ jobs:
         include:
           - version: '1'
             os: windows-latest
-        include:
           - version: '1'
             os: macOS-latest
     steps:
