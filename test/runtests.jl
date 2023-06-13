@@ -1875,7 +1875,6 @@ using Aqua: Aqua
         end
     end # @testset "multirate infinitesimal split methods interface"
 
-
     @testset "Energy preservation (Hamiltonian systems)" begin
         @testset "Pseudo-energy-preserving order 4" begin
             # References
@@ -1989,5 +1988,4 @@ using Aqua: Aqua
             Aqua.test_project_toml_formatting(BSeries)
         end
     end
-
 end # @testset "BSeries"
