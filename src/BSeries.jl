@@ -1459,8 +1459,6 @@ include("latexify.jl")
     include("precompile.jl")
 end
 
-
-
 """
     renormalize!(series)
 
@@ -1478,8 +1476,6 @@ function renormalize!(series)
     end
     return series
 end
-
-
 
 """
     energy_preserving(rk::RungeKuttaMethod, max_order)
@@ -1500,14 +1496,13 @@ function energy_preserving_order(rk::RungeKuttaMethod, max_order)
             return max_order
         end
         # Check energy preservation up to the given order
-        if is_energy_preserving(rk,p+1) == false
+        if is_energy_preserving(rk, p + 1) == false
             not_energy_preserving = true
         end
         p = p + 1
     end
     return p - 1
 end
-
 
 """
     is_energy_preserving(rk::RungeKuttaMethod, order)::Bool
@@ -1547,6 +1542,7 @@ function is_energy_preserving(series_integrator)
     # in a certain subspace spanned by energy-preserving pairs of trees.
     # This implementation checks this condition for each order.
     flow_series = modified_equation(series_integrator)
+
     # It is easier to work with renormalized coefficients such that we do not
     # have to divide by the symmetry of the trees in the following.
     renormalize!(flow_series)
@@ -1564,6 +1560,7 @@ function is_energy_preserving(series_integrator)
         trees[i] = thetrees[i].level_sequence
     end
     max_length = length(trees[end])
+
     # The `rank` function used in `_is_energy_preserving` doesn't work individually
     # for order less than 4 because the energy-preserving basis has only one element.
     # The following function checks the energy-preserving condition up to order 4
@@ -1585,7 +1582,7 @@ function is_energy_preserving(series_integrator)
                 push!(same_order_trees, trees[j])
             end
         end
-        if _is_energy_preserving(same_order_trees,same_order_coeffs) == false
+        if _is_energy_preserving(same_order_trees, same_order_coeffs) == false
             return false
         end
     end
@@ -1657,7 +1654,7 @@ function _is_energy_preserving(trees, coefficients)
                     if energy_preserving_pair in trees
                         # Generate a k-th canonical vector
                         idx = findfirst(isequal(energy_preserving_pair), trees)
-                        ek[idx] = 1*(-1)^m
+                        ek[idx] = 1 * (-1)^m
                         # Add ej + ek and push it into energy_preserving_basis
                         ej = ej + ek
                         push!(energy_preserving_basis, ej)
@@ -1703,18 +1700,20 @@ function rightmost_energy_preserving_tree(a::Vector{Int})
     m = num_branches(a)
     # We create an array from 1 to m plus another node for the final branch
     # of the rightmost trunk
-    energy_preserving_partner = collect(1:m+1)
+    energy_preserving_partner = collect(1:(m + 1))
     # Then, we insert every level_sequence from branches
     for j in 1:m
         last_j_occurrence = findlast(x -> x == j, energy_preserving_partner)
-        last_jplus1_occurrence = findlast(x -> x == j+1, energy_preserving_partner)
-        energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence], branches[j], energy_preserving_partner[last_jplus1_occurrence:end])
+        last_jplus1_occurrence = findlast(x -> x == j + 1, energy_preserving_partner)
+        energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence],
+                                         branches[j],
+                                         energy_preserving_partner[last_jplus1_occurrence:end])
     end
     energy_preserving_partner = canonicalarray(energy_preserving_partner)
     return energy_preserving_partner
 end
 
-# This function retuns the forest of `branches`` after removing the ritghtmost-trunk
+# This function retuns the forest of `branches` after removing the ritghtmost-trunk
 # from the tree. This array also swaps the order of the branches and modifies
 # the numbers in its level_sequence so that the new branches are ready for being
 # reassembled.
@@ -1725,14 +1724,14 @@ function get_branches(a)
     # the final branch of the trunk
     k = a[end]
     # We need to look for the last `last_j_occurrence` of every integer in [1, k-1]
-    for j in 1:k-1
+    for j in 1:(k - 1)
         last_j_occurrence = findlast(x -> x == j, a)
-        last_jplus1_occurrence = findlast(x -> x == j+1, a)
+        last_jplus1_occurrence = findlast(x -> x == j + 1, a)
         # Consider the empty branches
         if isnothing(last_j_occurrence) || isnothing(last_jplus1_occurrence)
             branches[j] = []
         else
-            branches[j] = a[last_j_occurrence+1:last_jplus1_occurrence-1]
+            branches[j] = a[(last_j_occurrence + 1):(last_jplus1_occurrence - 1)]
         end
     end
     # Create another dict for the modified indexes
@@ -1746,7 +1745,7 @@ function get_branches(a)
             # We use the formula
             # n+m-2j+1 for every number in the level_sequence
         else
-            modified_branches[j] = [n+m-2j+1 for n in branches[j]]
+            modified_branches[j] = [n + m - 2j + 1 for n in branches[j]]
         end
     end
     return reverse(modified_branches)
@@ -1764,9 +1763,9 @@ end
 function equivalent_trees(tree)
     equivalent_trees_set = []
     l = length(tree)
-    for i in 1:l-1
+    for i in 1:(l - 1)
         # For every node check if it is a leaf
-        if tree[i+1] <= tree[i]
+        if tree[i + 1] <= tree[i]
             # Make a copy of `tree` to work with
             graft = copy(tree)
             leaf_value = graft[i]
@@ -1784,7 +1783,7 @@ function equivalent_trees(tree)
                 # in the current level sequence
                 j_counter = 0
                 for node in initial_component:l
-                   if graft[node] == j
+                    if graft[node] == j
                         j_counter += 1
                     end
                 end
@@ -1818,7 +1817,7 @@ function equivalent_trees(tree)
                 # for cutting the tree to be (`right_index` - 1), if the leaf is near to
                 # right border we must define the right_index to be l+1.
                 if right_flag == false
-                    right_index = l+1
+                    right_index = l + 1
                 end
                 # Get the subtree to be transplanted
                 if left_index == right_index
@@ -1826,9 +1825,9 @@ function equivalent_trees(tree)
                     # Remove these components from the original tree
                     splice!(graft, left_index)
                 else
-                    plantout_subtree = graft[left_index:right_index-1]
+                    plantout_subtree = graft[left_index:(right_index - 1)]
                     # Remove these components from the original tree
-                    splice!(graft, left_index:right_index-1)
+                    splice!(graft, left_index:(right_index - 1))
                 end
                 length_subtree = length(plantout_subtree)
                 # Re-define the initial_component from which the subtree
@@ -1837,7 +1836,8 @@ function equivalent_trees(tree)
                 # Add the components to the right
                 graft = vcat(graft, plantout_subtree)
                 # Refresh the current position of the leaf
-                leaf_current_position = l + leaf_current_position - length_subtree - left_index + 1
+                leaf_current_position = l + leaf_current_position - length_subtree -
+                                        left_index + 1
                 if leaf_current_position == l
                     break
                 end
@@ -1850,9 +1850,8 @@ function equivalent_trees(tree)
     push!(equivalent_trees_set, tree)
     # Eliminate repeated
     unique!(equivalent_trees_set)
+
     return equivalent_trees_set
 end
-
-
 
 end # module
