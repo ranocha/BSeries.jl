@@ -1963,7 +1963,7 @@ using Aqua: Aqua
         # Springer, Berlin, Heidelberg. https://doi.org/10.1007/BFb0060019
         @testset "Test for AVF Method up to p order" begin
             #select order s
-            p = 6
+            p = 7
             series = bseries(p) do t, series
                 if order(t) in (0, 1)
                     return 1 // 1
