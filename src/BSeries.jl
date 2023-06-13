@@ -1713,7 +1713,7 @@ function rightmost_energy_preserving_tree(a::Vector{Int})
     return energy_preserving_partner
 end
 
-# This function retuns the forest of `branches` after removing the ritghtmost-trunk
+# This function returns the forest of `branches` after removing the ritghtmost-trunk
 # from the tree. This array also swaps the order of the branches and modifies
 # the numbers in its level_sequence so that the new branches are ready for being
 # reassembled.
