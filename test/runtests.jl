@@ -1875,6 +1875,93 @@ using Aqua: Aqua
         end
     end # @testset "multirate infinitesimal split methods interface"
 
+    @testset "Energy preservation (Hamiltonian systems)" begin
+        @testset "Pseudo-energy-preserving order 4" begin
+            # References
+            # Celledoni, Elena; McLachlan, Robert I.; McLaren, David I.;
+            # Owren, Brynjulf; G. Reinout W. Quispel; Wright, William M.
+            # Energy-preserving Runge-Kutta methods.
+            # ESAIM: Mathematical Modelling and Numerical Analysis -
+            # Modélisation Mathématique et Analyse Numérique,
+            # Volume 43 (2009) no. 4, pp. 645-649.
+            # doi : 10.1051/m2an/2009020. http://www.numdam.org/articles/10.1051/m2an/2009020/
+            A = [0 0 0
+                 1//3 0 0
+                 -5//48 15//16 0]
+            b = [1 // 10, 1 // 2, 2 // 5]
+            rk = RungeKuttaMethod(A, b)
+
+            # This method is E-P up to order 4
+            @test energy_preserving_order(rk, 10) == 4
+        end
+
+        @testset "Pseudo-energy-preserving order 3" begin
+            # References
+            # Celledoni, Elena; McLachlan, Robert I.; McLaren, David I.;
+            # Owren, Brynjulf; G. Reinout W. Quispel; Wright, William M.
+            # Energy-preserving Runge-Kutta methods.
+            # ESAIM: Mathematical Modelling and Numerical Analysis -
+            # Modélisation Mathématique et Analyse Numérique,
+            # Volume 43 (2009) no. 4, pp. 645-649.
+            # doi : 10.1051/m2an/2009020. http://www.numdam.org/articles/10.1051/m2an/2009020/
+            A = [0 0
+                 2//3 0]
+            b = [1 // 4, 3 // 4]
+            rk = RungeKuttaMethod(A, b)
+
+            # This method is E-P up to order 3
+            @test energy_preserving_order(rk, 10) == 3
+        end
+
+        @testset "Classical RK Method" begin
+            A = [0//1 0//1 0//1 0//1
+                 1//2 0//1 0//1 0//1
+                 0//1 1//2 0//1 0//1
+                 0//1 0//1 1//1 0//1]
+            b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+            rk = RungeKuttaMethod(A, b)
+            # This method is E-P up to order 4
+            @test energy_preserving_order(rk, 10) == 4
+        end
+
+        @testset "Effective Order" begin
+            # References
+            # Butcher, J.C. (1969). The effective order of Runge-Kutta methods.
+            # In: Morris, J.L. (eds) Conference on the Numerical Solution of
+            # Differential Equations. Lecture Notes in Mathematics, vol 109.
+            # Springer, Berlin, Heidelberg. https://doi.org/10.1007/BFb0060019
+            A = [0 0 0 0 0
+                 1//5 0 0 0 0
+                 0 2//5 0 0 0
+                 3//16 0 5//16 0 0
+                 1//4 0 -5//4 2 0]
+
+            b = [1 // 6, 0, 0, 2 // 3, 1 // 6]
+            rk = RungeKuttaMethod(A, b)
+            #This method is E-P up to order 4
+            @test energy_preserving_order(rk, 10) == 4
+        end
+
+        @testset "Test for AVF Method up to p order" begin
+            # select order
+            p = 7
+            series = bseries(p) do t, series
+                if order(t) in (0, 1)
+                    return 1 // 1
+                else
+                    v = 1 // 1
+                    n = 0
+                    for subtree in SubtreeIterator(t)
+                        v *= series[subtree]
+                        n += 1
+                    end
+                    return v / (n + 1)
+                end
+            end
+            @test is_energy_preserving(series) == true
+        end
+    end
+
     @testset "Aqua" begin
         Aqua.test_all(BSeries;
                       # We would like to check for ambiguities but cannot do so right now because
