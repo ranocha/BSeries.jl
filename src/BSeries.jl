@@ -1487,7 +1487,9 @@ This code is based on the Theorem 2 of
 function is_energy_preserving(map_series)
     flow_series = modified_equation(map_series)
     #check if the first element is map or flow
-    @assert flow_series[rootedtree([1])] == 1
+    if !isone(flow_series[rootedtree([1])])
+        throw(ArgumentError("This method is designed for B-series representing a flow."))
+    end
     #renormalize by multiplying by symmetry factor
     renormalize_bseries!(flow_series)
     #save all the coefficients in an array: it is easier
@@ -1506,10 +1508,9 @@ function is_energy_preserving(map_series)
     energy_preserving_flag = true
     max_length = length(trees[end])
     l = length(trees)
-    #first, check if the energy_preserving condition is satisfied
-    #low order (provided that the computational cost at order < 5)
-    # is low. This is because the 'rank' function's behavior
-    # in the test function doesn't works by separate for low orders.
+    # The 'rank' function used in 'energy_preserving_trees_test' doesn't work individually 
+    # for order less than 4 because the 'energy_preserving_basis' is a one-element matrix.
+    # The following function checks the energy_preserving condition up to order 4 together.
     if low_order_energy_preserving(trees, coefficients) == false
         return false
     end
@@ -1518,8 +1519,8 @@ function is_energy_preserving(map_series)
     while order <= max_length && energy_preserving_flag == true
         same_order_trees = []
         same_order_coeffs = []
-        #we create and fill the arrays of trees and coefficients
-        #corresponding to an 'order'
+        # we create and fill the arrays of trees and coefficients
+        # corresponding to an 'order'
         for j in 1:l
             if length(trees[j]) == order
                 push!(same_order_coeffs, coefficients[j])
@@ -1559,16 +1560,12 @@ end
 """
         renormalize_bseries!(series)
 
-This function receives a 'TruncatedBSeries' and returns
-a new 'TruncatedBseries' whose coefficients are divided
-by the symmetry of the corresponding tree.
+This function modifies a B-series by dividing each coefficient
+by the `symmetry` of the corresponding tree.
 """
 function renormalize_bseries!(series)
-    trees_array = collect(keys(series))
-    l = length(trees_array)
-    for i in 1:l
-        factor = symmetry(trees_array[i])
-        series[trees_array[i]] = series[trees_array[i]]*(1//factor)
+    for t in keys(series)
+        series[t] /= symmetry(t)
     end
 end
 
@@ -1598,9 +1595,10 @@ end
 
 #        get_branches()
 
-#It is not enough to generate the branches and swap them. The level_sequences must be modified 
-#with corrections to the numbers inside: the numbers will decrease if the branch is moved to a 
-#lower position, and they will increase if they are relocated in an upper position.
+#This function retuns the forest of 'branches' after removing the ritghtmost-trunk 
+# from the tree. This array also swaps the order of the branches and modifies 
+# the numbers in its level_sequence so that the new branches are ready for being 
+# reassembled. 
 
 function get_branches(a)
     m = num_branches(a)
@@ -1729,6 +1727,7 @@ function equivalent_trees(tree)
                         break
                     end
                 end
+                #special case
                 if right_index == 0
                     continue
                 end
@@ -1741,18 +1740,18 @@ function equivalent_trees(tree)
                 # get the subtree to be transplanted
                 if left_index == right_index
                     plantout_subtree = [j]
-                    # remove these componentes from the original tree
+                    # remove these components from the original tree
                     splice!(graft, left_index)
                 else
                     plantout_subtree = graft[left_index:right_index-1]
-                    # remove these componentes from the original tree
+                    # remove these components from the original tree
                     splice!(graft, left_index:right_index-1)
                 end
                 length_subtree = length(plantout_subtree)
                 # re-define the initial_component from which the subtree
                 # we are working with starts
                 initial_component = l - length_subtree + 1
-                # add the componentes to the right
+                # add the components to the right
                 graft = vcat(graft, plantout_subtree)
                 #refresh the current position of the leaf
                 leaf_current_position = l + leaf_current_position - length_subtree - left_index + 1
@@ -1840,6 +1839,7 @@ function energy_preserving_trees_test(trees, coefficients)
     #because the components of energy_preserving_basis is supposed to be columns, we transpose the matrix
     M = hcat(energy_preserving_basis...)
     rank_M = rank(M)
+    
     #we also create an extended matrix for which we append the vector of coefficients
     rank_MV = rank([M map(x -> Rational{Int64}(x), coefficients)])
     #println(rank_M == rank_MV)
