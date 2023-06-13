@@ -3,7 +3,7 @@ module BSeries
 @doc read(joinpath(dirname(@__DIR__), "README.md"), String) BSeries
 
 import Base: +, -, *, /, \
- 
+
 using Reexport: @reexport
 
 @reexport using RootedTrees
@@ -33,7 +33,10 @@ export elementary_differentials
 
 export MultirateInfinitesimalSplitMethod
 
-export is_energy_preserving, energy_preserving_order, renormalize_bseries!
+export renormalize!
+
+export is_energy_preserving, energy_preserving_order
+
 # Types used for traits
 # These traits may decide between different algorithms based on the
 # corresponding complexity etc.
@@ -374,7 +377,7 @@ The B-series of the average vector field (AVF) method is given by
 ``b(.) = 1`` and ``b([t_1, ..., t_n]) = b(t_1)...b(t_n) / (n + 1)``, see
 - Elena Celledoni, Robert I. McLachlan, David I. McLaren, Brynjulf Owren,
   G. Reinout W. Quispel, and William M. Wright.
-  "Energy-preserving runge-kutta methods."
+  "Energy-preserving Runge-Kutta methods."
   ESAIM: Mathematical Modelling and Numerical Analysis 43, no. 4 (2009): 645-649.
   [DOI: 10.1051/m2an/2009020](https://doi.org/10.1051/m2an/2009020)
 
@@ -1459,175 +1462,289 @@ end
 
 
 """
-        is_energy_preserving(rka::RungeKuttaMethod,order)::Bool
+    renormalize!(series)
 
-This function checks whether a Runge-Kutta method `rk` is 
-energy-preserving for a given `order`.
+This function modifies a B-series by dividing each coefficient
+by the `symmetry` of the corresponding tree.
+
+!!! warning
+    This breaks assumptions made on the representation of a B-series.
+    The modified B-series should not be passed to any other function assuming
+    the default normalization.
 """
-function is_energy_preserving(rk::RungeKuttaMethod,order)
-#generate bseries 
-    series = bseries(rk, order)
-    #pass it to the main function 'is_energy_preserving'
-    is_energy_preserving(series)
-end
-
-"""
-    is_energy_preserving(map_series)::Bool
-This function checks whether the B-series `series` of a time integration
-method is energy-preserving for Hamiltonian systems - up to the
-[`order`](@ref) of the `series`.
-
-# References
-This code is based on the Theorem 2 of
-- Elena Celledoni, Robert I. McLachlan, Brynjulf Owren, and G. R. W. Quispel. 
-  "Energy-preserving integrators and the structure of B-series."
-  Foundations of Computational Mathematics 10 (2010): 673-693.
-  [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
- """
-function is_energy_preserving(map_series)
-    flow_series = modified_equation(map_series)
-    #check if the first element is map or flow
-    @assert flow_series[rootedtree([1])] == 1
-    #renormalize by multiplying by symmetry factor
-    renormalize_bseries!(flow_series)
-    #save all the coefficients in an array: it is easier
-    #to call an array full of fractions when working with the 
-    #functions 'renormalize_bseries!' and 'energy_preserving_trees_test' 
-    coefficients = collect(values(flow_series))
-    #save all the RootedTrees in another array: 
-    thetrees = collect(keys(flow_series))
-    #we need only the level sequence
-    # Create an empty vector to store the converted trees into arrays
-    trees = Vector{Vector{Int}}(undef, length(flow_series))
-    # Convert the trees and store them in the 'trees' vector
-    for i in 1:length(flow_series)
-        trees[i] = thetrees[i].level_sequence
+function renormalize!(series)
+    for t in keys(series)
+        series[t] /= symmetry(t)
     end
-    energy_preserving_flag = true
-    max_length = length(trees[end])
-    l = length(trees)
-    #first, check if the energy_preserving condition is satisfied
-    #low order (provided that the computational cost at order < 5)
-    # is low. This is because the 'rank' function's behavior
-    # in the test function doesn't works by separate for low orders.
-    if low_order_energy_preserving(trees, coefficients) == false
-        return false
-    end
-    #loop over same-order trees
-    order = 5
-    while order <= max_length && energy_preserving_flag == true
-        same_order_trees = []
-        same_order_coeffs = []
-        #we create and fill the arrays of trees and coefficients
-        #corresponding to an 'order'
-        for j in 1:l
-            if length(trees[j]) == order
-                push!(same_order_coeffs, coefficients[j])
-                push!(same_order_trees,trees[j])
-            end
-        end
-        energy_preserving_flag = energy_preserving_trees_test(same_order_trees,same_order_coeffs)
-        order = order + 1
-    end
-    return energy_preserving_flag
-end
-
-#       low_order_energy_preserving(trees,coefficients)
-#
-# This function checks whether the set of level_sequences 'trees'
-# and the set of 'coefficients' corresponding to a Bseries is 
-# energy_preserving up to the 'uppermost_order', which we choose 
-# to be 4 for computational optimization
-function low_order_energy_preserving(trees, coefficients)
-    #set the limit up to which this function will work
-    uppermost_order = 4
-    same_order_trees = []
-    same_order_coeffs = []
-    index = 1
-    while length(trees[index]) <= uppermost_order
-        push!(same_order_coeffs, Rational{Int64}(coefficients[index]))
-        push!(same_order_trees,trees[index])
-        index += 1
-        if index > length(trees)
-            break
-        end
-    end
-    return energy_preserving_trees_test(same_order_trees,same_order_coeffs)
+    return series
 end
 
 
-"""
-        renormalize_bseries!(series)
-
-This function receives a 'TruncatedBSeries' and returns
-a new 'TruncatedBseries' whose coefficients are divided
-by the symmetry of the corresponding tree.
-"""
-function renormalize_bseries!(series)
-    trees_array = collect(keys(series))
-    l = length(trees_array)
-    for i in 1:l
-        factor = symmetry(trees_array[i])
-        series[trees_array[i]] = series[trees_array[i]]*(1//factor)
-    end
-end
 
 """
-        energy_preserving_order(rk,max_order)
-This function tells up to what order a method 'rk' is Energy Preserving.
-It requires a 'max_order' so that it doesnt blow up if the order up to which 
-the method is energy_preserving is too big or infinite.
+    energy_preserving(rk::RungeKuttaMethod, max_order)
+
+This function checks up to which order a Runge-Kitta method 'rk' is
+energy-preserving for Hamiltonian problems.
+It requires a 'max_order' so that it does not run forever if the order up to
+which the method is energy_preserving is too big or infinite.
+
+See also [`is_energy_preserving`](@ref)
 """
-function energy_preserving_order(rk,max_order)
+function energy_preserving_order(rk::RungeKuttaMethod, max_order)
     p = 0
     not_energy_preserving = false
     while not_energy_preserving == false
-        #make sure not to pass the max_order
+        # Make sure not to pass the max_order
         if p > max_order
             return max_order
         end
-        #generate bseries 
+        # Check energy preservation up to the given order
         if is_energy_preserving(rk,p+1) == false
             not_energy_preserving = true
         end
         p = p + 1
     end
-    return p-1
+    return p - 1
 end
 
 
-#        get_branches()
+"""
+    is_energy_preserving(rk::RungeKuttaMethod, order)::Bool
 
-#It is not enough to generate the branches and swap them. The level_sequences must be modified 
-#with corrections to the numbers inside: the numbers will decrease if the branch is moved to a 
-#lower position, and they will increase if they are relocated in an upper position.
+This function checks whether the Runge-Kutta method `rk` is
+energy-preserving for Hamiltonian systems up to a given `order`.
+"""
+function is_energy_preserving(rk::RungeKuttaMethod, order)
+    series = bseries(rk, order)
+    return is_energy_preserving(series)
+end
 
+"""
+    is_energy_preserving(series_integrator)::Bool
+
+This function checks whether the B-series `series_integrator` of a time
+integration method is energy-preserving for Hamiltonian systems - up to the
+[`order`](@ref) of `series_integrator`.
+
+# References
+
+This code is based on the Theorem 2 of
+- Elena Celledoni, Robert I. McLachlan, Brynjulf Owren, and G. R. W. Quispel.
+  "Energy-preserving integrators and the structure of B-series."
+  Foundations of Computational Mathematics 10 (2010): 673-693.
+  [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
+"""
+function is_energy_preserving(series_integrator)
+    # This method requires the B-series of a map as input
+    let t = first(keys(series_integrator))
+        @assert isempty(t)
+        @assert isone(series_integrator[t])
+    end
+
+    # Theorem 2 of Celledoni et al. (2010) requires working with the modified
+    # equation. The basic idea is to check whether the modified equation lies
+    # in a certain subspace spanned by energy-preserving pairs of trees.
+    # This implementation checks this condition for each order.
+    flow_series = modified_equation(series_integrator)
+    # It is easier to work with renormalized coefficients such that we do not
+    # have to divide by the symmetry of the trees in the following.
+    renormalize!(flow_series)
+
+    # Save all the coefficients in an array: it is easier to use an array
+    # of coefficients in '_is_energy_preserving'
+    coefficients = collect(values(flow_series))
+    # Save all the RootedTrees in another array
+    thetrees = collect(keys(flow_series))
+    # We need only the level sequences
+    # Create an empty vector to store the converted trees into arrays
+    trees = similar(thetrees, typeof(thetrees[1].level_sequence))
+    # Convert the trees and store them in the `trees` vector
+    for i in eachindex(trees, thetrees)
+        trees[i] = thetrees[i].level_sequence
+    end
+    max_length = length(trees[end])
+    # The `rank` function used in `_is_energy_preserving` doesn't work individually
+    # for order less than 4 because the energy-preserving basis has only one element.
+    # The following function checks the energy-preserving condition up to order 4
+    # together.
+    if _is_energy_preserving_low_order(trees, coefficients) == false
+        return false
+    end
+
+    # Next, we check each higher order separately. This reduces the problem
+    # from one big problem to several smaller problems.
+    for order in 5:max_length
+        same_order_trees = []
+        same_order_coeffs = []
+        # We create and fill the arrays of trees and coefficients
+        # corresponding to an `order`
+        for j in eachindex(trees, coefficients)
+            if length(trees[j]) == order
+                push!(same_order_coeffs, coefficients[j])
+                push!(same_order_trees, trees[j])
+            end
+        end
+        if _is_energy_preserving(same_order_trees,same_order_coeffs) == false
+            return false
+        end
+    end
+
+    return true
+end
+
+# This function checks whether the set of level_sequences `trees`
+# and the set of 'coefficients' corresponding to a B-series is
+# energy_preserving up to the 'uppermost_order', which we choose
+# to be 4 for computational optimization
+function _is_energy_preserving_low_order(trees, coefficients)
+    # Set the limit up to which this function will work
+    uppermost_order = 4
+    same_order_trees = []
+    same_order_coeffs = []
+    for index in eachindex(trees, coefficients)
+        t = trees[index]
+        if length(t) > uppermost_order
+            break
+        end
+        push!(same_order_trees, t)
+        push!(same_order_coeffs, coefficients[index])
+    end
+    return _is_energy_preserving(same_order_trees, same_order_coeffs)
+end
+
+# This function is the application of Theorem 2 of the paper
+# "Energy-Preserving Integrators and the Structure of B-series".
+# It takes an array `trees` of `level_sequence`s and the array
+# of coefficients.
+# Checks whether `trees` and `ocefficients` satisfify the energy_preserving
+# condition.
+function _is_energy_preserving(trees, coefficients)
+    # For every tree, obtain the adjoint and check if it exists
+    length_coeff = length(trees)
+    # Provided that a tree can have several adjoints, for every tree `t`
+    # we need to check if there is a linear combination of the coefficients
+    # of its adjoints such that this linear combination is equal to the
+    # coefficient of `t`.
+    # For this purpose, we create a energy_preserving_basis to store all the
+    # information
+    energy_preserving_basis = empty(trees)
+    for t in trees
+        if !isempty(t)
+            # Save the index of the `level_sequence`: this will be used for
+            # creating the matrix
+            highindex = findfirst(isequal(t), trees)
+            # Check whether the level sequence corresponds to a bushy tree.
+            # If so, we can exit early since the coefficients of bushy trees
+            # must be zero in the modified equation of energy-preserving methods.
+            if length(t) > 1 && is_bushy(t)
+                if !iszero(coefficients[highindex])
+                    return false
+                end
+            else
+                # If the tree is not a bush, then generate all the equivalent
+                # trees
+                equiv_set = equivalent_trees(t)
+                for onetree in equiv_set
+                    # j-th canonical vector
+                    ej = zeros(Int64, length_coeff)
+                    ej[highindex] = 1
+                    m = num_branches(onetree)
+                    energy_preserving_pair = rightmost_energy_preserving_tree(onetree)
+                    ek = zeros(Int64, length_coeff)
+                    # Check if the rightmost_energy_preserving_tree is in the
+                    # set of trees
+                    if energy_preserving_pair in trees
+                        # Generate a k-th canonical vector
+                        idx = findfirst(isequal(energy_preserving_pair), trees)
+                        ek[idx] = 1*(-1)^m
+                        # Add ej + ek and push it into energy_preserving_basis
+                        ej = ej + ek
+                        push!(energy_preserving_basis, ej)
+                    end
+                end
+            end
+        end
+    end
+    # We remove the empty columns (those full of zeros)
+    filter!(x -> any(y -> y != 0, x), energy_preserving_basis)
+    # We remove repeated columns
+    sort!(energy_preserving_basis)
+    unique!(energy_preserving_basis)
+    # The components of `energy_preserving_basis` is supposed to be columns.
+    # Thus, we transpose the matrix
+    M = hcat(energy_preserving_basis...)
+    rank_M = rank(M)
+    # We also create an extended matrix for which we append the vector of
+    # coefficients
+    rank_Mv = rank([M map(x -> Rational{Int64}(x), coefficients)])
+    # If the rank of M is equal to the rank of the extended Mv,
+    # then the system is energy-preserving
+    return rank_M == rank_Mv
+end
+
+# This function checks if the level_sequence is a bush.
+function is_bushy(tree)
+    return maximum(tree) <= tree[1] + 1
+end
+
+function num_branches(a)
+    k = a[end]
+    return k - 1
+end
+
+# This function returns the rightmost_energy_preserving_tree `level_sequence`
+# for a given tree (the input also in level-sequence form).
+function rightmost_energy_preserving_tree(a::Vector{Int})
+    # We want to generate all the branches with respect to the rightmost trunk
+    branches = get_branches(a)
+    # We obtain the number of branches the right-most trunk has.
+    # Theorem 2 in the article requires to know if m is odd or even
+    m = num_branches(a)
+    # We create an array from 1 to m plus another node for the final branch
+    # of the rightmost trunk
+    energy_preserving_partner = collect(1:m+1)
+    # Then, we insert every level_sequence from branches
+    for j in 1:m
+        last_j_occurrence = findlast(x -> x == j, energy_preserving_partner)
+        last_jplus1_occurrence = findlast(x -> x == j+1, energy_preserving_partner)
+        energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence], branches[j], energy_preserving_partner[last_jplus1_occurrence:end])
+    end
+    energy_preserving_partner = canonicalarray(energy_preserving_partner)
+    return energy_preserving_partner
+end
+
+# This function retuns the forest of `branches`` after removing the ritghtmost-trunk
+# from the tree. This array also swaps the order of the branches and modifies
+# the numbers in its level_sequence so that the new branches are ready for being
+# reassembled.
 function get_branches(a)
     m = num_branches(a)
     branches = Array{Array}(undef, m)
-    #we need to save the final number in the level_sequence because this is the final branch of the trunk
+    # We need to save the final number in the level_sequence because this is
+    # the final branch of the trunk
     k = a[end]
-    #we need to look for the last last_j_occurrence of every integer in [1,k-1]
+    # We need to look for the last `last_j_occurrence` of every integer in [1, k-1]
     for j in 1:k-1
         last_j_occurrence = findlast(x -> x == j, a)
         last_jplus1_occurrence = findlast(x -> x == j+1, a)
-        #consider the empty branches
+        # Consider the empty branches
         if isnothing(last_j_occurrence) || isnothing(last_jplus1_occurrence)
             branches[j] = []
         else
             branches[j] = a[last_j_occurrence+1:last_jplus1_occurrence-1]
         end
     end
-    #create another dict for the modified indexes
+    # Create another dict for the modified indexes
     modified_branches = Array{Array}(undef, m)
-    mid_branch = (m+1)/2
-    #we check if the number of branches is odd:
-    #in that case, the middle one remains the same
+    mid_branch = (m + 1) / 2
+    # We check if the number of branches is odd:
+    # in that case, the middle one remains the same
     for j in 1:m
         if m % 2 == 1 && j == mid_branch
             modified_branches[j] = branches[j]
-            #we use the formula
-            #n+m-2j+1 for every number in the level_sequence
+            # We use the formula
+            # n+m-2j+1 for every number in the level_sequence
         else
             modified_branches[j] = [n+m-2j+1 for n in branches[j]]
         end
@@ -1635,79 +1752,43 @@ function get_branches(a)
     return reverse(modified_branches)
 end
 
-
-#This function checks if the level_sequence is a bush.
-
-function is_bushy(tree)
-    return maximum(tree) <= tree[1] + 1
-end
-
-
-
-#This function returns the rightmost_energy_preserving_tree level_sequence 
-#for a given tree (the input also in level-sequence form).
-#branches
-function rightmost_energy_preserving_tree(a::Vector{Int})
-    #println("no_adjoint: ",a)
-    #we want to generate all the branches with respect to the rightmost trunk
-    branches = get_branches(a)
-    #we obtain the number of branches the right-most trunk has
-    #the Theorem 2 in the article requires to know if m is odd or even
-    m = num_branches(a)
-    #we create an array from 1 to m plus another node for the final branch of the rightmost trunk
-    #energy_preserving_partner
-    energy_preserving_partner = collect(1:m+1)
-    #then, we insert every level_sequence from branches
-    for j in 1:m
-        last_j_occurrence = findlast(x -> x == j, energy_preserving_partner)
-        last_jplus1_occurrence = findlast(x -> x == j+1, energy_preserving_partner)
-        energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence], branches[j], energy_preserving_partner[last_jplus1_occurrence:end])
-    end
-    #println("adjoint: ",energy_preserving_partner)
-    energy_preserving_partner = canonicalarray(energy_preserving_partner)
-    return energy_preserving_partner
-end
-
-
-#This function rearranges the level sequence in 
-#the same way as the Bseries output does
-
+# This function rearranges the level sequence in
+# the same way as the BSeries.jl output does
 function canonicalarray(tree)
     t = rootedtree(tree)
     trees = t.level_sequence
     return trees
 end
 
-#This function generates all the equivalent trees 
-#for a given level_sequence
+# This function generates all the equivalent trees for a given `level_sequence`
 function equivalent_trees(tree)
     equivalent_trees_set = []
     l = length(tree)
     for i in 1:l-1
         # For every node check if it is a leaf
         if tree[i+1] <= tree[i]
-            # Make a copy of 'tree' to work with
+            # Make a copy of `tree` to work with
             graft = copy(tree)
             leaf_value = graft[i]
             # Initialize the length of the subtree we are currently working with
             length_subtree = l
-            # Initialize the initial component from which we will start looping 
+            # Initialize the initial component from which we will start looping
             # in order to cut and paste every subtree at the right of the array
             initial_component = 1
             left_index = 0
             right_index = 0
-            # sending subtrees to the right
+            # Sending subtrees to the right
             leaf_current_position = i
             for j in 2:leaf_value
-                # make sure that there are more than one 'j' 
+                # Make sure that there are more than one 'j'
                 # in the current level sequence
                 j_counter = 0
                 for node in initial_component:l
                    if graft[node] == j
                         j_counter += 1
                     end
-                end 
-                # if there is only one 'j', then it makes no sense
+                end
+                # If there is only one 'j', then it makes no sense
                 # to continue the loop: continue with the next 'j'
                 if j_counter == 1
                     continue
@@ -1729,126 +1810,49 @@ function equivalent_trees(tree)
                         break
                     end
                 end
+                # Special case
                 if right_index == 0
                     continue
                 end
-                # consider special case: because we are defining (below) the right limit 
-                # for cutting the tree to be ('right_index' - 1), if the leaf is near to 
+                # Consider special case: because we are defining (below) the right limit
+                # for cutting the tree to be (`right_index` - 1), if the leaf is near to
                 # right border we must define the right_index to be l+1.
                 if right_flag == false
                     right_index = l+1
                 end
-                # get the subtree to be transplanted
+                # Get the subtree to be transplanted
                 if left_index == right_index
                     plantout_subtree = [j]
-                    # remove these componentes from the original tree
+                    # Remove these components from the original tree
                     splice!(graft, left_index)
                 else
                     plantout_subtree = graft[left_index:right_index-1]
-                    # remove these componentes from the original tree
+                    # Remove these components from the original tree
                     splice!(graft, left_index:right_index-1)
                 end
                 length_subtree = length(plantout_subtree)
-                # re-define the initial_component from which the subtree
+                # Re-define the initial_component from which the subtree
                 # we are working with starts
                 initial_component = l - length_subtree + 1
-                # add the componentes to the right
+                # Add the components to the right
                 graft = vcat(graft, plantout_subtree)
-                #refresh the current position of the leaf
+                # Refresh the current position of the leaf
                 leaf_current_position = l + leaf_current_position - length_subtree - left_index + 1
                 if leaf_current_position == l
                     break
                 end
             end
-            # obtain the energy_preserving_partner of 'graft'
-            # add this to 'equiv__energy_preserving_set'
-            #push!(equiv__energy_preserving_set, rightmost_energy_preserving_tree(graft))
+            # Obtain the energy_preserving_partner of 'graft'
             push!(equivalent_trees_set, graft)
         end
     end
-    #include the original tree
+    # Include the original tree
     push!(equivalent_trees_set, tree)
-    #eliminate repeated
+    # Eliminate repeated
     unique!(equivalent_trees_set)
     return equivalent_trees_set
 end
 
 
-function num_branches(a)
-    k = a[end]
-    return k - 1
-end
-
-#        energy_preserving_trees_test(trees,coefficients)
-
-#this function is the application of  Theorem 2 of the paper 
-#"Energy-Preserving Integrators and the Structure of B-series". 
-#It takes an array 'trees' of level_sequences and the array 
-#of coefficients. 
-#Checks whether the sets of energy_preserving_tree satisfify the
-#energy_preserving condition. 
-
-function energy_preserving_trees_test(trees, coefficients)
-    #for every tree, obtain the adjoint and check if it exists
-    length_coeff = length(trees)
-    #provided that a tree can have several adjoints, for every tree t we need to check if there is a linear combination of the coefficients 
-    #of its adjoints such that this linear combination is equal to the coefficient of t. 
-    #For this purpose, we create a energy_preserving_basis to store all the information
-    energy_preserving_basis = Vector{Int64}[]
-    for t in trees
-        if !isempty(t) 
-            #save the index of the level_sequence: this will be used for creating the matrix EP
-            highindex = findfirst(isequal(t), trees)
-            # Check whether the level sequence corresponds to a bushy tree.
-            # If so, we can exit early since the coefficients of bushy trees must be
-            # zero in the modified equation of energy-preserving methods.
-            if length(t) > 1 && is_bushy(t)
-                if coefficients[highindex] != 0
-                    return false
-                end
-            else
-                #if the tree is not a bush, then generate all the equivalent trees
-                equiv_set = equivalent_trees(t)
-                for onetree in equiv_set
-                #j-th canonical vector
-                    ej = zeros(Int64, length_coeff)
-                    ej[highindex] = 1
-                    m = num_branches(onetree)
-                    energy_preserving_pair = rightmost_energy_preserving_tree(onetree)
-                    ek = zeros(Int64, length_coeff) 
-                    #check if an rightmost_energy_preserving_tree is in the set of trees
-                    if energy_preserving_pair in trees 
-                    #generate a k-th canonical vector
-                        ek[findfirst(isequal(energy_preserving_pair), trees)] = 1*(-1)^m
-                    #println(ek)
-                    #sum ej + ek and push it into energy_preserving_basis
-                        ej = ej + ek
-                        #println(ej)
-                        push!(energy_preserving_basis, ej)
-                    end
-                end
-            end
-        end
-    end
-    #we filter the empty columns (those full of zeros)
-    filter!(x -> any(y -> y != 0, x), energy_preserving_basis)
-    #we filter repeated columns
-    sort!(energy_preserving_basis)
-    unique!(energy_preserving_basis)
-    #println(energy_preserving_basis)
-    #println("Longitud de M: ", length(energy_preserving_basis))
-    #because the components of energy_preserving_basis is supposed to be columns, we transpose the matrix
-    M = hcat(energy_preserving_basis...)
-    rank_M = rank(M)
-    #we also create an extended matrix for which we append the vector of coefficients
-    rank_MV = rank([M map(x -> Rational{Int64}(x), coefficients)])
-    #println(rank_M == rank_MV)
-    #X = find_vector_X(M,coefficients)
-    #println(X)
-    #println("All the trees have been checked:")
-    result = rank_M == rank_MV
-    #if the rank of M is equal to the rank of the extended MV, then the system is energy-Preserving
-    return result
-end
 
 end # module
