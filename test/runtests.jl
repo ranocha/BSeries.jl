@@ -217,9 +217,17 @@ using Aqua: Aqua
     end
 
     @testset "average Vector field (AVF) method" begin
-        series = @inferred(average_vector_field_method(6))
-        @test @inferred(order_of_accuracy(series)) == 2
-        @test is_energy_preserving(series)
+        @testset "Rational coefficients" begin
+            series = @inferred(bseries(AverageVectorFieldMethod(), 6))
+            @test @inferred(order_of_accuracy(series)) == 2
+            @test is_energy_preserving(series)
+        end
+
+        @testset "Floating point coefficients" begin
+            series = @inferred(bseries(AverageVectorFieldMethod(Float64), 6))
+            @test @inferred(order_of_accuracy(series)) == 2
+            @test is_energy_preserving(series)
+        end
     end
 
     @testset "substitute" begin

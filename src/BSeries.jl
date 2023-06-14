@@ -31,7 +31,7 @@ export modified_equation, modifying_integrator
 
 export elementary_differentials
 
-export average_vector_field_method
+export AverageVectorFieldMethod
 
 export MultirateInfinitesimalSplitMethod
 
@@ -470,25 +470,17 @@ end
 # should create a lazy version, optionally a memoized one
 
 """
-    average_vector_field_method([T=Rational{Int},] order)
+    AverageVectorFieldMethod([T=Rational{Int}])
 
-Construct the B-series of the average vector field (AVF) method up to the given
-`order`, using coefficients of type `T`.
-
-See also [`bseries`](@ref).
-
-!!! note "Normalization by elementary differentials"
-    The coefficients of the B-series returned by this method need to be
-    multiplied by a power of the time step divided by the `symmetry` of the
-    rooted tree and multiplied by the corresponding elementary differential
-    of the input vector field ``f``.
-    See also [`evaluate`](@ref).
+Construct a representation of the average vector field (AVF) method using
+coefficients of type `T`. You can pass it as argument to [`bseries`](@ref)
+to construct the corresponding B-series.
 
 # Examples
 
 We can generate this as follows.
 ```jldoctest
-julia> series = average_vector_field_method(3)
+julia> series = bseries(AverageVectorFieldMethod(), 3)
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 5 entries:
   RootedTree{Int64}: Int64[]   => 1//1
   RootedTree{Int64}: [1]       => 1//1
@@ -508,11 +500,25 @@ The B-series of the average vector field (AVF) method is given by
   ESAIM: Mathematical Modelling and Numerical Analysis 43, no. 4 (2009): 645-649.
   [DOI: 10.1051/m2an/2009020](https://doi.org/10.1051/m2an/2009020)
 """
-function average_vector_field_method(order)
-    average_vector_field_method(Rational{Int}, order)
-end
+struct AverageVectorFieldMethod{T} end
 
-function average_vector_field_method(::Type{T}, o) where {T}
+AverageVectorFieldMethod() = AverageVectorFieldMethod(Rational{Int})
+AverageVectorFieldMethod(::Type{T}) where {T} = AverageVectorFieldMethod{T}()
+
+"""
+    bseries(avf::AverageVectorFieldMethod, order)
+
+Compute the B-series of the [`AverageVectorFieldMethod`](@ref) up to a
+prescribed integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by `bseries` need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+"""
+function bseries(::AverageVectorFieldMethod{T}, o) where {T}
     bseries(o) do t, series
         if order(t) in (0, 1)
             return one(T)
