@@ -31,6 +31,8 @@ export modified_equation, modifying_integrator
 
 export elementary_differentials
 
+export average_vector_field_method
+
 export MultirateInfinitesimalSplitMethod
 
 export renormalize!
