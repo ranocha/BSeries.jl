@@ -1705,8 +1705,8 @@ function rightmost_energy_preserving_tree(a::Vector{Int})
         last_j_occurrence::Int = findlast(x -> x == j, energy_preserving_partner)
         last_jplus1_occurrence::Int = findlast(x -> x == j + 1, energy_preserving_partner)
         energy_preserving_partner::typeof(a) = vcat(energy_preserving_partner[1:last_j_occurrence],
-                                         branches[j],
-                                         energy_preserving_partner[last_jplus1_occurrence:end])
+                                                    branches[j],
+                                                    energy_preserving_partner[last_jplus1_occurrence:end])
     end
     energy_preserving_partner = canonicalarray(energy_preserving_partner)
     return energy_preserving_partner
