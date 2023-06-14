@@ -1942,7 +1942,7 @@ using Aqua: Aqua
             @test energy_preserving_order(rk, 10) == 4
         end
 
-        @testset "Test for AVF Method up to p order" begin
+        @testset "Average Vector Field (AVF)" begin
             # select order
             p = 7
             series = bseries(p) do t, series
@@ -1959,6 +1959,66 @@ using Aqua: Aqua
                 end
             end
             @test is_energy_preserving(series) == true
+        end
+
+        @testset "Floating point coefficients" begin
+            # AVF method again
+            series = bseries(7) do t, series
+                if order(t) in (0, 1)
+                    return 1.0
+                else
+                    v = 1.0
+                    n = 0
+                    for subtree in SubtreeIterator(t)
+                        v *= series[subtree]
+                        n += 1
+                    end
+                    return v / (n + 1)
+                end
+            end
+            # TODO: This test is currently broken and throws an error
+            @test_skip is_energy_preserving(series)
+        end
+
+        @testset "Symbolic coefficients" begin
+            @testset "SymEngine.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymEngine.symbols("α")
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 2))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                # TODO: This test is currently broken and throws an error
+                @test_broken is_energy_preserving(series_integrator)
+            end
+
+            @testset "SymPy.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymPy.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 2))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                # TODO: This test is currently broken and throws an error
+                @test_broken is_energy_preserving(series_integrator)
+            end
+
+            @testset "Symbolics.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                Symbolics.@variables α
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 2))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                # TODO: This test is currently broken and throws an error
+                @test_broken is_energy_preserving(series_integrator)
+            end
         end
     end
 
