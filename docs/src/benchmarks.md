@@ -295,12 +295,12 @@ end
 
 println("Energy preservation")
 @time begin
-  series = average_vector_field_method(up_to_order)
+  series = bseries(AverageVectorFieldMethod(), up_to_order)
   println(is_energy_preserving(series))
 end
 
 @time begin
-  series = average_vector_field_method(up_to_order)
+  series = bseries(AverageVectorFieldMethod(), up_to_order)
   println(is_energy_preserving(series))
 end
 ```
