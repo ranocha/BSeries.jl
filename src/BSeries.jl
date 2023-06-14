@@ -1572,8 +1572,8 @@ function is_energy_preserving(series_integrator)
     # Next, we check each higher order separately. This reduces the problem
     # from one big problem to several smaller problems.
     for order in 5:max_length
-        same_order_trees = []
-        same_order_coeffs = []
+        same_order_trees = empty(trees)
+        same_order_coeffs = empty(coefficients)
         # We create and fill the arrays of trees and coefficients
         # corresponding to an `order`
         for j in eachindex(trees, coefficients)
@@ -1597,8 +1597,8 @@ end
 function _is_energy_preserving_low_order(trees, coefficients)
     # Set the limit up to which this function will work
     uppermost_order = 4
-    same_order_trees = []
-    same_order_coeffs = []
+    same_order_trees = empty(trees)
+    same_order_coeffs = empty(coefficients)
     for index in eachindex(trees, coefficients)
         t = trees[index]
         if length(t) > uppermost_order
@@ -1626,55 +1626,54 @@ function _is_energy_preserving(trees, coefficients)
     # For this purpose, we create a energy_preserving_basis to store all the
     # information
     energy_preserving_basis = empty(trees)
-    for t in trees
-        if !isempty(t)
-            # Save the index of the `level_sequence`: this will be used for
-            # creating the matrix
-            highindex = findfirst(isequal(t), trees)
-            # Check whether the level sequence corresponds to a bushy tree.
-            # If so, we can exit early since the coefficients of bushy trees
-            # must be zero in the modified equation of energy-preserving methods.
-            if length(t) > 1 && is_bushy(t)
-                if !iszero(coefficients[highindex])
-                    return false
-                end
-            else
-                # If the tree is not a bush, then generate all the equivalent
-                # trees
-                equiv_set = equivalent_trees(t)
-                for onetree in equiv_set
-                    # j-th canonical vector
-                    ej = zeros(Int64, length_coeff)
-                    ej[highindex] = 1
-                    m = num_branches(onetree)
-                    energy_preserving_pair = rightmost_energy_preserving_tree(onetree)
-                    ek = zeros(Int64, length_coeff)
-                    # Check if the rightmost_energy_preserving_tree is in the
-                    # set of trees
-                    if energy_preserving_pair in trees
-                        # Generate a k-th canonical vector
-                        idx = findfirst(isequal(energy_preserving_pair), trees)
-                        ek[idx] = 1 * (-1)^m
-                        # Add ej + ek and push it into energy_preserving_basis
-                        ej = ej + ek
-                        push!(energy_preserving_basis, ej)
-                    end
+    for (t_index, t) in enumerate(trees)
+        # We do not need to consider the empty tree
+        isempty(t) && continue
+
+        # Check whether the level sequence corresponds to a bushy tree.
+        # If so, we can exit early since the coefficients of bushy trees
+        # must be zero in the modified equation of energy-preserving methods.
+        if length(t) > 1 && is_bushy(t)
+            if !iszero(coefficients[t_index])
+                return false
+            end
+        else
+            # If the tree is not a bush, then generate all the equivalent trees
+            equiv_set = equivalent_trees(t)
+            for onetree in equiv_set
+                # j-th canonical vector
+                ej = zeros(Int64, length_coeff)
+                ej[t_index] = 1
+                m = num_branches(onetree)
+                energy_preserving_pair = rightmost_energy_preserving_tree(onetree)
+                ek = zeros(Int64, length_coeff)
+                # Check if the rightmost energy-preserving tree is in the
+                # set of trees
+                idx = findfirst(isequal(energy_preserving_pair), trees)
+                if idx !== nothing # i.e., energy_preserving_pair in trees
+                    # Generate a k-th canonical vector
+                    ek[idx] = 1 * (-1)^m
+                    # Add ej + ek and push it into energy_preserving_basis
+                    ej = ej + ek
+                    push!(energy_preserving_basis, ej)
                 end
             end
         end
     end
     # We remove the empty columns (those full of zeros)
-    filter!(x -> any(y -> y != 0, x), energy_preserving_basis)
+    filter!(!iszero, energy_preserving_basis)
+
     # We remove repeated columns
-    sort!(energy_preserving_basis)
     unique!(energy_preserving_basis)
+
     # The components of `energy_preserving_basis` is supposed to be columns.
     # Thus, we transpose the matrix
-    M = hcat(energy_preserving_basis...)
+    M = reduce(hcat, energy_preserving_basis)
     rank_M = rank(M)
     # We also create an extended matrix for which we append the vector of
     # coefficients
-    rank_Mv = rank([M map(x -> Rational{Int64}(x), coefficients)])
+    Mv = [M coefficients]
+    rank_Mv = rank(Mv)
     # If the rank of M is equal to the rank of the extended Mv,
     # then the system is energy-preserving
     return rank_M == rank_Mv
@@ -1690,7 +1689,7 @@ function num_branches(a)
     return k - 1
 end
 
-# This function returns the rightmost_energy_preserving_tree `level_sequence`
+# This function returns the rightmost energy-preserving tree (`level_sequence`)
 # for a given tree (the input also in level-sequence form).
 function rightmost_energy_preserving_tree(a::Vector{Int})
     # We want to generate all the branches with respect to the rightmost trunk
@@ -1703,11 +1702,11 @@ function rightmost_energy_preserving_tree(a::Vector{Int})
     energy_preserving_partner = collect(1:(m + 1))
     # Then, we insert every level_sequence from branches
     for j in 1:m
-        last_j_occurrence = findlast(x -> x == j, energy_preserving_partner)
-        last_jplus1_occurrence = findlast(x -> x == j + 1, energy_preserving_partner)
-        energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence],
-                                         branches[j],
-                                         energy_preserving_partner[last_jplus1_occurrence:end])
+        last_j_occurrence::Int = findlast(x -> x == j, energy_preserving_partner)
+        last_jplus1_occurrence::Int = findlast(x -> x == j + 1, energy_preserving_partner)
+        energy_preserving_partner::typeof(a) = vcat(energy_preserving_partner[1:last_j_occurrence],
+                                                    branches[j],
+                                                    energy_preserving_partner[last_jplus1_occurrence:end])
     end
     energy_preserving_partner = canonicalarray(energy_preserving_partner)
     return energy_preserving_partner
@@ -1761,7 +1760,7 @@ end
 
 # This function generates all the equivalent trees for a given `level_sequence`
 function equivalent_trees(tree)
-    equivalent_trees_set = []
+    equivalent_trees_set = Vector{typeof(tree)}()
     l = length(tree)
     for i in 1:(l - 1)
         # For every node check if it is a leaf
