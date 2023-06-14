@@ -216,6 +216,20 @@ using Aqua: Aqua
         end
     end
 
+    @testset "average Vector field (AVF) method" begin
+        @testset "Rational coefficients" begin
+            series = @inferred(bseries(AverageVectorFieldMethod(), 6))
+            @test @inferred(order_of_accuracy(series)) == 2
+            @test is_energy_preserving(series)
+        end
+
+        @testset "Floating point coefficients" begin
+            series = @inferred(bseries(AverageVectorFieldMethod(Float64), 6))
+            @test @inferred(order_of_accuracy(series)) == 2
+            @test is_energy_preserving(series)
+        end
+    end
+
     @testset "substitute" begin
         Symbolics.@variables a1 a2 a31 a32
         a = OrderedDict{RootedTrees.RootedTree{Int, Vector{Int}}, Symbolics.Num}(rootedtree(Int[]) => 1,
