@@ -41,3 +41,25 @@ end_time = time.time()
 with open(io_file, 'a') as io:
   print(result, file=io)
   print("", end_time - start_time, "seconds", file=io)
+
+
+with open(io_file, 'a') as io:
+  print("\nEnergy preservation", file=io)
+
+start_time = time.time()
+a = pybs.series.AVF
+b = pybs.series.modified_equation(a)
+result = pybs.series.energy_preserving_upto_order(b, up_to_order)
+end_time = time.time()
+with open(io_file, 'a') as io:
+  print(result, file=io)
+  print("", end_time - start_time, "seconds", file=io)
+
+start_time = time.time()
+a = pybs.series.AVF
+b = pybs.series.modified_equation(a)
+result = pybs.series.energy_preserving_upto_order(b, up_to_order)
+end_time = time.time()
+with open(io_file, 'a') as io:
+  print(result, file=io)
+  print("", end_time - start_time, "seconds", file=io)

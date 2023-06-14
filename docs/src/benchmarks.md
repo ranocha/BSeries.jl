@@ -291,6 +291,18 @@ end
   series = modifying_integrator(A, b, c, up_to_order)
   println(sum(values(series)))
 end
+
+
+println("Energy preservation")
+@time begin
+  series = average_vector_field_method(up_to_order)
+  println(is_energy_preserving(series))
+end
+
+@time begin
+  series = average_vector_field_method(up_to_order)
+  println(is_energy_preserving(series))
+end
 ```
 
 
