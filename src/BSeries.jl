@@ -1686,7 +1686,7 @@ end
 # condition.
 function _is_energy_preserving(trees, coefficients)
     # TODO: `Float32` would also be nice to have. However, the default tolerance
-    #       of the rank computation is based on `Flaot64`. Thus, it will usually
+    #       of the rank computation is based on `Float64`. Thus, it will usually
     #       not work with coefficients given only in 32 bit precision.
     if eltype(coefficients) <: Union{Float64, Rational{Int8}, Rational{Int16},
         Rational{Int32}, Rational{Int64}, Rational{Int128}}
