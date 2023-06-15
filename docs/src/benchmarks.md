@@ -293,7 +293,7 @@ end
 end
 
 
-println("Energy preservation")
+println("\nEnergy preservation")
 @time begin
   series = bseries(AverageVectorFieldMethod(), up_to_order)
   println(is_energy_preserving(series))
