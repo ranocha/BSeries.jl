@@ -16,8 +16,9 @@ if !isdefined(Base, :get_extension)
 end
 
 using Latexify: Latexify, LaTeXString
-using Combinatorics: permutations
-using LinearAlgebra: rank
+using Combinatorics: Combinatorics, permutations
+using LinearAlgebra: LinearAlgebra, rank
+using SparseArrays: SparseArrays, sparse
 
 @reexport using Polynomials: Polynomials, Polynomial
 
@@ -1684,6 +1685,15 @@ end
 # Checks whether `trees` and `ocefficients` satisfify the energy_preserving
 # condition.
 function _is_energy_preserving(trees, coefficients)
+    if eltype(coefficients) <: Union{Float32, Float64, Rational{Int8}, Rational{Int16},
+                                     Rational{Int32}, Rational{Int64}, Rational{Int128}}
+        _is_energy_preserving_sparse(trees, coefficients)
+    else
+        _is_energy_preserving_dense(trees, coefficients)
+    end
+end
+
+function _is_energy_preserving_dense(trees, coefficients)
     # For every tree, obtain the adjoint and check if it exists
     length_coeff = length(trees)
     # Provided that a tree can have several adjoints, for every tree `t`
@@ -1733,14 +1743,92 @@ function _is_energy_preserving(trees, coefficients)
     # We remove repeated columns
     unique!(energy_preserving_basis)
 
-    # The components of `energy_preserving_basis` is supposed to be columns.
-    # Thus, we transpose the matrix
+    # The components of `energy_preserving_basis` are the columns of the matrix `M`.
     M = reduce(hcat, energy_preserving_basis)
     rank_M = rank(M)
+
     # We also create an extended matrix for which we append the vector of
     # coefficients
     Mv = [M coefficients]
     rank_Mv = rank(Mv)
+
+    # If the rank of M is equal to the rank of the extended Mv,
+    # then the system is energy-preserving
+    return rank_M == rank_Mv
+end
+
+# This method is specialized for coefficients that can be used efficiently in
+# sparse arrays.
+function _is_energy_preserving_sparse(trees, coefficients)
+    # For every tree, obtain the adjoint and check if it exists.
+    # Provided that a tree can have several adjoints, for every tree `t`
+    # we need to check if there is a linear combination of the coefficients
+    # of its adjoints such that this linear combination is equal to the
+    # coefficient of `t`.
+    # For this purpose, we create a energy-preserving basis as sparse matrix
+    # to store all the information. We assemble this matrix in a sparse format.
+    rows = Vector{Int}()
+    cols = Vector{Int}()
+    # The SparseArrays package supports only floating point coefficients.
+    vals = Vector{Float64}()
+
+    col = 1
+    for (t_index, t) in enumerate(trees)
+        # We do not need to consider the empty tree
+        isempty(t) && continue
+
+        # Check whether the level sequence corresponds to a bushy tree.
+        # If so, we can exit early since the coefficients of bushy trees
+        # must be zero in the modified equation of energy-preserving methods.
+        if length(t) > 1 && is_bushy(t)
+            if !iszero(coefficients[t_index])
+                return false
+            end
+        else
+            # If the tree is not a bush, then generate all the equivalent trees
+            equiv_set = equivalent_trees(t)
+            for onetree in equiv_set
+                push!(rows, t_index)
+                push!(cols, col)
+                push!(vals, 1)
+
+                m = num_branches(onetree)
+                energy_preserving_pair = rightmost_energy_preserving_tree(onetree)
+
+                # Check if the rightmost energy-preserving tree is in the
+                # set of trees
+                idx = findfirst(isequal(energy_preserving_pair), trees)
+                if idx !== nothing # i.e., energy_preserving_pair in trees
+                    push!(rows, idx)
+                    push!(cols, col)
+                    push!(vals, (-1)^m)
+                    col = col + 1
+                end
+            end
+        end
+    end
+    # TODO: We could try to improve the performance by
+    # - removing empty columns (those full of zeros)
+    # - removing repeated columns
+    # - working with `svd` directly instead of computing the `rank` twice
+
+    # The components of `energy_preserving_basis` are the columns of the matrix `M`.
+    M = sparse(rows, cols, vals, length(coefficients), maximum(cols))
+    rank_M = rank(M)
+
+    # We also create an extended matrix for which we append the vector of
+    # coefficients
+    col = maximum(cols) + 1
+    for i in eachindex(coefficients)
+        coeff = coefficients[i]
+        iszero(coeff) && continue
+        push!(rows, i)
+        push!(cols, col)
+        push!(vals, coeff)
+    end
+    Mv = sparse(rows, cols, vals, length(coefficients), col)
+    rank_Mv = rank(Mv)
+
     # If the rank of M is equal to the rank of the extended Mv,
     # then the system is energy-preserving
     return rank_M == rank_Mv
