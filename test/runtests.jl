@@ -1976,22 +1976,16 @@ using Aqua: Aqua
         end
 
         @testset "Floating point coefficients" begin
-            # AVF method again
-            series = bseries(7) do t, series
-                if order(t) in (0, 1)
-                    return 1.0
-                else
-                    v = 1.0
-                    n = 0
-                    for subtree in SubtreeIterator(t)
-                        v *= series[subtree]
-                        n += 1
-                    end
-                    return v / (n + 1)
-                end
-            end
+            # AVF method again with various types of coefficients
+            series = bseries(AverageVectorFieldMethod(Float32), 7)
+            @test is_energy_preserving(series)
+
+            series = bseries(AverageVectorFieldMethod(Float64), 7)
+            @test is_energy_preserving(series)
+
+            series = bseries(AverageVectorFieldMethod(BigFloat), 7)
             # TODO: This test is currently broken and throws an error
-            @test_skip is_energy_preserving(series)
+            @test_broken is_energy_preserving(series)
         end
 
         @testset "Symbolic coefficients" begin

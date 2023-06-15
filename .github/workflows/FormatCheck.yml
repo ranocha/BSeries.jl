@@ -32,10 +32,10 @@ jobs:
         run: |
           julia -e '
           out = Cmd(`git diff --name-only`) |> read |> String
+          out_verbose = Cmd(`git diff`) |> read |> String
           if out == ""
               exit(0)
           else
-              @error "Some files have not been formatted !!!"
-              write(stdout, out)
+              @error "Some files have not been formatted !!!" out out_verbose
               exit(1)
           end'
