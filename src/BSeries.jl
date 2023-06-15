@@ -1686,7 +1686,8 @@ end
 # condition.
 function _is_energy_preserving(trees, coefficients)
     if eltype(coefficients) <: Union{Float32, Float64, Rational{Int8}, Rational{Int16},
-                                     Rational{Int32}, Rational{Int64}, Rational{Int128}}
+        Rational{Int32}, Rational{Int64}, Rational{Int128}}
+        # These types support efficient computations in sparse matrices
         _is_energy_preserving_sparse(trees, coefficients)
     else
         _is_energy_preserving_dense(trees, coefficients)
