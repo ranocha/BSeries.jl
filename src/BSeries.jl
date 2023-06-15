@@ -1685,7 +1685,10 @@ end
 # Checks whether `trees` and `ocefficients` satisfify the energy_preserving
 # condition.
 function _is_energy_preserving(trees, coefficients)
-    if eltype(coefficients) <: Union{Float32, Float64, Rational{Int8}, Rational{Int16},
+    # TODO: `Float32` would also be nice to have. However, the default tolerance
+    #       of the rank computation is based on `Flaot64`. Thus, it will usually
+    #       not work with coefficients given only in 32 bit precision.
+    if eltype(coefficients) <: Union{Float64, Rational{Int8}, Rational{Int16},
         Rational{Int32}, Rational{Int64}, Rational{Int128}}
         # These types support efficient computations in sparse matrices
         _is_energy_preserving_sparse(trees, coefficients)
