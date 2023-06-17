@@ -1136,9 +1136,11 @@ function _modified_equation_thread(series_integrator, ::EagerEvaluation)
         if idx_stop === nothing
             idx_stop = lastindex(series_integrator.coef.keys)
         end
-        # We need to collect the trees we wil iterate over in a vector for
-        # threaded parallelism.
         # TODO: This uses internal implementation details...
+        # We iterate over the indices instead of the trees in the threaded
+        # loop since that is slightly more efficient at the time of writing
+        # since it results in less allocations.
+        # TODO: remove old version
         # trees = view(series_integrator.coef.keys, idx_start:idx_stop)
         # Threads.@threads for t in trees
         indices = idx_start:idx_stop
