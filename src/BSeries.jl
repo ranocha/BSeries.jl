@@ -1025,41 +1025,13 @@ function modified_equation(series_integrator, thread = Threads.nthreads() > 1)
 end
 
 function _modified_equation_serial(series_integrator, ::EagerEvaluation)
-    V = valtype(series_integrator)
-
-    # B-series of the exact solution
-    # We could just use the lazy version
-    #   series_ex = ExactSolution{V}()
-    # However, we need to access elements of `series_ex` more than once in the
-    # substitution below. Thus, it's cheaper to compute every entry only once and
-    # re-use it later.
-    series_ex = ExactSolution(series_integrator)
-
-    # Prepare B-series of the modified equation
-    series_keys = keys(series_integrator)
-    series = empty(series_integrator)
-    for t in series_keys
-        series[t] = zero(V)
-    end
-
-    iter = iterate(series_keys)
-    if iter !== nothing
-        t, t_state = iter
-        if isempty(t)
-            iter = iterate(series_keys, t_state)
-            if iter !== nothing
-                t, t_state = iter
-            end
-        end
-
-        series[t] = series_integrator[t]
-        iter = iterate(series_keys, t_state)
-    end
+    series, series_keys, series_ex, iter = _modified_equation_shared(series_integrator)
 
     # Recursively solve
     #   substitute(series, series_ex, t) == series_integrator[t]
     # This works because
     #   substitute(series, series_ex, t) = series[t] + lower order terms
+
     # Since the `keys` are ordered, we don't need to use nested loops of the form
     #   for o in 2:order
     #     for _t in RootedTreeIterator(o)
@@ -1075,7 +1047,7 @@ function _modified_equation_serial(series_integrator, ::EagerEvaluation)
     return series
 end
 
-function _modified_equation_thread(series_integrator, ::EagerEvaluation)
+@inline function _modified_equation_shared(series_integrator)
     V = valtype(series_integrator)
 
     # B-series of the exact solution
@@ -1106,6 +1078,12 @@ function _modified_equation_thread(series_integrator, ::EagerEvaluation)
         series[t] = series_integrator[t]
         iter = iterate(series_keys, t_state)
     end
+
+    return series, series_keys, series_ex, iter
+end
+
+function _modified_equation_thread(series_integrator, ::EagerEvaluation)
+    series, series_keys, series_ex, iter = _modified_equation_shared(series_integrator)
 
     # Recursively solve
     #   substitute(series, series_ex, t) == series_integrator[t]
@@ -1161,8 +1139,11 @@ function _modified_equation_thread(series_integrator, ::EagerEvaluation)
         # We need to collect the trees we wil iterate over in a vector for
         # threaded parallelism.
         # TODO: This uses internal implementation details...
-        trees = view(series_integrator.coef.keys, idx_start:idx_stop)
-        Threads.@threads for t in trees
+        # trees = view(series_integrator.coef.keys, idx_start:idx_stop)
+        # Threads.@threads for t in trees
+        indices = idx_start:idx_stop
+        Threads.@threads for i in indices
+            t = @inbounds series_integrator.coef.keys[i]
             series[t] += series_integrator[t] - substitute(series, series_ex, t)
         end
     end
