@@ -1014,11 +1014,17 @@ Section 3.2 of
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
-function modified_equation(series_integrator)
-    _modified_equation(series_integrator, evaluation_type(series_integrator))
+function modified_equation(series_integrator, thread = Threads.nthreads() > 1)
+    if thread
+        _modified_equation_thread(series_integrator,
+                                  evaluation_type(series_integrator))
+    else
+        _modified_equation_serial(series_integrator,
+                                  evaluation_type(series_integrator))
+    end
 end
 
-function _modified_equation(series_integrator, ::EagerEvaluation)
+function _modified_equation_serial(series_integrator, ::EagerEvaluation)
     V = valtype(series_integrator)
 
     # B-series of the exact solution
@@ -1064,6 +1070,101 @@ function _modified_equation(series_integrator, ::EagerEvaluation)
         t, t_state = iter
         series[t] += series_integrator[t] - substitute(series, series_ex, t)
         iter = iterate(series_keys, t_state)
+    end
+
+    return series
+end
+
+function _modified_equation_thread(series_integrator, ::EagerEvaluation)
+    V = valtype(series_integrator)
+
+    # B-series of the exact solution
+    # We could just use the lazy version
+    #   series_ex = ExactSolution{V}()
+    # However, we need to access elements of `series_ex` more than once in the
+    # substitution below. Thus, it's cheaper to compute every entry only once and
+    # re-use it later.
+    series_ex = ExactSolution(series_integrator)
+
+    # Prepare B-series of the modified equation
+    series_keys = keys(series_integrator)
+    series = empty(series_integrator)
+    for t in series_keys
+        series[t] = zero(V)
+    end
+
+    iter = iterate(series_keys)
+    if iter !== nothing
+        t, t_state = iter
+        if isempty(t)
+            iter = iterate(series_keys, t_state)
+            if iter !== nothing
+                t, t_state = iter
+            end
+        end
+
+        series[t] = series_integrator[t]
+        iter = iterate(series_keys, t_state)
+    end
+
+    # Recursively solve
+    #   substitute(series, series_ex, t) == series_integrator[t]
+    # This works because
+    #   substitute(series, series_ex, t) = series[t] + lower order terms
+
+    # Here, we use the serial version up to a specified `cutoff_order`, i.e.,
+    # for low-order trees, since it avoids the parallel overhead. We only use
+    # the parallel (threaded) version for trees of an order of at least
+    # `cutoff_order`.
+    cutoff_order = 5
+
+    # Since the `keys` are ordered, we don't need to use nested loops of the form
+    #   for o in 2:order
+    #     for _t in RootedTreeIterator(o)
+    #       t = copy(_t)
+    # which are slightly less efficient due to additional computations and
+    # allocations.
+    while iter !== nothing
+        t, t_state = iter
+        order(t) >= cutoff_order && break
+        series[t] += series_integrator[t] - substitute(series, series_ex, t)
+        iter = iterate(series_keys, t_state)
+    end
+
+    # The algorithm has a data dependency: It is assumed that the coefficients
+    # of the new `series` are already computed for all trees with a lower order
+    # than the current tree. Thus, we can use threaded parallelism only over a
+    # set of trees of the same order.
+    # for o in cutoff_order:order(series_integrator)
+    #     # We need to collect the trees we wil iterate over in a vector for
+    #     # threaded parallelism.
+    #     # TODO: This should be the iterator type specified by the keys
+    #     #       of the series_integrator
+    #     trees = map(copy, RootedTreeIterator(o))
+    #     Threads.@threads for t in trees
+    #         series[t] += series_integrator[t] - substitute(series, series_ex, t)
+    #     end
+    # end
+
+    idx_stop = findfirst(==(cutoff_order) ∘ order, series_integrator.coef.keys)
+    if idx_stop === nothing
+        return series
+    else
+        idx_stop = idx_stop - 1
+    end
+    for o in cutoff_order:order(series_integrator)
+        idx_start = findnext(==(o) ∘ order, series_integrator.coef.keys, idx_stop)
+        idx_stop = findnext(==(o + 1) ∘ order, series_integrator.coef.keys, idx_start)
+        if idx_stop === nothing
+            idx_stop = lastindex(series_integrator.coef.keys)
+        end
+        # We need to collect the trees we wil iterate over in a vector for
+        # threaded parallelism.
+        # TODO: This uses internal implementation details...
+        trees = view(series_integrator.coef.keys, idx_start:idx_stop)
+        Threads.@threads for t in trees
+            series[t] += series_integrator[t] - substitute(series, series_ex, t)
+        end
     end
 
     return series
