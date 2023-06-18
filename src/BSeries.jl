@@ -989,10 +989,11 @@ function _evaluate(f, u, dt, series, ::EagerEvaluation, reduce_order_by)
 end
 
 """
-    modified_equation(series_integrator)
+    modified_equation(series_integrator, thread::Bool = Threads.nthreads() > 1)
 
 Compute the B-series of the modified equation of the time integration method
-with B-series `series_integrator`.
+with B-series `series_integrator` using multiple threads if Julia is started
+with multiple threads and `thread` is set to `true`.
 
 Given an ordinary differential equation (ODE) ``u'(t) = f(u(t))`` and a
 Runge-Kutta method, the idea is to interpret the numerical solution with
@@ -1014,7 +1015,7 @@ Section 3.2 of
   Foundations of Computational Mathematics
   [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
 """
-function modified_equation(series_integrator, thread = Threads.nthreads() > 1)
+function modified_equation(series_integrator, thread::Bool = Threads.nthreads() > 1)
     if thread
         _modified_equation_thread(series_integrator,
                                   evaluation_type(series_integrator))
@@ -1025,6 +1026,7 @@ function modified_equation(series_integrator, thread = Threads.nthreads() > 1)
 end
 
 function _modified_equation_serial(series_integrator, ::EagerEvaluation)
+    # Setup shared between the serial and threaded versions
     series, series_keys, series_ex, iter = _modified_equation_shared(series_integrator)
 
     # Recursively solve
@@ -1083,6 +1085,7 @@ end
 end
 
 function _modified_equation_thread(series_integrator, ::EagerEvaluation)
+    # Setup shared between the serial and threaded versions
     series, series_keys, series_ex, iter = _modified_equation_shared(series_integrator)
 
     # Recursively solve
@@ -1131,18 +1134,15 @@ function _modified_equation_thread(series_integrator, ::EagerEvaluation)
         idx_stop = idx_stop - 1
     end
     for o in cutoff_order:order(series_integrator)
+        # TODO: This uses internal implementation details...
         idx_start = findnext(==(o) ∘ order, series_integrator.coef.keys, idx_stop)
         idx_stop = findnext(==(o + 1) ∘ order, series_integrator.coef.keys, idx_start)
         if idx_stop === nothing
             idx_stop = lastindex(series_integrator.coef.keys)
         end
-        # TODO: This uses internal implementation details...
         # We iterate over the indices instead of the trees in the threaded
         # loop since that is slightly more efficient at the time of writing
-        # since it results in less allocations.
-        # TODO: remove old version
-        # trees = view(series_integrator.coef.keys, idx_start:idx_stop)
-        # Threads.@threads for t in trees
+        # due to less allocations.
         indices = idx_start:idx_stop
         Threads.@threads for i in indices
             t = @inbounds series_integrator.coef.keys[i]
