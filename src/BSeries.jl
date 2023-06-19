@@ -1114,7 +1114,7 @@ function _modified_equation_thread(series_integrator, ::EagerEvaluation)
     # than the current tree. Thus, we can use threaded parallelism only over a
     # set of trees of the same order.
     # for o in cutoff_order:order(series_integrator)
-    #     # We need to collect the trees we wil iterate over in a vector for
+    #     # We need to collect the trees we will iterate over in a vector for
     #     # threaded parallelism.
     #     # TODO: This should be the iterator type specified by the keys
     #     #       of the series_integrator
