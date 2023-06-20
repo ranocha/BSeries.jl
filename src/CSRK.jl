@@ -1,11 +1,7 @@
-#Packages which would be useful eventually
-
 using BSeries
-using SymPy; 
-
+using SymPy
 using LinearAlgebra
 using PyCall
-
 
 # This function generates a polinomial 
 #       A_{t,z} = [t,t^2/2,..., t^s/s]*M*[1, z, ..., z^(s-1)]^T
@@ -30,6 +26,7 @@ function PolinomialA(M,t,z)
     end
     # multiply matrix times vector
     result = M * poli_z
+    #println(result)
     # use dot product for the two vectors
     result = dot(poli_t,result)
     return result
@@ -59,21 +56,21 @@ function elementary_differentials_csrk(M,rootedtree)
     # stablish initial integrand, which is the rightmost leaf (last node of the level sequence)
     if l > 1
         integrand = integrate(PolinomialA(M,variables[tree[end]-1],variables[tree[end]]),(variables[tree[end]],0,1))
+        #println(integrand)
     else
         # if the Rooted Tree is [1] or [], the elementary differential will be 1.
         return 1
     end
-    while inverse_counter > 1 
+    while inverse_counter > 1
+        println("flag")
         # println("A_",variables[tree[inverse_counter]-1],variables[tree[inverse_counter]])
         pseudo_integrand = PolinomialA(M,variables[tree[inverse_counter]-1],variables[tree[inverse_counter]])*integrand
         integrand = integrate(pseudo_integrand,(variables[tree[inverse_counter]],0,1))
         # println(integrand)
         inverse_counter -= 1
     end
+    #println(integrate(PolinomialA(M,1,variables[1])*integrand,(variables[1],0,1)))
     #multiply for the Basis_Polonimial, i.e. the Polinomial B
     #return the integral with respect to x1.
     return integrate(PolinomialA(M,1,variables[1])*integrand,(variables[1],0,1))
 end
-
-
-
