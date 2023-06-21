@@ -17,6 +17,7 @@ end
 
 using Latexify: Latexify, LaTeXString
 
+using SymPy
 
 @reexport using Polynomials: Polynomials, Polynomial
 
@@ -32,6 +33,7 @@ export elementary_differentials
 
 export MultirateInfinitesimalSplitMethod
 
+export elementary_differentials_csrk
 # Types used for traits
 # These traits may decide between different algorithms based on the
 # corresponding complexity etc.
@@ -1880,5 +1882,75 @@ function energy_preserving_trees_test(trees, coefficients)
     #if the rank of M is equal to the rank of the extended MV, then the system is energy-Preserving
     return result
 end
+
+
+
+# This function generates a polynomial 
+#       A_{t,z} = [t,t^2/2,..., t^s/s]*M*[1, z, ..., z^(s-1)]^T
+# for a given square matrix M of dimmension s and chars 't' and 'z'.  
+function PolynomialA(M,t,z)
+    s = size(M,1)
+    # we need variables to work with
+    variable1 = Sym(t)
+    variable2 = Sym(z)
+    # conjugate the variable 1, provided that this will be the variable
+    # of the left polynomial
+    variable1 = conjugate(variable1)
+    # generate the components of the polynomial with powers of t
+    poli_z = Array{SymPy.Sym}(undef, s)
+    for i in 1:s
+        poli_z[i] = variable2^(i-1)
+    end
+    # generate the components of the polynomial with powers of z
+    poli_t = Array{SymPy.Sym}(undef, s)
+    for i in 1:s
+        poli_t[i] = (1 // i)*(variable1^i)
+    end
+    # multiply matrix times vector
+    result = M * poli_z
+    # use dot product for the two vectors
+    result = dot(poli_t,result)
+    return result
+end
+
+
+"""
+    elementary_differentials_csrk(M,tree)
+
+This function calculates the CSRK elementary differential for a given 
+square matrix 'M' and a given RootedTree.
+
+"""
+function elementary_differentials_csrk(M,rootedtree)
+    # we'll work with the level sequence
+    tree = rootedtree.level_sequence
+    m = maximum(tree)
+    l = length(tree)
+    # create the variables called 'xi' for 1 <= i <= m
+    variables = []
+    for i in 1:m
+        var_name = "x$i"
+        var = Sym(var_name)
+        push!(variables, var)
+    end
+    inverse_counter = l-1
+    # stablish initial integrand, which is the rightmost leaf (last node of the level sequence)
+    if l > 1
+        integrand = integrate(PolynomialA(M,variables[tree[end]-1],variables[tree[end]]),(variables[tree[end]],0,1))
+    else
+        # if the RootedTree is [1] or [], the elementary differential will be 1.
+        return 1
+    end
+    while inverse_counter > 1
+        println("flag")
+        pseudo_integrand = PolynomialA(M,variables[tree[inverse_counter]-1],variables[tree[inverse_counter]])*integrand
+        integrand = integrate(pseudo_integrand,(variables[tree[inverse_counter]],0,1))
+        inverse_counter -= 1
+    end
+    # multiply for the Basis_Polynomial, i.e. the Polynomial B
+    # return the integral with respect to x1.
+    return integrate(PolynomialA(M,1,variables[1])*integrand,(variables[1],0,1))
+end
+
 
 end # module
