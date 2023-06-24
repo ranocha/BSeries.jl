@@ -68,6 +68,19 @@ end
 
 TruncatedBSeries{T, V}() where {T, V} = TruncatedBSeries{T, V}(OrderedDict{T, V}())
 
+
+# create 'struct' for CSRK
+struct ContinuousStageRungeKuttaMethod{T, MatT <: AbstractMatrix{T}} <: AbstractTimeIntegrationMethod
+    matrix::MatT
+end
+
+function ContinuousStageRungeKuttaMethod(matrix::AbstractMatrix)
+T = promote_type(eltype(A))
+_M = T.(matrix)
+return ContinuousStageRungeKuttaMethod(_M)
+end
+
+
 # general interface methods of `AbstractDict` for `TruncatedBSeries`
 @inline Base.iterate(series::TruncatedBSeries) = iterate(series.coef)
 @inline Base.iterate(series::TruncatedBSeries, state) = iterate(series.coef, state)
@@ -1907,18 +1920,6 @@ function energy_preserving_trees_test(trees, coefficients)
     #if the rank of M is equal to the rank of the extended MV, then the system is energy-Preserving
     return result
 end
-
-# create 'struct' for CSRK
-struct ContinuousStageRungeKuttaMethod{T, MatT <: AbstractMatrix{T}} <: AbstractTimeIntegrationMethod
-        matrix::MatT
-end
-
-function ContinuousStageRungeKuttaMethod(matrix::AbstractMatrix)
-    T = promote_type(eltype(A))
-    _M = T.(matrix)
-    return ContinuousStageRungeKuttaMethod(_M)
-end
-
 
 # This function generates a polynomial 
 #       A_{t,z} = [t,t^2/2,..., t^s/s]*M*[1, z, ..., z^(s-1)]^T
