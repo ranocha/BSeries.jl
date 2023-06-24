@@ -19,6 +19,8 @@ using Latexify: Latexify, LaTeXString
 
 using SymPy
 
+using LinearAlgebra
+
 @reexport using Polynomials: Polynomials, Polynomial
 
 export TruncatedBSeries, ExactSolution
@@ -33,7 +35,7 @@ export elementary_differentials
 
 export MultirateInfinitesimalSplitMethod
 
-export elementary_differentials_csrk
+export elementary_differentials_csrk, CSRK
 # Types used for traits
 # These traits may decide between different algorithms based on the
 # corresponding complexity etc.
@@ -70,16 +72,15 @@ TruncatedBSeries{T, V}() where {T, V} = TruncatedBSeries{T, V}(OrderedDict{T, V}
 
 
 # create 'struct' for CSRK
-struct ContinuousStageRungeKuttaMethod{T, MatT <: AbstractMatrix{T}} <: AbstractTimeIntegrationMethod
+struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix}
     matrix::MatT
 end
 
-function ContinuousStageRungeKuttaMethod(matrix::AbstractMatrix)
-T = promote_type(eltype(A))
-_M = T.(matrix)
-return ContinuousStageRungeKuttaMethod(_M)
+function CSRK(matrix::AbstractMatrix)
+    T = promote_type(eltype(matrix))
+    _M = T.(matrix)
+    return ContinuousStageRungeKuttaMethod(_M)
 end
-
 
 # general interface methods of `AbstractDict` for `TruncatedBSeries`
 @inline Base.iterate(series::TruncatedBSeries) = iterate(series.coef)
@@ -555,20 +556,13 @@ function bseries(ros::RosenbrockMethod, order)
 end
 
 """
-CSRK
+    bseries(csrk::,ContinuousStageRungeKuttaMethod, order)
+Compute the B-series of the Continuous Stage Runge-Kutta method `csrk` up to a prescribed
+integer `order`.
 """
 function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
-    V_tmp = eltype(csrk)
-    if V_tmp <: Integer
-        # If people use integer coefficients, they will likely want to have results
-        # as exact as possible. However, general terms are not integers. Thus, we
-        # use rationals instead.
-        V = Rational{V_tmp}
-    else
-        V = V_tmp
-    end
+    V = Rational{Int64}
     series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
-
     series[rootedtree(Int[])] = one(V)
     for o in 1:order
         for t in RootedTreeIterator(o)
@@ -1960,6 +1954,7 @@ square matrix 'M' and a given RootedTree.
 function elementary_differentials_csrk(M,rootedtree)
     # we'll work with the level sequence
     tree = rootedtree.level_sequence
+    M = M.matrix
     m = maximum(tree)
     l = length(tree)
     # create the variables called 'xi' for 1 <= i <= m
@@ -1978,7 +1973,6 @@ function elementary_differentials_csrk(M,rootedtree)
         return 1
     end
     while inverse_counter > 1
-        println("flag")
         pseudo_integrand = PolynomialA(M,variables[tree[inverse_counter]-1],variables[tree[inverse_counter]])*integrand
         integrand = integrate(pseudo_integrand,(variables[tree[inverse_counter]],0,1))
         inverse_counter -= 1
