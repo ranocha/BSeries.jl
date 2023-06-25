@@ -16,8 +16,10 @@ if !isdefined(Base, :get_extension)
 end
 
 using Latexify: Latexify, LaTeXString
-using Combinatorics: permutations
-using LinearAlgebra: rank
+using Combinatorics: Combinatorics, permutations
+using LinearAlgebra: LinearAlgebra, rank, dot
+using SparseArrays: SparseArrays, sparse
+using SymPy
 
 @reexport using Polynomials: Polynomials, Polynomial
 
@@ -31,11 +33,15 @@ export modified_equation, modifying_integrator
 
 export elementary_differentials
 
+export AverageVectorFieldMethod
+
 export MultirateInfinitesimalSplitMethod
 
 export renormalize!
 
 export is_energy_preserving, energy_preserving_order
+
+export elementary_differentials_csrk, CSRK
 
 # Types used for traits
 # These traits may decide between different algorithms based on the
@@ -70,6 +76,19 @@ struct TruncatedBSeries{T <: AbstractRootedTree, V} <: AbstractDict{T, V}
 end
 
 TruncatedBSeries{T, V}() where {T, V} = TruncatedBSeries{T, V}(OrderedDict{T, V}())
+
+"""
+    ContinuousStageRungeKuttaMethod
+"""
+struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix}
+    matrix::MatT
+end
+
+function CSRK(matrix::AbstractMatrix)
+    T = promote_type(eltype(matrix))
+    _M = T.(matrix)
+    return ContinuousStageRungeKuttaMethod(_M)
+end
 
 # general interface methods of `AbstractDict` for `TruncatedBSeries`
 @inline Base.iterate(series::TruncatedBSeries) = iterate(series.coef)
@@ -468,6 +487,71 @@ end
 # should create a lazy version, optionally a memoized one
 
 """
+    AverageVectorFieldMethod([T=Rational{Int}])
+
+Construct a representation of the average vector field (AVF) method using
+coefficients of type `T`. You can pass it as argument to [`bseries`](@ref)
+to construct the corresponding B-series.
+
+# Examples
+
+We can generate this as follows.
+```jldoctest
+julia> series = bseries(AverageVectorFieldMethod(), 3)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 5 entries:
+  RootedTree{Int64}: Int64[]   => 1//1
+  RootedTree{Int64}: [1]       => 1//1
+  RootedTree{Int64}: [1, 2]    => 1//2
+  RootedTree{Int64}: [1, 2, 3] => 1//4
+  RootedTree{Int64}: [1, 2, 2] => 1//3
+```
+
+# References
+
+The B-series of the average vector field (AVF) method is given by
+``b(.) = 1`` and ``b([t_1, ..., t_n]) = b(t_1)...b(t_n) / (n + 1)``, see
+
+- Elena Celledoni, Robert I. McLachlan, David I. McLaren, Brynjulf Owren,
+  G. Reinout W. Quispel, and William M. Wright.
+  "Energy-preserving Runge-Kutta methods."
+  ESAIM: Mathematical Modelling and Numerical Analysis 43, no. 4 (2009): 645-649.
+  [DOI: 10.1051/m2an/2009020](https://doi.org/10.1051/m2an/2009020)
+"""
+struct AverageVectorFieldMethod{T} end
+
+AverageVectorFieldMethod() = AverageVectorFieldMethod(Rational{Int})
+AverageVectorFieldMethod(::Type{T}) where {T} = AverageVectorFieldMethod{T}()
+
+"""
+    bseries(avf::AverageVectorFieldMethod, order)
+
+Compute the B-series of the [`AverageVectorFieldMethod`](@ref) up to a
+prescribed integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by `bseries` need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+"""
+function bseries(::AverageVectorFieldMethod{T}, o) where {T}
+    bseries(o) do t, series
+        if order(t) in (0, 1)
+            return one(T)
+        else
+            v = one(T)
+            n = 0
+            for subtree in SubtreeIterator(t)
+                v *= series[subtree]
+                n += 1
+            end
+            return v / (n + 1)
+        end
+    end
+end
+
+"""
     bseries(ark::AdditiveRungeKuttaMethod, order)
 
 Compute the B-series of the additive Runge-Kutta method `ark` up to a prescribed
@@ -538,6 +622,24 @@ function bseries(ros::RosenbrockMethod, order)
     for o in 1:order
         for t in RootedTreeIterator(o)
             series[copy(t)] = elementary_weight(t, ros)
+        end
+    end
+
+    return series
+end
+
+
+"""
+CSRK
+"""
+function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
+    csrk = csrk.matrix
+    V = Rational{Int64}
+    series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
+    series[rootedtree(Int[])] = one(Int64)
+    for o in 1:order
+        for t in RootedTreeIterator(o)
+            series[copy(t)] = elementary_differentials_csrk(csrk, t)
         end
     end
 
@@ -1572,8 +1674,8 @@ function is_energy_preserving(series_integrator)
     # Next, we check each higher order separately. This reduces the problem
     # from one big problem to several smaller problems.
     for order in 5:max_length
-        same_order_trees = []
-        same_order_coeffs = []
+        same_order_trees = empty(trees)
+        same_order_coeffs = empty(coefficients)
         # We create and fill the arrays of trees and coefficients
         # corresponding to an `order`
         for j in eachindex(trees, coefficients)
@@ -1597,8 +1699,8 @@ end
 function _is_energy_preserving_low_order(trees, coefficients)
     # Set the limit up to which this function will work
     uppermost_order = 4
-    same_order_trees = []
-    same_order_coeffs = []
+    same_order_trees = empty(trees)
+    same_order_coeffs = empty(coefficients)
     for index in eachindex(trees, coefficients)
         t = trees[index]
         if length(t) > uppermost_order
@@ -1617,6 +1719,23 @@ end
 # Checks whether `trees` and `ocefficients` satisfify the energy_preserving
 # condition.
 function _is_energy_preserving(trees, coefficients)
+    # TODO: `Float32` would also be nice to have. However, the default tolerance
+    #       of the rank computation is based on `Float64`. Thus, it will usually
+    #       not work with coefficients given only in 32 bit precision.
+    # For very few coefficients, dense operations are more efficient than
+    # sparse operations.
+    if (length(coefficients) > 20 &&
+        eltype(coefficients) <: Union{Float64,
+              Rational{Int8}, Rational{Int16}, Rational{Int32}, Rational{Int64},
+              Rational{Int128}})
+        # These types support efficient computations in sparse matrices
+        _is_energy_preserving_sparse(trees, coefficients)
+    else
+        _is_energy_preserving_dense(trees, coefficients)
+    end
+end
+
+function _is_energy_preserving_dense(trees, coefficients)
     # For every tree, obtain the adjoint and check if it exists
     length_coeff = length(trees)
     # Provided that a tree can have several adjoints, for every tree `t`
@@ -1626,55 +1745,132 @@ function _is_energy_preserving(trees, coefficients)
     # For this purpose, we create a energy_preserving_basis to store all the
     # information
     energy_preserving_basis = empty(trees)
-    for t in trees
-        if !isempty(t)
-            # Save the index of the `level_sequence`: this will be used for
-            # creating the matrix
-            highindex = findfirst(isequal(t), trees)
-            # Check whether the level sequence corresponds to a bushy tree.
-            # If so, we can exit early since the coefficients of bushy trees
-            # must be zero in the modified equation of energy-preserving methods.
-            if length(t) > 1 && is_bushy(t)
-                if !iszero(coefficients[highindex])
-                    return false
-                end
-            else
-                # If the tree is not a bush, then generate all the equivalent
-                # trees
-                equiv_set = equivalent_trees(t)
-                for onetree in equiv_set
-                    # j-th canonical vector
-                    ej = zeros(Int64, length_coeff)
-                    ej[highindex] = 1
-                    m = num_branches(onetree)
-                    energy_preserving_pair = rightmost_energy_preserving_tree(onetree)
-                    ek = zeros(Int64, length_coeff)
-                    # Check if the rightmost_energy_preserving_tree is in the
-                    # set of trees
-                    if energy_preserving_pair in trees
-                        # Generate a k-th canonical vector
-                        idx = findfirst(isequal(energy_preserving_pair), trees)
-                        ek[idx] = 1 * (-1)^m
-                        # Add ej + ek and push it into energy_preserving_basis
-                        ej = ej + ek
-                        push!(energy_preserving_basis, ej)
-                    end
+    for (t_index, t) in enumerate(trees)
+        # We do not need to consider the empty tree
+        isempty(t) && continue
+
+        # Check whether the level sequence corresponds to a bushy tree.
+        # If so, we can exit early since the coefficients of bushy trees
+        # must be zero in the modified equation of energy-preserving methods.
+        if length(t) > 1 && is_bushy(t)
+            if !iszero(coefficients[t_index])
+                return false
+            end
+        else
+            # If the tree is not a bush, then generate all the equivalent trees
+            equiv_set = equivalent_trees(t)
+            for onetree in equiv_set
+                # j-th canonical vector
+                ej = zeros(Int64, length_coeff)
+                ej[t_index] = 1
+                m = num_branches(onetree)
+                energy_preserving_pair = rightmost_energy_preserving_tree(onetree)
+                ek = zeros(Int64, length_coeff)
+                # Check if the rightmost energy-preserving tree is in the
+                # set of trees
+                idx = findfirst(isequal(energy_preserving_pair), trees)
+                if idx !== nothing # i.e., energy_preserving_pair in trees
+                    # Generate a k-th canonical vector
+                    ek[idx] = 1 * (-1)^m
+                    # Add ej + ek and push it into energy_preserving_basis
+                    ej = ej + ek
+                    push!(energy_preserving_basis, ej)
                 end
             end
         end
     end
     # We remove the empty columns (those full of zeros)
-    filter!(x -> any(y -> y != 0, x), energy_preserving_basis)
+    filter!(!iszero, energy_preserving_basis)
+
     # We remove repeated columns
-    sort!(energy_preserving_basis)
     unique!(energy_preserving_basis)
-    # The components of `energy_preserving_basis` is supposed to be columns.
-    # Thus, we transpose the matrix
-    M = hcat(energy_preserving_basis...)
+
+    # The components of `energy_preserving_basis` are the columns of the matrix `M`.
+    M = reduce(hcat, energy_preserving_basis)
     rank_M = rank(M)
+
     # We also create an extended matrix for which we append the vector of
     # coefficients
-    rank_Mv = rank([M map(x -> Rational{Int64}(x), coefficients)])
+    Mv = [M coefficients]
+    rank_Mv = rank(Mv)
+
+    # If the rank of M is equal to the rank of the extended Mv,
+    # then the system is energy-preserving
+    return rank_M == rank_Mv
+end
+
+# This method is specialized for coefficients that can be used efficiently in
+# sparse arrays.
+function _is_energy_preserving_sparse(trees, coefficients)
+    # For every tree, obtain the adjoint and check if it exists.
+    # Provided that a tree can have several adjoints, for every tree `t`
+    # we need to check if there is a linear combination of the coefficients
+    # of its adjoints such that this linear combination is equal to the
+    # coefficient of `t`.
+    # For this purpose, we create a energy-preserving basis as sparse matrix
+    # to store all the information. We assemble this matrix in a sparse format.
+    rows = Vector{Int}()
+    cols = Vector{Int}()
+    # The SparseArrays package supports only floating point coefficients.
+    vals = Vector{Float64}()
+
+    col = 1
+    for (t_index, t) in enumerate(trees)
+        # We do not need to consider the empty tree
+        isempty(t) && continue
+
+        # Check whether the level sequence corresponds to a bushy tree.
+        # If so, we can exit early since the coefficients of bushy trees
+        # must be zero in the modified equation of energy-preserving methods.
+        if length(t) > 1 && is_bushy(t)
+            if !iszero(coefficients[t_index])
+                return false
+            end
+        else
+            # If the tree is not a bush, then generate all the equivalent trees
+            equiv_set = equivalent_trees(t)
+            for onetree in equiv_set
+                push!(rows, t_index)
+                push!(cols, col)
+                push!(vals, 1)
+
+                m = num_branches(onetree)
+                energy_preserving_pair = rightmost_energy_preserving_tree(onetree)
+
+                # Check if the rightmost energy-preserving tree is in the
+                # set of trees
+                idx = findfirst(isequal(energy_preserving_pair), trees)
+                if idx !== nothing # i.e., energy_preserving_pair in trees
+                    push!(rows, idx)
+                    push!(cols, col)
+                    push!(vals, (-1)^m)
+                    col = col + 1
+                end
+            end
+        end
+    end
+    # TODO: We could try to improve the performance by
+    # - removing empty columns (those full of zeros)
+    # - removing repeated columns
+    # - working with `svd` directly instead of computing the `rank` twice
+
+    # The components of `energy_preserving_basis` are the columns of the matrix `M`.
+    M = sparse(rows, cols, vals, length(coefficients), maximum(cols))
+    rank_M = rank(M)
+
+    # We also create an extended matrix for which we append the vector of
+    # coefficients
+    col = maximum(cols) + 1
+    for i in eachindex(coefficients)
+        coeff = coefficients[i]
+        iszero(coeff) && continue
+        push!(rows, i)
+        push!(cols, col)
+        push!(vals, coeff)
+    end
+    Mv = sparse(rows, cols, vals, length(coefficients), col)
+    rank_Mv = rank(Mv)
+
     # If the rank of M is equal to the rank of the extended Mv,
     # then the system is energy-preserving
     return rank_M == rank_Mv
@@ -1690,7 +1886,7 @@ function num_branches(a)
     return k - 1
 end
 
-# This function returns the rightmost_energy_preserving_tree `level_sequence`
+# This function returns the rightmost energy-preserving tree (`level_sequence`)
 # for a given tree (the input also in level-sequence form).
 function rightmost_energy_preserving_tree(a::Vector{Int})
     # We want to generate all the branches with respect to the rightmost trunk
@@ -1703,11 +1899,11 @@ function rightmost_energy_preserving_tree(a::Vector{Int})
     energy_preserving_partner = collect(1:(m + 1))
     # Then, we insert every level_sequence from branches
     for j in 1:m
-        last_j_occurrence = findlast(x -> x == j, energy_preserving_partner)
-        last_jplus1_occurrence = findlast(x -> x == j + 1, energy_preserving_partner)
-        energy_preserving_partner = vcat(energy_preserving_partner[1:last_j_occurrence],
-                                         branches[j],
-                                         energy_preserving_partner[last_jplus1_occurrence:end])
+        last_j_occurrence::Int = findlast(x -> x == j, energy_preserving_partner)
+        last_jplus1_occurrence::Int = findlast(x -> x == j + 1, energy_preserving_partner)
+        energy_preserving_partner::typeof(a) = vcat(energy_preserving_partner[1:last_j_occurrence],
+                                                    branches[j],
+                                                    energy_preserving_partner[last_jplus1_occurrence:end])
     end
     energy_preserving_partner = canonicalarray(energy_preserving_partner)
     return energy_preserving_partner
@@ -1761,7 +1957,7 @@ end
 
 # This function generates all the equivalent trees for a given `level_sequence`
 function equivalent_trees(tree)
-    equivalent_trees_set = []
+    equivalent_trees_set = Vector{typeof(tree)}()
     l = length(tree)
     for i in 1:(l - 1)
         # For every node check if it is a leaf
@@ -1853,5 +2049,73 @@ function equivalent_trees(tree)
 
     return equivalent_trees_set
 end
+
+
+# This function generates a polynomial 
+#       A_{t,z} = [t,t^2/2,..., t^s/s]*M*[1, z, ..., z^(s-1)]^T
+# for a given square matrix M of dimmension s and chars 't' and 'z'.  
+function PolynomialA(M,t,z)
+    s = size(M,1)
+    # we need variables to work with
+    variable1 = Sym(t)
+    variable2 = Sym(z)
+    # conjugate the variable 1, provided that this will be the variable
+    # of the left polynomial
+    variable1 = conjugate(variable1)
+    # generate the components of the polynomial with powers of t
+    poli_z = Array{SymPy.Sym}(undef, s)
+    for i in 1:s
+        poli_z[i] = variable2^(i-1)
+    end
+    # generate the components of the polynomial with powers of z
+    poli_t = Array{SymPy.Sym}(undef, s)
+    for i in 1:s
+        poli_t[i] = (1 // i)*(variable1^i)
+    end
+    # multiply matrix times vector
+    result = M * poli_z
+    # use dot product for the two vectors
+    result = dot(poli_t,result)
+    return result
+end
+
+
+"""
+    elementary_differentials_csrk(M,tree)
+
+This function calculates the CSRK elementary differential for a given 
+square matrix 'M' and a given RootedTree.
+
+"""
+function elementary_differentials_csrk(M,rootedtree)
+    # we'll work with the level sequence
+    tree = rootedtree.level_sequence
+    m = maximum(tree)
+    l = length(tree)
+    # create the variables called 'xi' for 1 <= i <= m
+    variables = []
+    for i in 1:m
+        var_name = "x$i"
+        var = Sym(var_name)
+        push!(variables, var)
+    end
+    inverse_counter = l-1
+    # stablish initial integrand, which is the rightmost leaf (last node of the level sequence)
+    if l > 1
+        integrand = integrate(PolynomialA(M,variables[tree[end]-1],variables[tree[end]]),(variables[tree[end]],0,1))
+    else
+        # if the RootedTree is [1] or [], the elementary differential will be 1.
+        return 1
+    end
+    while inverse_counter > 1
+        pseudo_integrand = PolynomialA(M,variables[tree[inverse_counter]-1],variables[tree[inverse_counter]])*integrand
+        integrand = integrate(pseudo_integrand,(variables[tree[inverse_counter]],0,1))
+        inverse_counter -= 1
+    end
+    # multiply for the Basis_Polynomial, i.e. the Polynomial B
+    # return the integral with respect to x1.
+    return integrate(PolynomialA(M,1,variables[1])*integrand,(variables[1],0,1))
+end
+
 
 end # module
