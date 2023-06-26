@@ -8,8 +8,8 @@ Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-Aqua = "0.5, 0.6"
+Aqua = "0.6.1"
 StaticArrays = "1"
-SymEngine = "0.8"
+SymEngine = "0.8, 0.9.1"
 SymPy = "1"
 Symbolics = "4, 5"

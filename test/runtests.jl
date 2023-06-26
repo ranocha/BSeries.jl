@@ -216,6 +216,20 @@ using Aqua: Aqua
         end
     end
 
+    @testset "average Vector field (AVF) method" begin
+        @testset "Rational coefficients" begin
+            series = @inferred(bseries(AverageVectorFieldMethod(), 6))
+            @test @inferred(order_of_accuracy(series)) == 2
+            @test is_energy_preserving(series)
+        end
+
+        @testset "Floating point coefficients" begin
+            series = @inferred(bseries(AverageVectorFieldMethod(Float64), 6))
+            @test @inferred(order_of_accuracy(series)) == 2
+            @test is_energy_preserving(series)
+        end
+    end
+
     @testset "substitute" begin
         Symbolics.@variables a1 a2 a31 a32
         a = OrderedDict{RootedTrees.RootedTree{Int, Vector{Int}}, Symbolics.Num}(rootedtree(Int[]) => 1,
@@ -1283,7 +1297,9 @@ using Aqua: Aqua
                     end
                 end
 
-                @testset "modifying_integrator" begin mod_int = @inferred modifying_integrator(series_integrator) end
+                @testset "modifying_integrator" begin
+                    mod_int = @inferred modifying_integrator(series_integrator)
+                end
             end
         end
 
@@ -1873,21 +1889,173 @@ using Aqua: Aqua
         end
     end # @testset "multirate infinitesimal split methods interface"
 
+    @testset "Energy preservation (Hamiltonian systems)" begin
+        @testset "Pseudo-energy-preserving order 4" begin
+            # References
+            # Celledoni, Elena; McLachlan, Robert I.; McLaren, David I.;
+            # Owren, Brynjulf; G. Reinout W. Quispel; Wright, William M.
+            # Energy-preserving Runge-Kutta methods.
+            # ESAIM: Mathematical Modelling and Numerical Analysis -
+            # Modélisation Mathématique et Analyse Numérique,
+            # Volume 43 (2009) no. 4, pp. 645-649.
+            # doi : 10.1051/m2an/2009020. http://www.numdam.org/articles/10.1051/m2an/2009020/
+            A = [0 0 0
+                 1//3 0 0
+                 -5//48 15//16 0]
+            b = [1 // 10, 1 // 2, 2 // 5]
+            rk = RungeKuttaMethod(A, b)
+
+            # This method is E-P up to order 4
+            @test energy_preserving_order(rk, 10) == 4
+        end
+
+        @testset "Pseudo-energy-preserving order 3" begin
+            # References
+            # Celledoni, Elena; McLachlan, Robert I.; McLaren, David I.;
+            # Owren, Brynjulf; G. Reinout W. Quispel; Wright, William M.
+            # Energy-preserving Runge-Kutta methods.
+            # ESAIM: Mathematical Modelling and Numerical Analysis -
+            # Modélisation Mathématique et Analyse Numérique,
+            # Volume 43 (2009) no. 4, pp. 645-649.
+            # doi : 10.1051/m2an/2009020. http://www.numdam.org/articles/10.1051/m2an/2009020/
+            A = [0 0
+                 2//3 0]
+            b = [1 // 4, 3 // 4]
+            rk = RungeKuttaMethod(A, b)
+
+            # This method is E-P up to order 3
+            @test energy_preserving_order(rk, 10) == 3
+        end
+
+        @testset "Classical RK Method" begin
+            A = [0//1 0//1 0//1 0//1
+                 1//2 0//1 0//1 0//1
+                 0//1 1//2 0//1 0//1
+                 0//1 0//1 1//1 0//1]
+            b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+            rk = RungeKuttaMethod(A, b)
+            # This method is E-P up to order 4
+            @test energy_preserving_order(rk, 10) == 4
+        end
+
+        @testset "Effective Order" begin
+            # References
+            # Butcher, J.C. (1969). The effective order of Runge-Kutta methods.
+            # In: Morris, J.L. (eds) Conference on the Numerical Solution of
+            # Differential Equations. Lecture Notes in Mathematics, vol 109.
+            # Springer, Berlin, Heidelberg. https://doi.org/10.1007/BFb0060019
+            A = [0 0 0 0 0
+                 1//5 0 0 0 0
+                 0 2//5 0 0 0
+                 3//16 0 5//16 0 0
+                 1//4 0 -5//4 2 0]
+
+            b = [1 // 6, 0, 0, 2 // 3, 1 // 6]
+            rk = RungeKuttaMethod(A, b)
+            #This method is E-P up to order 4
+            @test energy_preserving_order(rk, 10) == 4
+        end
+
+        @testset "Average Vector Field (AVF)" begin
+            # select order
+            p = 7
+            series = bseries(p) do t, series
+                if order(t) in (0, 1)
+                    return 1 // 1
+                else
+                    v = 1 // 1
+                    n = 0
+                    for subtree in SubtreeIterator(t)
+                        v *= series[subtree]
+                        n += 1
+                    end
+                    return v / (n + 1)
+                end
+            end
+            @test is_energy_preserving(series) == true
+        end
+
+        @testset "Floating point coefficients" begin
+            # AVF method again with various types of coefficients
+            series = bseries(AverageVectorFieldMethod(Float32), 7)
+            @test is_energy_preserving(series)
+
+            series = bseries(AverageVectorFieldMethod(Float64), 7)
+            @test is_energy_preserving(series)
+
+            series = bseries(AverageVectorFieldMethod(BigFloat), 7)
+            # TODO: This test is currently broken and throws an error
+            @test_broken is_energy_preserving(series)
+        end
+
+        @testset "Symbolic coefficients" begin
+            @testset "SymEngine.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymEngine.symbols("α")
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 2))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                # TODO: This test is currently broken and throws an error
+                @test_broken is_energy_preserving(series_integrator)
+            end
+
+            @testset "SymPy.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymPy.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 2))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                # TODO: This test is currently broken and throws an error
+                @test_broken is_energy_preserving(series_integrator)
+            end
+
+            @testset "Symbolics.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                Symbolics.@variables α
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 2))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                # TODO: This test is currently broken and throws an error
+                @test_broken is_energy_preserving(series_integrator)
+            end
+        end
+    end
+
     @testset "Aqua" begin
         Aqua.test_all(BSeries;
                       # We would like to check for ambiguities but cannot do so right now because
                       # of https://github.com/JuliaTesting/Aqua.jl/issues/79
                       # Thus, we do not test for ambiguities here but run an additional test
                       # below excluding ambiguity tests with Base.
-                      ambiguities = false
+                      ambiguities = false,
                       # ambiguities=(; exclude=[
                       #   isapprox, Base.var"#isapprox##kw", # with Polynomials.jl
                       #   getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
                       #   /, # https://github.com/jump-dev/MutableArithmetics.jl/issues/161
                       # ])
-                      )
+                      # Requires.jl is not loaded on new versions of Julia
+                      stale_deps = (; ignore = [:Requires]),
+                      # We would like to test the Project.toml formatting but there are some
+                      # CI issues, see https://github.com/ranocha/BSeries.jl/pull/119
+                      project_toml_formatting = false)
 
         # No Base and as extra test for the reason described above
-        @testset "ambiguities" begin Aqua.test_ambiguities([BSeries]) end
+        @testset "ambiguities" begin
+            Aqua.test_ambiguities([BSeries])
+        end
+
+        # Project.toml formatting only on newer versions of Julia
+        if VERSION >= v"1.9"
+            Aqua.test_project_toml_formatting(BSeries)
+        end
     end
 end # @testset "BSeries"
