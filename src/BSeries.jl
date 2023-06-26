@@ -2054,7 +2054,7 @@ end
 
 # This function generates a polynomial 
 #       A_{t,z} = [t,t^2/2,..., t^s/s]*M*[1, z, ..., z^(s-1)]^T
-# for a given square matrix M of dimmension s and chars 't' and 'z'.  
+# for a given square matrix M of dimension s and chars 't' and 'z'.  
 function PolynomialA(M,t,z)
     s = size(M,1)
     # we need variables to work with
