@@ -65,6 +65,12 @@ using Aqua: Aqua
                 b = [1 - α, α]
                 c = [0, 1 / (2 * α)]
                 series_integrator = bseries(A, b, c, 3)
+
+                # Call this once to avoid failing tests with `@test_nowarn`
+                # caused by deprecation warnings from PyCall.jl. See also
+                # https://github.com/JuliaPy/PyCall.jl/pull/1042
+                deepcopy(α)
+
                 @test_nowarn latexify(series_integrator)
             end
 
