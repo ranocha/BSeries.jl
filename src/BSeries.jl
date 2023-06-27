@@ -674,16 +674,13 @@ SIAM Journal on Numerical Analysis. 54. 10.1137/15M1020861.
 """
 function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
     csrk = csrk.matrix
-    V = Rational{Int64}
-    series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
-    series[rootedtree(Int[])] = one(Int64)
-    for o in 1:order
-        for t in RootedTreeIterator(o)
-            series[copy(t)] = elementary_differentials_csrk(csrk, t)
+    bseries(o) do t, series
+        if order(t) in (0, 1)
+            return one(csrk)
+        else
+            return elementary_differentials_csrk(csrk, t)
         end
     end
-
-    return series
 end
 
 # TODO: bseries(ros::RosenbrockMethod)
