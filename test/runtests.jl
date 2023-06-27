@@ -2058,4 +2058,41 @@ using Aqua: Aqua
             Aqua.test_project_toml_formatting(BSeries)
         end
     end
+
+    @testset "Continuous Stage Runge-Kutta Method" begin
+        @testset "(Inverse) 4x4-Hilbert Matrix" begin
+            # References
+            # - Yuto Miyatake and John C. Butcher.
+            # "A characterization of energy-preserving methods and the construction of
+            # parallel integrators for Hamiltonian systems."
+            # SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
+            # [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
+
+            # This is the matrix obtained by inverting the 4x4-Hilbert matrix
+            M = [-6//5   72//5  -36//1  24//1;
+            72//5  -144//5 -48//1  72//1;
+            -36//1 -48//1   720//1 -720//1;
+            24//1   72//1  -720//1  720//1]
+            csrk = ContinuousStageRungeKuttaMethod(M)
+            # Generate the bseries up to order 4
+            order = 4
+            series = bseries(csrk, order)
+            l = length(series)
+            # we save the expected coefficients in the following array
+            expected_coefficients = [1//1 ,1//1, 1//2, 6004799503160661//36028797018963968, 6004799503160661//18014398509481984, 6004799503160661//144115188075855872, 6004799503160661//72057594037927936, 1//8, 1//4]
+            # define a Bool 'coef_match' which checks if all the obtained coefficients are the same as the expected ones.
+            coef_match = true
+            # generate every RootedTree up to order 4, and check if its coefficient in 'series' mathes the expected ones
+            counter = 2
+            for o in 1:order
+                for t in RootedTreeIterator(o)
+                    if series[t] != expected_coefficients[counter]
+                        coef_match = false
+                    end
+                    counter += 1
+                end
+            end
+            @test coef_match == true
+        end
+    end
 end # @testset "BSeries"

@@ -19,6 +19,7 @@ using Latexify: Latexify, LaTeXString
 using Combinatorics: Combinatorics, permutations
 using LinearAlgebra: LinearAlgebra, rank, dot
 using SparseArrays: SparseArrays, sparse
+using SymPy
 
 @reexport using Polynomials: Polynomials, Polynomial
 
@@ -622,6 +623,13 @@ A struct that describes a CSRK method. This kind of 'struct' should be construct
 via [`CSRK`] 
         'csrk = CSRK(M)' 
 in order to later call the 'bseries' function. 
+
+# References
+- Yuto Miyatake and John C. Butcher.
+"A characterization of energy-preserving methods and the construction of
+parallel integrators for Hamiltonian systems."
+SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
+[DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
 """
 struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix}
     matrix::MatT
@@ -629,12 +637,17 @@ end
 
 
 """
-        bseries(csrk::ContinuousStageRungeKuttaMethod, order)
+    bseries(csrk::ContinuousStageRungeKuttaMethod, order)
 
-Return a truncated B-series up to the specified `order` with coefficients
-determined by the square matrix located in `csrk`. The coefficients for every 
-RootedTree are obtained via the 'elementary_differentials_csrk' function,
-which is calculated according to Miyatake & Butcher (2015). [See @ref csrk]
+Compute the B-series of the [`ContinuousStageRungeKuttaMethod`](@ref) `csrk`
+up to the prescribed integer `order` as described by Miyatake & Butcher (2015).
+    
+!!! note "Normalization by elementary differentials"
+The coefficients of the B-series returned by this method need to be
+multiplied by a power of the time step divided by the `symmetry` of the
+rooted tree and multiplied by the corresponding elementary differential
+of the input vector field ``f``.
+See also [`evaluate`](@ref).
 
 # Example:
 The energy-preserving 4x4 matrix given by Miyatake & Butcher (2015) is
@@ -663,19 +676,31 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entri
 
 ```
 # References
-Butcher, John & Miyatake, Yuto. (2015). A Characterization of Energy-Preserving
-Methods and the Construction of Parallel Integrators for Hamiltonian Systems. 
-SIAM Journal on Numerical Analysis. 54. 10.1137/15M1020861. 
+- Yuto Miyatake and John C. Butcher.
+"A characterization of energy-preserving methods and the construction of
+parallel integrators for Hamiltonian systems."
+SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
+[DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
 """
 function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
     csrk = csrk.matrix
-    bseries(o) do t, series
-        if order(t) in (0, 1)
-            return one(csrk)
-        else
-            return elementary_differentials_csrk(csrk, t)
+    V_tmp = eltype(csrk)
+    if V_tmp <: Integer
+        # If people use integer coefficients, they will likely want to have results
+        # as exact as possible. However, general terms are not integers. Thus, we
+        # use rationals instead.
+        V = Rational{V_tmp}
+    else
+        V = V_tmp
+    end
+    series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
+    series[rootedtree(Int[])] = one(V)
+    for o in 1:order
+        for t in RootedTreeIterator(o)
+            series[copy(t)] = elementary_differentials_csrk(csrk, t)
         end
     end
+    return series
 end
 
 # TODO: bseries(ros::RosenbrockMethod)
