@@ -2095,12 +2095,13 @@ end
 #       A_{t,z} = [t,t^2/2,..., t^s/s]*M*[1, z, ..., z^(s-1)]^T
 # for a given square matrix M of dimension s and chars 't' and 'z'.  
 function PolynomialA(M,t,z)
+    # get the dimension of the matrix
     s = size(M,1)
-    # we need variables to work with
+    # we need symbolic variables to work with
     variable1 = Sym(t)
     variable2 = Sym(z)
-    # conjugate the variable 1, provided that this will be the variable
-    # of the left polynomial
+    # conjugate the variable 1, since  this will be the variable of the left polynomial
+    # and the function 'dot' assumes it to be conjugated
     variable1 = conjugate(variable1)
     # generate the components of the polynomial with powers of t
     poli_z = Array{SymPy.Sym}(undef, s)
@@ -2115,8 +2116,7 @@ function PolynomialA(M,t,z)
     # multiply matrix times vector
     result = M * poli_z
     # use dot product for the two vectors
-    result = dot(poli_t,result)
-    return result
+    return dot(poli_t,result)
 end
 
 
@@ -2130,20 +2130,24 @@ square matrix 'M' and a given RootedTree according to [@ref].
 Butcher, John & Miyatake, Yuto. (2015). A Characterization of Energy-Preserving
 Methods and the Construction of Parallel Integrators for Hamiltonian Systems. 
 SIAM Journal on Numerical Analysis. 54. 10.1137/15M1020861. 
+(https://www.researchgate.net/publication/276211444_A_Characterization_of_Energy-Preserving_Methods_and_the_Construction_of_Parallel_Integrators_for_Hamiltonian_Systems)
 
 """
 function elementary_differentials_csrk(M,rootedtree)
-    # we'll work with the level sequence
+    # we extract the level_sequence of 'rootedtree'
     tree = rootedtree.level_sequence
     m = maximum(tree)
     l = length(tree)
-    # create the variables called 'xi' for 1 <= i <= m
+    # Since we will integrate with symbolic variables for 
+    # every node in the tree, we create the variables called 
+    # 'xi' for 1 <= i <= m, because m is the most distant node from the root. 
     variables = []
     for i in 1:m
         var_name = "x$i"
         var = Sym(var_name)
         push!(variables, var)
     end
+    # we will calculate an integral for every node in the level_sequence from right to left
     inverse_counter = l-1
     # stablish initial integrand, which is the rightmost leaf (last node of the level sequence)
     if l > 1
@@ -2152,12 +2156,18 @@ function elementary_differentials_csrk(M,rootedtree)
         # if the RootedTree is [1] or [], the elementary differential will be 1.
         return 1
     end
+    # Start a cycle for integrating 
     while inverse_counter > 1
+        # we define the pseudo_integrand as the product between the last integral and the new polynomial (since the polynomials are
+        # multiplying each others inside the biggest integral). For a node 'i', this new Polynomial is computed for the variables
+        # 'xi' and 'x(i-1)'. 
         pseudo_integrand = PolynomialA(M,variables[tree[inverse_counter]-1],variables[tree[inverse_counter]])*integrand
+        # integrate this new pseudo_integrand with respect to the variable 'xi'
         integrand = integrate(pseudo_integrand,(variables[tree[inverse_counter]],0,1))
         inverse_counter -= 1
     end
-    # multiply for the Basis_Polynomial, i.e. the Polynomial B
+    # Once we have covered every node except for the base, multiply for the Basis_Polynomial, i.e. the Polynomial B
+    # defined by B_{x1} = A_{1, x1}.
     # return the integral with respect to x1.
     return integrate(PolynomialA(M,1,variables[1])*integrand,(variables[1],0,1))
 end
