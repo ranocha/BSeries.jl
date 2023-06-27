@@ -40,7 +40,7 @@ export renormalize!
 
 export is_energy_preserving, energy_preserving_order
 
-export CSRK
+export ContinuousStageRungeKuttaMethod
 
 # Types used for traits
 # These traits may decide between different algorithms based on the
@@ -627,11 +627,6 @@ struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix}
     matrix::MatT
 end
 
-function CSRK(matrix::AbstractMatrix)
-    T = promote_type(eltype(matrix))
-    _M = T.(matrix)
-    return ContinuousStageRungeKuttaMethod(_M)
-end
 
 """
         bseries(csrk::ContinuousStageRungeKuttaMethod, order)
