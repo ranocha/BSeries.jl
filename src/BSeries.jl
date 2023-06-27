@@ -40,7 +40,7 @@ export renormalize!
 
 export is_energy_preserving, energy_preserving_order
 
-export elementary_differentials_csrk, CSRK
+export CSRK
 
 # Types used for traits
 # These traits may decide between different algorithms based on the
@@ -75,19 +75,6 @@ struct TruncatedBSeries{T <: AbstractRootedTree, V} <: AbstractDict{T, V}
 end
 
 TruncatedBSeries{T, V}() where {T, V} = TruncatedBSeries{T, V}(OrderedDict{T, V}())
-
-"""
-CSRK struct
-"""
-struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix}
-    matrix::MatT
-end
-
-function CSRK(matrix::AbstractMatrix)
-    T = promote_type(eltype(matrix))
-    _M = T.(matrix)
-    return ContinuousStageRungeKuttaMethod(_M)
-end
 
 
 # general interface methods of `AbstractDict` for `TruncatedBSeries`
@@ -629,7 +616,61 @@ function bseries(ros::RosenbrockMethod, order)
 end
 
 """
-bseries CSRK
+    ContinuousStageRungeKuttaMethod
+
+A struct that describes a CSRK method. This kind of 'struct' should be constructed 
+via [`CSRK`] 
+        'csrk = CSRK(M)' 
+in order to later call the 'bseries' function. 
+"""
+struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix}
+    matrix::MatT
+end
+
+function CSRK(matrix::AbstractMatrix)
+    T = promote_type(eltype(matrix))
+    _M = T.(matrix)
+    return ContinuousStageRungeKuttaMethod(_M)
+end
+
+"""
+        bseries(csrk::ContinuousStageRungeKuttaMethod, order)
+
+Return a truncated B-series up to the specified `order` with coefficients
+determined by the square matrix located in `csrk`. The coefficients for every 
+RootedTree are obtained via the 'elementary_differentials_csrk' function,
+which is calculated according to Miyatake & Butcher (2015). [See @ref csrk]
+
+# Example:
+The energy-preserving 4x4 matrix given by Miyatake & Butcher (2015) is
+```
+M = [-6//5   72//5  -36//1  24//1;
+        72//5  -144//5 -48//1  72//1;
+        -36//1 -48//1   720//1 -720//1;
+        24//1   72//1  -720//1  720//1]
+```
+
+Then, we calculate the bseries with the following code:
+
+```
+csrk = CSRK(M)
+series = bseries(csrk, 4)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
+  RootedTree{Int64}: Int64[]      => 1//1
+  RootedTree{Int64}: [1]          => 1//1
+  RootedTree{Int64}: [1, 2]       => 1//2
+  RootedTree{Int64}: [1, 2, 3]    => 6004799503160661//36028797018963968
+  RootedTree{Int64}: [1, 2, 2]    => 6004799503160661//18014398509481984
+  RootedTree{Int64}: [1, 2, 3, 4] => 6004799503160661//144115188075855872
+  RootedTree{Int64}: [1, 2, 3, 3] => 6004799503160661//72057594037927936
+  RootedTree{Int64}: [1, 2, 3, 2] => 1//8
+  RootedTree{Int64}: [1, 2, 2, 2] => 1//4
+
+```
+# References
+Butcher, John & Miyatake, Yuto. (2015). A Characterization of Energy-Preserving
+Methods and the Construction of Parallel Integrators for Hamiltonian Systems. 
+SIAM Journal on Numerical Analysis. 54. 10.1137/15M1020861. 
 """
 function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
     csrk = csrk.matrix
@@ -2050,8 +2091,6 @@ function equivalent_trees(tree)
 end
 
 
-
-
 # This function generates a polynomial 
 #       A_{t,z} = [t,t^2/2,..., t^s/s]*M*[1, z, ..., z^(s-1)]^T
 # for a given square matrix M of dimension s and chars 't' and 'z'.  
@@ -2085,7 +2124,12 @@ end
     elementary_differentials_csrk(M,tree)
 
 This function calculates the CSRK elementary differential for a given 
-square matrix 'M' and a given RootedTree.
+square matrix 'M' and a given RootedTree according to [@ref].
+
+# References
+Butcher, John & Miyatake, Yuto. (2015). A Characterization of Energy-Preserving
+Methods and the Construction of Parallel Integrators for Hamiltonian Systems. 
+SIAM Journal on Numerical Analysis. 54. 10.1137/15M1020861. 
 
 """
 function elementary_differentials_csrk(M,rootedtree)
