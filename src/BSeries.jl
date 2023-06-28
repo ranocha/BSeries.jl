@@ -625,11 +625,12 @@ via [`CSRK`]
 in order to later call the 'bseries' function. 
 
 # References
+
 - Yuto Miyatake and John C. Butcher.
-"A characterization of energy-preserving methods and the construction of
-parallel integrators for Hamiltonian systems."
-SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
-[DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
+  "A characterization of energy-preserving methods and the construction of
+  parallel integrators for Hamiltonian systems."
+  SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
+  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
 """
 struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix}
     matrix::MatT
