@@ -2117,5 +2117,33 @@ using Aqua: Aqua
             expected_coefficients = [1,1, 25*x^2/32 + 5*x*y/4 + y^2/2,  1105*x^3/2304 + 671*x^2*y/576 + 545*x*y^2/576 + 37*y^3/144, 125*x^3/192 + 25*x^2*y/16 + 5*x*y^2/4 + y^3/3]
             @test collect(values(series)) == expected_coefficients
         end
+        @testset "Symbolic coefficients using SymEngine.jl" begin
+            # Define variables
+            import SymEngine: symbols
+            x,y = SymEngine.symbols("x y")
+            # Create symbolic matrix
+            M = [x y;
+                y x]
+            csrk = ContinuousStageRungeKuttaMethod(M)
+            # Generate the bseries up to order 4
+            order = 3
+            series = bseries(csrk, order)
+            expected_coefficients = [1,1, 25*x^2/32 + 5*x*y/4 + y^2/2,  1105*x^3/2304 + 671*x^2*y/576 + 545*x*y^2/576 + 37*y^3/144, 125*x^3/192 + 25*x^2*y/16 + 5*x*y^2/4 + y^3/3]
+            @test collect(values(series)) == expected_coefficients
+        end
+        @testset "Symbolic coefficients using Symbolics.jl" begin
+            # Define variables
+            import Symbolics: @variables
+            @variables x y
+            # Create symbolic matrix
+            M = [x y;
+                y x]
+            csrk = ContinuousStageRungeKuttaMethod(M)
+            # Generate the bseries up to order 4
+            order = 3
+            series = bseries(csrk, order)
+            expected_coefficients = [1,1, 25*x^2/32 + 5*x*y/4 + y^2/2,  1105*x^3/2304 + 671*x^2*y/576 + 545*x*y^2/576 + 37*y^3/144, 125*x^3/192 + 25*x^2*y/16 + 5*x*y^2/4 + y^3/3]
+            @test collect(values(series)) == expected_coefficients
+        end
     end
 end # @testset "BSeries"
