@@ -643,11 +643,11 @@ Compute the B-series of the [`ContinuousStageRungeKuttaMethod`](@ref) `csrk`
 up to the prescribed integer `order` as described by Miyatake & Butcher (2015).
     
 !!! note "Normalization by elementary differentials"
-The coefficients of the B-series returned by this method need to be
-multiplied by a power of the time step divided by the `symmetry` of the
-rooted tree and multiplied by the corresponding elementary differential
-of the input vector field ``f``.
-See also [`evaluate`](@ref).
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
 
 # Example:
 The energy-preserving 4x4 matrix given by Miyatake & Butcher (2015) is
