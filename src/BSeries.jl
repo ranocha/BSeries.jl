@@ -1394,7 +1394,8 @@ Internal function specialized on symbolic variables and expressions from
 - [SymPy.jl](https://github.com/JuliaPy/SymPy.jl), and
 - [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
 
-if these packages are loaded (via Requires.jl).
+if these packages are loaded (via Requires.jl or weak dependencies on
+Julia v1.9 and newer).
 """
 function compute_derivative end
 
