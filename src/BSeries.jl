@@ -619,9 +619,9 @@ end
 """
     ContinuousStageRungeKuttaMethod
 
-A struct that describes a CSRK method. This kind of 'struct' should be constructed 
-via [`CSRK`] 
-        'csrk = CSRK(M)' 
+A struct that describes a CSRK method. This kind of `struct` should be constructed 
+via [ContinuousStageRungeKuttaMethod] 
+    `csrk = ContinuousStageRungeKuttaMethod(M)`
 in order to later call the 'bseries' function. 
 
 # References
