@@ -668,10 +668,10 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entri
   RootedTree{Int64}: Int64[]      => 1//1
   RootedTree{Int64}: [1]          => 1//1
   RootedTree{Int64}: [1, 2]       => 1//2
-  RootedTree{Int64}: [1, 2, 3]    => 6004799503160661//36028797018963968
-  RootedTree{Int64}: [1, 2, 2]    => 6004799503160661//18014398509481984
-  RootedTree{Int64}: [1, 2, 3, 4] => 6004799503160661//144115188075855872
-  RootedTree{Int64}: [1, 2, 3, 3] => 6004799503160661//72057594037927936
+  RootedTree{Int64}: [1, 2, 3]    => 1//6
+  RootedTree{Int64}: [1, 2, 2]    => 1//3
+  RootedTree{Int64}: [1, 2, 3, 4] => 1//24
+  RootedTree{Int64}: [1, 2, 3, 3] => 1//12
   RootedTree{Int64}: [1, 2, 3, 2] => 1//8
   RootedTree{Int64}: [1, 2, 2, 2] => 1//4
 
@@ -698,7 +698,7 @@ function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
     series[rootedtree(Int[])] = one(V)
     for o in 1:order
         for t in RootedTreeIterator(o)
-            series[copy(t)] = elementary_differentials_csrk(csrk, t)
+            series[copy(t)] = N(elementary_differentials_csrk(csrk, t))
         end
     end
     return series

@@ -2077,7 +2077,7 @@ using Aqua: Aqua
             # Generate the bseries up to order 4
             order = 4
             series = bseries(csrk, order)
-            expected_coefficients = [1//1 ,1//1, 1//2, 6004799503160661//36028797018963968, 6004799503160661//18014398509481984, 6004799503160661//144115188075855872, 6004799503160661//72057594037927936, 1//8, 1//4]
+            expected_coefficients = [1//1 ,1//1, 1//2, 1//6, 1//3, 1//24, 1//12, 1//8, 1//4]
             @test collect(values(series)) == expected_coefficients
         end
     end
