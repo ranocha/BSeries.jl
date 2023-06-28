@@ -625,11 +625,12 @@ via [ContinuousStageRungeKuttaMethod]
 in order to later call the 'bseries' function. 
 
 # References
+
 - Yuto Miyatake and John C. Butcher.
-"A characterization of energy-preserving methods and the construction of
-parallel integrators for Hamiltonian systems."
-SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
-[DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
+  "A characterization of energy-preserving methods and the construction of
+  parallel integrators for Hamiltonian systems."
+  SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
+  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
 """
 struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix}
     matrix::MatT
@@ -643,11 +644,11 @@ Compute the B-series of the [`ContinuousStageRungeKuttaMethod`](@ref) `csrk`
 up to the prescribed integer `order` as described by Miyatake & Butcher (2015).
     
 !!! note "Normalization by elementary differentials"
-The coefficients of the B-series returned by this method need to be
-multiplied by a power of the time step divided by the `symmetry` of the
-rooted tree and multiplied by the corresponding elementary differential
-of the input vector field ``f``.
-See also [`evaluate`](@ref).
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
 
 # Example:
 The energy-preserving 4x4 matrix given by Miyatake & Butcher (2015) is
@@ -658,7 +659,7 @@ M = [-6//5   72//5  -36//1  24//1;
         24//1   72//1  -720//1  720//1]
 ```
 
-Then, we calculate the bseries with the following code:
+Then, we calculate the B-series with the following code:
 
 ```
 csrk = CSRK(M)
@@ -677,10 +678,10 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entri
 ```
 # References
 - Yuto Miyatake and John C. Butcher.
-"A characterization of energy-preserving methods and the construction of
-parallel integrators for Hamiltonian systems."
-SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
-[DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
+  "A characterization of energy-preserving methods and the construction of
+  parallel integrators for Hamiltonian systems."
+  SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
+  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
 """
 function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
     csrk = csrk.matrix
