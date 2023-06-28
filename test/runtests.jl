@@ -2119,7 +2119,6 @@ using Aqua: Aqua
         end
         @testset "Symbolic coefficients using SymEngine.jl" begin
             # Define variables
-            import SymEngine: symbols
             x,y = SymEngine.symbols("x y")
             # Create symbolic matrix
             M = [x y;
