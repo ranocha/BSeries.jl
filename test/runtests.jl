@@ -2112,9 +2112,8 @@ using Aqua: Aqua
         end
         @testset "Symbolic coefficients using SymPy.jl" begin
             # Define variables
-            import SymPy: symbols
-            x = symbols("x")
-            y = symbols("y")
+            x = SymPy.symbols("x")
+            y = SymPy.symbols("y")
             # Create symbolic matrix
             M = [x y;
                 y x]
@@ -2127,7 +2126,6 @@ using Aqua: Aqua
         end
         @testset "Symbolic coefficients using SymEngine.jl" begin
             # Define variables
-            import SymEngine: symbols
             x,y = SymEngine.symbols("x y")
             # Create symbolic matrix
             M = [x y;
@@ -2141,8 +2139,7 @@ using Aqua: Aqua
         end
         @testset "Symbolic coefficients using Symbolics.jl" begin
             # Define variables
-            import Symbolics: @variables
-            (Symbolics.@variables x y)
+            @Symbolics.variables x y
             # Create symbolic matrix
             M = [x y;
                 y x]
