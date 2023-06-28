@@ -2083,11 +2083,19 @@ using Aqua: Aqua
 
         @testset "Floating-points coefficients" begin
             # Define variables
+            # Values from current research for CSRK Methods.
+            
+            # References
+            # - Yuto Miyatake and John C. Butcher.
+            # "A characterization of energy-preserving methods and the construction of
+            # parallel integrators for Hamiltonian systems."
+            # SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
+            # [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861)
             a = -0.37069987
             b = 0.74139974
             c = 2.51720052
 
-            # Create symbolic matrix
+            # Create the 4x4 matrix
             Minv = [a 1//2 b 1//6;
             1//2 1//4 1//6 1//8;
             b 1//6 c 1//10;
@@ -2111,7 +2119,7 @@ using Aqua: Aqua
             M = [x y;
                 y x]
             csrk = ContinuousStageRungeKuttaMethod(M)
-            # Generate the bseries up to order 4
+            # Generate the bseries up to order 3
             order = 3
             series = bseries(csrk, order)
             expected_coefficients = [1,1, 25*x^2/32 + 5*x*y/4 + y^2/2,  1105*x^3/2304 + 671*x^2*y/576 + 545*x*y^2/576 + 37*y^3/144, 125*x^3/192 + 25*x^2*y/16 + 5*x*y^2/4 + y^3/3]
@@ -2125,7 +2133,7 @@ using Aqua: Aqua
             M = [x y;
                 y x]
             csrk = ContinuousStageRungeKuttaMethod(M)
-            # Generate the bseries up to order 4
+            # Generate the bseries up to order 3
             order = 3
             series = bseries(csrk, order)
             expected_coefficients = [1,1, 25*x^2/32 + 5*x*y/4 + y^2/2,  1105*x^3/2304 + 671*x^2*y/576 + 545*x*y^2/576 + 37*y^3/144, 125*x^3/192 + 25*x^2*y/16 + 5*x*y^2/4 + y^3/3]
@@ -2134,16 +2142,36 @@ using Aqua: Aqua
         @testset "Symbolic coefficients using Symbolics.jl" begin
             # Define variables
             import Symbolics: @variables
-            @variables x y
+            (Symbolics.@variables x y)
             # Create symbolic matrix
             M = [x y;
                 y x]
             csrk = ContinuousStageRungeKuttaMethod(M)
-            # Generate the bseries up to order 4
+            # Generate the bseries up to order 3
             order = 3
             series = bseries(csrk, order)
             expected_coefficients = [1,1, 25*x^2/32 + 5*x*y/4 + y^2/2,  1105*x^3/2304 + 671*x^2*y/576 + 545*x*y^2/576 + 37*y^3/144, 125*x^3/192 + 25*x^2*y/16 + 5*x*y^2/4 + y^3/3]
             @test collect(values(series)) == expected_coefficients
+        end
+        @testset "Energy-Preserving CSRK" begin
+            # References
+            # - Yuto Miyatake and John C. Butcher.
+            # "A characterization of energy-preserving methods and the construction of
+            # parallel integrators for Hamiltonian systems."
+            # SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
+            # [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
+
+            # This is the matrix obtained by inverting the 4x4-Hilbert matrix
+            M = [-6//5   72//5  -36//1  24//1;
+            72//5  -144//5 -48//1  72//1;
+            -36//1 -48//1   720//1 -720//1;
+            24//1   72//1  -720//1  720//1]
+            csrk = ContinuousStageRungeKuttaMethod(M)
+            # Generate the bseries up to order 5
+            order = 5
+            series = bseries(csrk, order)
+            #check if it is energy-preserving
+            @test is_energy_preserving(series) == true
         end
     end
 end # @testset "BSeries"

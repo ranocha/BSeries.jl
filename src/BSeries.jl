@@ -632,9 +632,11 @@ in order to later call the 'bseries' function.
   SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
   [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
 """
-struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix}
-    matrix::MatT
+struct ContinuousStageRungeKuttaMethod{T, MatT <: AbstractMatrix{T}} <: RootedTrees.AbstractTimeIntegrationMethod
+    A::MatT
 end
+
+Base.eltype(::ContinuousStageRungeKuttaMethod{T}) where {T} = T
 
 
 """
