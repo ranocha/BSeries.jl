@@ -40,7 +40,8 @@ with open(io_file, 'a') as io:
   print("", end_time - start_time, "seconds", file=io)
 
 
-print("\nModifying integrator")
+with open(io_file, 'a') as io:
+  print("\nModifying integrator", file=io)
 
 start_time = time.time()
 BSeries.set_order(up_to_order)
