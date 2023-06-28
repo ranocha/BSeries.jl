@@ -2080,5 +2080,42 @@ using Aqua: Aqua
             expected_coefficients = [1//1 ,1//1, 1//2, 1//6, 1//3, 1//24, 1//12, 1//8, 1//4]
             @test collect(values(series)) == expected_coefficients
         end
+
+        @testset "Floating-points coefficients" begin
+            # Define variables
+            a = -0.37069987
+            b = 0.74139974
+            c = 2.51720052
+
+            # Create symbolic matrix
+            Minv = [a 1//2 b 1//6;
+            1//2 1//4 1//6 1//8;
+            b 1//6 c 1//10;
+            1//6 1//8 1//10 1//12]
+
+            # Calculate inverse of the  matrix
+            M = inv(Minv)
+            csrk = ContinuousStageRungeKuttaMethod(M)
+            # Generate the bseries up to order 4
+            order = 4
+            series = bseries(csrk, order)
+            expected_coefficients = [1.0 ,1.0, 0.5000000000000002, 0.16666666666666666, 0.3333333333333336, 0.04166666666666661, 0.0833333333333332, 0.12500000000000003, 0.2500000000000003]
+            @test collect(values(series)) == expected_coefficients
+        end
+        @testset "Symbolic coefficients using SymPy.jl" begin
+            # Define variables
+            import SymPy: symbols
+            x = symbols("x")
+            y = symbols("y")
+            # Create symbolic matrix
+            M = [x y;
+                y x]
+            csrk = ContinuousStageRungeKuttaMethod(M)
+            # Generate the bseries up to order 4
+            order = 3
+            series = bseries(csrk, order)
+            expected_coefficients = [1,1, 25*x^2/32 + 5*x*y/4 + y^2/2,  1105*x^3/2304 + 671*x^2*y/576 + 545*x*y^2/576 + 37*y^3/144, 125*x^3/192 + 25*x^2*y/16 + 5*x*y^2/4 + y^3/3]
+            @test collect(values(series)) == expected_coefficients
+        end
     end
 end # @testset "BSeries"
