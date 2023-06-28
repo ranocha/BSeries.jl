@@ -34,6 +34,8 @@ export elementary_differentials
 
 export AverageVectorFieldMethod
 
+export ContinuousStageRungeKuttaMethod
+
 export MultirateInfinitesimalSplitMethod
 
 export renormalize!
@@ -615,7 +617,189 @@ end
 # TODO: bseries(ros::RosenbrockMethod)
 # should create a lazy version, optionally a memoized one
 
-# TODO: Documentation, Base.show, export etc.
+"""
+    ContinuousStageRungeKuttaMethod(M)
+
+A struct that describes a continuous stage Runge-Kutta (CSRK) method. It can
+be constructed by passing the parameter matrix `M` as described by Miyatake and
+Butcher (2016). You can compute the B-series of the method by [`bseries`](@ref).
+
+# References
+
+- Yuto Miyatake and John C. Butcher.
+  "A characterization of energy-preserving methods and the construction of
+  parallel integrators for Hamiltonian systems."
+  SIAM Journal on Numerical Analysis 54, no. 3 (2016):
+  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861)
+"""
+struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix}
+    matrix::MatT
+end
+
+# TODO: Documentation (tutorial), Base.show, etc.
+
+"""
+    bseries(csrk::ContinuousStageRungeKuttaMethod, order)
+
+Compute the B-series of the [`ContinuousStageRungeKuttaMethod`](@ref) `csrk`
+up to the prescribed integer `order` as described by Miyatake & Butcher (2016).
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+
+# Examples
+
+The [`AverageVectorFieldMethod`](@ref) is given by the parameter matrix with
+single entry one.
+
+```jldoctest
+julia> M = fill(1//1, 1, 1)
+1×1 Matrix{Rational{Int64}}:
+ 1//1
+
+julia> series = bseries(ContinuousStageRungeKuttaMethod(M), 4)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
+  RootedTree{Int64}: Int64[]      => 1//1
+  RootedTree{Int64}: [1]          => 1//1
+  RootedTree{Int64}: [1, 2]       => 1//2
+  RootedTree{Int64}: [1, 2, 3]    => 1//4
+  RootedTree{Int64}: [1, 2, 2]    => 1//3
+  RootedTree{Int64}: [1, 2, 3, 4] => 1//8
+  RootedTree{Int64}: [1, 2, 3, 3] => 1//6
+  RootedTree{Int64}: [1, 2, 3, 2] => 1//6
+  RootedTree{Int64}: [1, 2, 2, 2] => 1//4
+
+julia> series - bseries(AverageVectorFieldMethod(), order(series))
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
+  RootedTree{Int64}: Int64[]      => 0//1
+  RootedTree{Int64}: [1]          => 0//1
+  RootedTree{Int64}: [1, 2]       => 0//1
+  RootedTree{Int64}: [1, 2, 3]    => 0//1
+  RootedTree{Int64}: [1, 2, 2]    => 0//1
+  RootedTree{Int64}: [1, 2, 3, 4] => 0//1
+  RootedTree{Int64}: [1, 2, 3, 3] => 0//1
+  RootedTree{Int64}: [1, 2, 3, 2] => 0//1
+  RootedTree{Int64}: [1, 2, 2, 2] => 0//1
+```
+
+# References
+
+- Yuto Miyatake and John C. Butcher.
+  "A characterization of energy-preserving methods and the construction of
+  parallel integrators for Hamiltonian systems."
+  SIAM Journal on Numerical Analysis 54, no. 3 (2016):
+  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861)
+"""
+function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
+    bseries(order) do t, series
+        elementary_weight(t, csrk)
+    end
+end
+
+# TODO: bseries(csrk::ContinuousStageRungeKuttaMethod)
+# should create a lazy version, optionally a memoized one
+
+"""
+    elementary_weight(t::RootedTree, csrk::ContinuousStageRungeKuttaMethod)
+
+Compute the elementary weight Φ(`t`) of the
+[`ContinuousStageRungeKuttaMethod`](@ref) `csrk`
+for a rooted tree `t``.
+
+# References
+
+- Yuto Miyatake and John C. Butcher.
+  "A characterization of energy-preserving methods and the construction of
+  parallel integrators for Hamiltonian systems."
+  SIAM Journal on Numerical Analysis 54, no. 3 (2016):
+  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861)
+"""
+function RootedTrees.elementary_weight(t::RootedTree,
+                                       csrk::ContinuousStageRungeKuttaMethod)
+    # See Miyatake & Butcher (2016), p. 1998, right before eq. (2.8)
+    if order(t) <= 1
+        return one(eltype(csrk.matrix))
+    end
+
+    # First, we compute the coefficient matrix `A_τζ` of the method from
+    # the matrix `M = csrk.matrix`. We compute it only once and pass it to
+    # `derivative_weight` below to save additional computations.
+    A_τζ = _matrix_a(csrk)
+
+    # The elementary weight Φ is given as
+    #   Φ(t) = ∫₀¹ B_τ ϕ_τ(t₁) ... ϕ_τ(tₘ) dτ
+    # where
+    #   B_ζ = A_1ζ
+    # Since the polynomial matrix `A_τζ` is stored as a polyomial in ζ
+    # with coefficients as polynomials in τ, setting `τ = 1` means that
+    # we need to evaluate all coefficients at 1 and interpret the result
+    # as a polynomial in τ.
+    integrand = let
+        v = map(p -> p(1), Polynomials.coeffs(A_τζ))
+        Polynomial{eltype(v), :τ}(v)
+    end
+    # Now, we can loop over all subtrees and simply update the integrand.
+    for subtree in SubtreeIterator(t)
+        ϕ = derivative_weight(subtree, A_τζ, csrk)
+        integrand = integrand * ϕ
+    end
+
+    # The antiderivative comes with a zero constant term. Thus, we can just
+    # evaluate it at 1 to get the value of the integral from 0 to 1.
+    antiderivative = Polynomials.integrate(integrand)
+    result = antiderivative(1)
+
+    return result
+end
+
+# See Miyatake & Butcher (2016), p. 1998, right before eq. (2.8)
+function derivative_weight(t::RootedTree, A_τζ, csrk::ContinuousStageRungeKuttaMethod)
+
+    # The derivative weight ϕ_τ is given as
+    #   ϕ_τ(t) = ∫₀¹ A_τζ ϕ_ζ(t₁) ... ϕ_ζ(tₘ) dζ
+    # Since the polynomial matrix `A_τζ` is stored as a polyomial in ζ
+    # with coefficients as polynomials in τ, we need to interpret the
+    # return value of the inner `derivative_weight` as the constant
+    # polynomial in ζ with coefficients given as polynomials in τ.
+    integrand = A_τζ
+    for subtree in SubtreeIterator(t)
+        ϕ = derivative_weight(subtree, A_τζ, csrk)
+        integrand = integrand * Polynomial{typeof(ϕ), :ζ}(Polynomials.coeffs(ϕ))
+    end
+
+    # The antiderivative comes with a zero constant term. Thus, we can just
+    # evaluate it at 1 to get the value of the integral from 0 to 1.
+    antiderivative = Polynomials.integrate(integrand)
+    result = antiderivative(1)
+
+    return result
+end
+
+# Equation (2.6) of Miyatake & Butcher (2016)
+function _matrix_a(csrk::ContinuousStageRungeKuttaMethod)
+    M = csrk.matrix
+    T = eltype(M)
+    s = size(M, 1)
+
+    τ = Vector{Polynomial{T, :τ}}(undef, s)
+    for i in 1:s
+        v = zeros(T, i + 1)
+        v[end] = 1 // i
+        τ[i] = Polynomial{T, :τ}(v)
+    end
+
+    Mτ = M' * τ
+    A_τζ = Polynomial{eltype(Mτ), :ζ}(Mτ)
+
+    return A_τζ
+end
+
+
+# TODO: Documentation (tutorial), Base.show, etc.
 """
     MultirateInfinitesimalSplitMethod(A, D, G, c)
 
