@@ -204,6 +204,14 @@ series = bseries(5) do t, series
 end
 ```
 
+[BSeries.jl](https://github.com/ranocha/BSeries.jl) also offers a
+convenience constructor using the type [`AverageVectorFieldMethod`](@ref)
+as follows.
+
+```@example ex:AVF
+series == bseries(AverageVectorFieldMethod(), 5)
+```
+
 We can check that this method is second-order accurate by comparing it to
 the B-series of the exact solution, truncated at the same order.
 
