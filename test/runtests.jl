@@ -2133,8 +2133,7 @@ using Aqua: Aqua
         end
         @testset "Symbolic coefficients using Symbolics.jl" begin
             # Define variables
-            import Symbolics: @variables
-            @variables x y
+            Symbolics.@variables x y
             # Create symbolic matrix
             M = [x y;
                 y x]
