@@ -659,7 +659,7 @@ M = [-6//5   72//5  -36//1  24//1;
         24//1   72//1  -720//1  720//1]
 ```
 
-Then, we calculate the bseries with the following code:
+Then, we calculate the B-series with the following code:
 
 ```
 csrk = CSRK(M)
