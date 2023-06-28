@@ -19,7 +19,7 @@ using Latexify: Latexify, LaTeXString
 using Combinatorics: Combinatorics, permutations
 using LinearAlgebra: LinearAlgebra, rank, dot
 using SparseArrays: SparseArrays, sparse
-using SymPy
+# using SymPy
 
 @reexport using Polynomials: Polynomials, Polynomial
 
@@ -619,18 +619,18 @@ end
 """
     ContinuousStageRungeKuttaMethod
 
-A struct that describes a CSRK method. This kind of `struct` should be constructed 
-via [ContinuousStageRungeKuttaMethod] 
+A struct that describes a CSRK method. This kind of `struct` should be constructed
+via [ContinuousStageRungeKuttaMethod]
     `csrk = ContinuousStageRungeKuttaMethod(M)`
-in order to later call the 'bseries' function. 
+in order to later call the 'bseries' function.
 
 # References
 
 - Yuto Miyatake and John C. Butcher.
   "A characterization of energy-preserving methods and the construction of
   parallel integrators for Hamiltonian systems."
-  SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
-  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
+  SIAM Journal on Numerical Analysis 54, no. 3 (2016):
+  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861)
 """
 struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix}
     matrix::MatT
@@ -642,7 +642,7 @@ end
 
 Compute the B-series of the [`ContinuousStageRungeKuttaMethod`](@ref) `csrk`
 up to the prescribed integer `order` as described by Miyatake & Butcher (2015).
-    
+
 !!! note "Normalization by elementary differentials"
     The coefficients of the B-series returned by this method need to be
     multiplied by a power of the time step divided by the `symmetry` of the
@@ -680,8 +680,8 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entri
 - Yuto Miyatake and John C. Butcher.
   "A characterization of energy-preserving methods and the construction of
   parallel integrators for Hamiltonian systems."
-  SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
-  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
+  SIAM Journal on Numerical Analysis 54, no. 3 (2016):
+  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861)
 """
 function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
     csrk = csrk.matrix
@@ -698,7 +698,7 @@ function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
     series[rootedtree(Int[])] = one(V)
     for o in 1:order
         for t in RootedTreeIterator(o)
-            series[copy(t)] = N(elementary_differentials_csrk(csrk, t))
+            series[copy(t)] = Main.SymPy.N(elementary_differentials_csrk(csrk, t))
         end
     end
     return series
@@ -2109,25 +2109,25 @@ function equivalent_trees(tree)
 end
 
 
-# This function generates a polynomial 
+# This function generates a polynomial
 #       A_{t,z} = [t,t^2/2,..., t^s/s]*M*[1, z, ..., z^(s-1)]^T
-# for a given square matrix M of dimension s and chars 't' and 'z'.  
+# for a given square matrix M of dimension s and chars 't' and 'z'.
 function PolynomialA(M,t,z)
     # get the dimension of the matrix
     s = size(M,1)
     # we need symbolic variables to work with
-    variable1 = Sym(t)
-    variable2 = Sym(z)
+    variable1 = Main.SymPy.Sym(t)
+    variable2 = Main.SymPy.Sym(z)
     # conjugate the variable 1, since  this will be the variable of the left polynomial
     # and the function 'dot' assumes it to be conjugated
-    variable1 = conjugate(variable1)
+    variable1 = Main.SymPy.conjugate(variable1)
     # generate the components of the polynomial with powers of t
-    poli_z = Array{SymPy.Sym}(undef, s)
+    poli_z = Array{Main.SymPy.Sym}(undef, s)
     for i in 1:s
         poli_z[i] = variable2^(i-1)
     end
     # generate the components of the polynomial with powers of z
-    poli_t = Array{SymPy.Sym}(undef, s)
+    poli_t = Array{Main.SymPy.Sym}(undef, s)
     for i in 1:s
         poli_t[i] = (1 // i)*(variable1^i)
     end
@@ -2141,13 +2141,13 @@ end
 """
     elementary_differentials_csrk(M,tree)
 
-This function calculates the CSRK elementary differential for a given 
+This function calculates the CSRK elementary differential for a given
 square matrix 'M' and a given RootedTree according to [@ref].
 
 # References
 Butcher, John & Miyatake, Yuto. (2015). A Characterization of Energy-Preserving
-Methods and the Construction of Parallel Integrators for Hamiltonian Systems. 
-SIAM Journal on Numerical Analysis. 54. 10.1137/15M1020861. 
+Methods and the Construction of Parallel Integrators for Hamiltonian Systems.
+SIAM Journal on Numerical Analysis. 54. 10.1137/15M1020861.
 (https://www.researchgate.net/publication/276211444_A_Characterization_of_Energy-Preserving_Methods_and_the_Construction_of_Parallel_Integrators_for_Hamiltonian_Systems)
 
 """
@@ -2156,38 +2156,189 @@ function elementary_differentials_csrk(M,rootedtree)
     tree = rootedtree.level_sequence
     m = maximum(tree)
     l = length(tree)
-    # Since we will integrate with symbolic variables for 
-    # every node in the tree, we create the variables called 
-    # 'xi' for 1 <= i <= m, because m is the most distant node from the root. 
+    # Since we will integrate with symbolic variables for
+    # every node in the tree, we create the variables called
+    # 'xi' for 1 <= i <= m, because m is the most distant node from the root.
     variables = []
     for i in 1:m
         var_name = "x$i"
-        var = Sym(var_name)
+        var = Main.SymPy.Sym(var_name)
         push!(variables, var)
     end
     # we will calculate an integral for every node in the level_sequence from right to left
     inverse_counter = l-1
     # stablish initial integrand, which is the rightmost leaf (last node of the level sequence)
     if l > 1
-        integrand = integrate(PolynomialA(M,variables[tree[end]-1],variables[tree[end]]),(variables[tree[end]],0,1))
+        integrand = Main.SymPy.integrate(PolynomialA(M,variables[tree[end]-1],variables[tree[end]]),(variables[tree[end]],0,1))
     else
         # if the RootedTree is [1] or [], the elementary differential will be 1.
         return 1
     end
-    # Start a cycle for integrating 
+    # Start a cycle for integrating
     while inverse_counter > 1
         # we define the pseudo_integrand as the product between the last integral and the new polynomial (since the polynomials are
         # multiplying each others inside the biggest integral). For a node 'i', this new Polynomial is computed for the variables
-        # 'xi' and 'x(i-1)'. 
+        # 'xi' and 'x(i-1)'.
         pseudo_integrand = PolynomialA(M,variables[tree[inverse_counter]-1],variables[tree[inverse_counter]])*integrand
         # integrate this new pseudo_integrand with respect to the variable 'xi'
-        integrand = integrate(pseudo_integrand,(variables[tree[inverse_counter]],0,1))
+        integrand = Main.SymPy.integrate(pseudo_integrand,(variables[tree[inverse_counter]],0,1))
         inverse_counter -= 1
     end
     # Once we have covered every node except for the base, multiply for the Basis_Polynomial, i.e. the Polynomial B
     # defined by B_{x1} = A_{1, x1}.
     # return the integral with respect to x1.
-    return integrate(PolynomialA(M,1,variables[1])*integrand,(variables[1],0,1))
+    return Main.SymPy.integrate(PolynomialA(M,1,variables[1])*integrand,(variables[1],0,1))
 end
+
+
+
+# This function should finally become a method of `bseries`. I have split it for
+# now to allow easier testing and debugging. With the current implementation,
+# I get
+# ```julia
+# julia> using SymPy, BSeries
+#
+# julia> M = [-6//5 72//5 -36 24;
+#            72//5 -144//5 -48 72;
+#            -36 -48 720 -720;
+#            24 72 -720 720]
+# 4×4 Matrix{Rational{Int64}}:
+#   -6//5    72//5   -36//1    24//1
+#   72//5  -144//5   -48//1    72//1
+#  -36//1   -48//1   720//1  -720//1
+#   24//1    72//1  -720//1   720//1
+#
+# julia> csrk = ContinuousStageRungeKuttaMethod(M)
+# ContinuousStageRungeKuttaMethod{Matrix{Rational{Int64}}}(Rational{Int64}[-6//5 72//5 -36//1 24//1; 72//5 -144//5 -48//1 72//1; -36//1 -48//1 720//1 -720//1; 24//1 72//1 -720//1 720//1])
+#
+# julia> let order = 5, csrk = csrk # second run after
+#            series1 = @time BSeries.bseries_tmp(csrk, order)
+#            series2 = @time bseries(csrk, order)
+#            series1 - series2
+#        end
+#   0.000443 seconds (3.72 k allocations: 398.547 KiB)
+#   5.567717 seconds (59.24 k allocations: 1.859 MiB)
+# TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+#   RootedTree{Int64}: Int64[]         => 0//1
+#   RootedTree{Int64}: [1]             => 0//1
+#   RootedTree{Int64}: [1, 2]          => 0//1
+#   RootedTree{Int64}: [1, 2, 3]       => 0//1
+#   RootedTree{Int64}: [1, 2, 2]       => 0//1
+#   RootedTree{Int64}: [1, 2, 3, 4]    => 0//1
+#   RootedTree{Int64}: [1, 2, 3, 3]    => 0//1
+#   RootedTree{Int64}: [1, 2, 3, 2]    => 0//1
+#   RootedTree{Int64}: [1, 2, 2, 2]    => 0//1
+#   RootedTree{Int64}: [1, 2, 3, 4, 5] => 0//1
+#   RootedTree{Int64}: [1, 2, 3, 4, 4] => 0//1
+#   RootedTree{Int64}: [1, 2, 3, 4, 3] => 0//1
+#   RootedTree{Int64}: [1, 2, 3, 4, 2] => 0//1
+#   RootedTree{Int64}: [1, 2, 3, 3, 3] => 0//1
+#   RootedTree{Int64}: [1, 2, 3, 3, 2] => 0//1
+#   RootedTree{Int64}: [1, 2, 3, 2, 3] => 0//1
+#   RootedTree{Int64}: [1, 2, 3, 2, 2] => 0//1
+#   RootedTree{Int64}: [1, 2, 2, 2, 2] => 0//1
+# ```
+function bseries_tmp(csrk::ContinuousStageRungeKuttaMethod, order)
+    bseries(order) do t, series
+        elementary_weight(t, csrk)
+    end
+end
+
+"""
+    elementary_weight(t::RootedTree, csrk::ContinuousStageRungeKuttaMethod)
+
+Compute the elementary weight Φ(`t`) of the
+[`ContinuousStageRungeKuttaMethod`](@ref) `csrk`
+for a rooted tree `t``.
+
+# References
+
+- Yuto Miyatake and John C. Butcher.
+  "A characterization of energy-preserving methods and the construction of
+  parallel integrators for Hamiltonian systems."
+  SIAM Journal on Numerical Analysis 54, no. 3 (2016):
+  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861)
+"""
+function RootedTrees.elementary_weight(t::RootedTree, csrk::ContinuousStageRungeKuttaMethod)
+    # See Miyatake & Butcher (2015), p. 1998, right before eq. (2.8)
+    if order(t) <= 1
+        return one(eltype(csrk.matrix))
+    end
+
+    # First, we compute the coefficient matrix `A_τζ` of the method from
+    # the matrix `M = csrk.matrix`. We compute it only once and pass it to
+    # `derivative_weight` below to save additional computations.
+    A_τζ = _matrix_a(csrk)
+
+    # The elementary weight Φ is given as
+    #   Φ(t) = ∫₀¹ B_τ ϕ_τ(t₁) ... ϕ_τ(tₘ) dτ
+    # where
+    #   B_ζ = A_1ζ
+    # Since the polynomial matrix `A_τζ` is stored as a polyomial in ζ
+    # with coefficients as polynomials in τ, setting `τ = 1` means that
+    # we need to evaluate all coefficients at 1 and interpret the result
+    # as a polynomial in τ.
+    integrand = let
+        v = map(p -> p(1), Polynomials.coeffs(A_τζ))
+        Polynomial{eltype(v), :τ}(v)
+    end
+    # Now, we can loop over all subtrees and simply update the integrand.
+    for subtree in SubtreeIterator(t)
+        ϕ = derivative_weight(subtree, A_τζ, csrk)
+        integrand = integrand * ϕ
+    end
+
+    # The antiderivative comes with a zero constant term. Thus, we can just
+    # evaluate it at 1 to get the value of the integral from 0 to 1.
+    antiderivative = Polynomials.integrate(integrand)
+    result = antiderivative(1)
+
+    return result
+end
+
+# See Miyatake & Butcher (2015), p. 1998, right before eq. (2.8)
+function derivative_weight(t::RootedTree, A_τζ, csrk::ContinuousStageRungeKuttaMethod)
+
+    # The derivative weight ϕ_τ is given as
+    #   ϕ_τ(t) = ∫₀¹ A_τζ ϕ_ζ(t₁) ... ϕ_ζ(tₘ) dζ
+    # Since the polynomial matrix `A_τζ` is stored as a polyomial in ζ
+    # with coefficients as polynomials in τ, we need to interpret the
+    # return value of the inner `derivative_weight` as the constant
+    # polynomial in ζ with coefficients given as polynomials in τ.
+    integrand = A_τζ
+    for subtree in SubtreeIterator(t)
+        ϕ = derivative_weight(subtree, A_τζ, csrk)
+        integrand = integrand * Polynomial{typeof(ϕ), :ζ}(Polynomials.coeffs(ϕ))
+    end
+
+    # The antiderivative comes with a zero constant term. Thus, we can just
+    # evaluate it at 1 to get the value of the integral from 0 to 1.
+    antiderivative = Polynomials.integrate(integrand)
+    result = antiderivative(1)
+
+    return result
+end
+
+# Equation (2.6) of Miyatake & Butcher (2015)
+function _matrix_a(csrk::ContinuousStageRungeKuttaMethod)
+    M = csrk.matrix
+    T = eltype(M)
+    s = size(M, 1)
+
+
+    τ = Vector{Polynomial{T, :τ}}(undef, s)
+    for i in 1:s
+        v = zeros(T, i + 1)
+        v[end] = 1 // i
+        τ[i] = Polynomial{T, :τ}(v)
+    end
+    # τ = [(v = zeros(T, i + 1); v[end] = 1 // i; Polynomial{T, :τ}(v)) for i in 1:s]
+
+    Mτ = M' * τ
+    A_τζ = Polynomial{eltype(Mτ), :ζ}(Mτ)
+
+    return A_τζ
+end
+
 
 end # module
