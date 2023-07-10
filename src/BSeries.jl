@@ -632,7 +632,7 @@ in order to later call the 'bseries' function.
   SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
   [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
 """
-struct ContinuousStageRungeKuttaMethod{T, MatT <: AbstractMatrix{T}} <: RootedTrees.AbstractTimeIntegrationMethod
+struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix} <: RootedTrees.AbstractTimeIntegrationMethod
     A::MatT
 end
 
@@ -664,7 +664,7 @@ M = [-6//5   72//5  -36//1  24//1;
 Then, we calculate the B-series with the following code:
 
 ```
-csrk = CSRK(M)
+csrk = ContinuousStageRungeKuttaMethod(M)
 series = bseries(csrk, 4)
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
   RootedTree{Int64}: Int64[]      => 1//1
@@ -686,7 +686,7 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entri
   [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
 """
 function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
-    csrk = csrk.matrix
+    csrk = csrk.A
     V_tmp = eltype(csrk)
     if V_tmp <: Integer
         # If people use integer coefficients, they will likely want to have results
