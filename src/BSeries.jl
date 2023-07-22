@@ -798,7 +798,6 @@ function _matrix_a(csrk::ContinuousStageRungeKuttaMethod)
     return A_τζ
 end
 
-
 # TODO: Documentation (tutorial), Base.show, etc.
 """
     MultirateInfinitesimalSplitMethod(A, D, G, c)

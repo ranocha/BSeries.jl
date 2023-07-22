@@ -1554,7 +1554,7 @@ using Aqua: Aqua
 
     @testset "Continuous stage Runge-Kutta methods interface" begin
         @testset "Average vector field method" begin
-            M = fill(1//1, 1, 1)
+            M = fill(1 // 1, 1, 1)
             csrk = @inferred ContinuousStageRungeKuttaMethod(M)
 
             # TODO: This is no type stable at the moment
@@ -1571,7 +1571,7 @@ using Aqua: Aqua
             #   SIAM Journal on Numerical Analysis 54, no. 3 (2016):
             #   [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861)
             M = [-6//5 72//5 -36//1 24//1
-                 72//5  -144//5 -48//1 72//1
+                 72//5 -144//5 -48//1 72//1
                  -36//1 -48//1 720//1 -720//1
                  24//1 72//1 -720//1 720//1]
             csrk = @inferred ContinuousStageRungeKuttaMethod(M)
@@ -1599,8 +1599,8 @@ using Aqua: Aqua
             # Examples in Section 5.3.1
             α = SymEngine.symbols("α")
             α1 = 1 / (36 * α - 7)
-            M = [α1+4 -6*α1-6 6*α1
-                 -6*α1-6 36*α1+12 -36*α1
+            M = [α1+4 -6 * α1-6 6*α1
+                 -6 * α1-6 36 * α1+12 -36*α1
                  6*α1 -36*α1 36*α1]
             csrk = @inferred ContinuousStageRungeKuttaMethod(M)
 
@@ -1627,8 +1627,8 @@ using Aqua: Aqua
             # Examples in Section 5.3.1
             α = SymPy.symbols("α", real = true)
             α1 = 1 / (36 * α - 7)
-            M = [α1+4 -6*α1-6 6*α1
-                 -6*α1-6 36*α1+12 -36*α1
+            M = [α1+4 -6 * α1-6 6*α1
+                 -6 * α1-6 36 * α1+12 -36*α1
                  6*α1 -36*α1 36*α1]
             csrk = @inferred ContinuousStageRungeKuttaMethod(M)
 
@@ -1646,8 +1646,8 @@ using Aqua: Aqua
             # Examples in Section 5.3.1
             Symbolics.@variables α
             α1 = 1 / (36 * α - 7)
-            M = [α1+4 -6*α1-6 6*α1
-                 -6*α1-6 36*α1+12 -36*α1
+            M = [α1+4 -6 * α1-6 6*α1
+                 -6 * α1-6 36 * α1+12 -36*α1
                  6*α1 -36*α1 36*α1]
             csrk = @inferred ContinuousStageRungeKuttaMethod(M)
 
