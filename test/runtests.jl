@@ -1564,6 +1564,17 @@ using Aqua: Aqua
             @test all(iszero, values(series - series_avf))
         end
 
+        @testset "Average vector field method with integer coefficient" begin
+            M = fill(1, 1, 1)
+            csrk = @inferred ContinuousStageRungeKuttaMethod(M)
+
+            # TODO: This is no type stable at the moment
+            # series = @inferred bseries(csrk, 8)
+            series = bseries(csrk, 8)
+            series_avf = @inferred bseries(AverageVectorFieldMethod(), order(series))
+            @test all(iszero, values(series - series_avf))
+        end
+
         @testset "Example in Section 4.2 of Miyatake and Butcher (2016)" begin
             # - Yuto Miyatake and John C. Butcher.
             #   "A characterization of energy-preserving methods and the construction of

@@ -414,8 +414,18 @@ function bseries(f::Function, order, iterator_type = RootedTreeIterator)
     t = first(iterator_type(0))
     v = f(t, nothing)
 
+    V_tmp = typeof(v)
+    if V_tmp <: Integer
+        # If people use integer coefficients, they will likely want to have results
+        # as exact as possible. However, general terms are not integers. Thus, we
+        # use rationals instead.
+        V = Rational{V_tmp}
+    else
+        V = V_tmp
+    end
+
     # Setup the series
-    series = TruncatedBSeries{typeof(t), typeof(v)}()
+    series = TruncatedBSeries{typeof(t), V}()
     series[copy(t)] = v
 
     for o in 1:order
@@ -782,8 +792,16 @@ end
 # Equation (2.6) of Miyatake & Butcher (2016)
 function _matrix_a(csrk::ContinuousStageRungeKuttaMethod)
     M = csrk.matrix
-    T = eltype(M)
     s = size(M, 1)
+    T_tmp = eltype(M)
+    if T_tmp <: Integer
+        # If people use integer coefficients, they will likely want to have results
+        # as exact as possible. However, general terms are not integers. Thus, we
+        # use rationals instead.
+        T = Rational{T_tmp}
+    else
+        T = T_tmp
+    end
 
     τ = Vector{Polynomial{T, :τ}}(undef, s)
     for i in 1:s
