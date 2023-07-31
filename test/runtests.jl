@@ -65,6 +65,12 @@ using Aqua: Aqua
                 b = [1 - α, α]
                 c = [0, 1 / (2 * α)]
                 series_integrator = bseries(A, b, c, 3)
+
+                # Call this once to avoid failing tests with `@test_nowarn`
+                # caused by deprecation warnings from PyCall.jl. See also
+                # https://github.com/JuliaPy/PyCall.jl/pull/1042
+                deepcopy(α)
+
                 @test_nowarn latexify(series_integrator)
             end
 
@@ -1545,6 +1551,129 @@ using Aqua: Aqua
                   false
         end
     end # @testset "Rosenbrock methods interface"
+
+    @testset "Continuous stage Runge-Kutta methods interface" begin
+        @testset "Average vector field method" begin
+            M = fill(1 // 1, 1, 1)
+            csrk = @inferred ContinuousStageRungeKuttaMethod(M)
+
+            # TODO: This is no type stable at the moment
+            # series = @inferred bseries(csrk, 8)
+            series = bseries(csrk, 8)
+            series_avf = @inferred bseries(AverageVectorFieldMethod(), order(series))
+            @test all(iszero, values(series - series_avf))
+        end
+
+        @testset "Average vector field method with integer coefficient" begin
+            M = fill(1, 1, 1)
+            csrk = @inferred ContinuousStageRungeKuttaMethod(M)
+
+            # TODO: This is no type stable at the moment
+            # series = @inferred bseries(csrk, 8)
+            series = bseries(csrk, 8)
+            series_avf = @inferred bseries(AverageVectorFieldMethod(), order(series))
+            @test all(iszero, values(series - series_avf))
+        end
+
+        @testset "Example in Section 4.2 of Miyatake and Butcher (2016)" begin
+            # - Yuto Miyatake and John C. Butcher.
+            #   "A characterization of energy-preserving methods and the construction of
+            #   parallel integrators for Hamiltonian systems."
+            #   SIAM Journal on Numerical Analysis 54, no. 3 (2016):
+            #   [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861)
+            M = [-6//5 72//5 -36//1 24//1
+                 72//5 -144//5 -48//1 72//1
+                 -36//1 -48//1 720//1 -720//1
+                 24//1 72//1 -720//1 720//1]
+            csrk = @inferred ContinuousStageRungeKuttaMethod(M)
+
+            # TODO: This is no type stable at the moment
+            # series = @inferred bseries(csrk, 6)
+            series = bseries(csrk, 6)
+
+            @test @inferred(order_of_accuracy(series)) == 4
+            @test is_energy_preserving(series)
+
+            # Now with floating point coefficients
+            M = Float64.(M)
+            csrk = @inferred ContinuousStageRungeKuttaMethod(M)
+
+            # TODO: This is no type stable at the moment
+            # series = @inferred bseries(csrk, 6)
+            series = bseries(csrk, 6)
+
+            @test @inferred(order_of_accuracy(series)) == 4
+            @test_broken is_energy_preserving(series)
+        end
+
+        @testset "SymEngine.jl" begin
+            # Examples in Section 5.3.1
+            α = SymEngine.symbols("α")
+            α1 = 1 / (36 * α - 7)
+            M = [α1+4 -6 * α1-6 6*α1
+                 -6 * α1-6 36 * α1+12 -36*α1
+                 6*α1 -36*α1 36*α1]
+            csrk = @inferred ContinuousStageRungeKuttaMethod(M)
+
+            # TODO: This is no type stable at the moment
+            # series = @inferred bseries(csrk, 5)
+            series = bseries(csrk, 5)
+
+            # The simple test does not work at the moment due to missing
+            # simplifications in SymEngine.jl
+            @test_broken @inferred(order_of_accuracy(series)) == 4
+            exact = @inferred ExactSolution(series)
+            for o in 1:4
+                for t in RootedTreeIterator(o)
+                    expr = SymEngine.expand(series[t] - exact[t])
+                    @test iszero(SymEngine.expand(1 * expr))
+                end
+            end
+
+            # TODO: This is currently not implemented
+            @test_broken is_energy_preserving(series)
+        end
+
+        @testset "SymPy.jl" begin
+            # Examples in Section 5.3.1
+            α = SymPy.symbols("α", real = true)
+            α1 = 1 / (36 * α - 7)
+            M = [α1+4 -6 * α1-6 6*α1
+                 -6 * α1-6 36 * α1+12 -36*α1
+                 6*α1 -36*α1 36*α1]
+            csrk = @inferred ContinuousStageRungeKuttaMethod(M)
+
+            # TODO: This is no type stable at the moment
+            # series = @inferred bseries(csrk, 5)
+            series = bseries(csrk, 5)
+
+            @test @inferred(order_of_accuracy(series)) == 4
+
+            # TODO: This is currently not implemented
+            @test_broken is_energy_preserving(series)
+        end
+
+        @testset "Symbolics.jl" begin
+            # Examples in Section 5.3.1
+            Symbolics.@variables α
+            α1 = 1 / (36 * α - 7)
+            M = [α1+4 -6 * α1-6 6*α1
+                 -6 * α1-6 36 * α1+12 -36*α1
+                 6*α1 -36*α1 36*α1]
+            csrk = @inferred ContinuousStageRungeKuttaMethod(M)
+
+            # TODO: This is no type stable at the moment
+            # series = @inferred bseries(csrk, 2)
+            series = bseries(csrk, 2)
+
+            # TODO: There are errors from Symbolics.jl if we go to higher
+            #       orders.
+            # @test @inferred(order_of_accuracy(series)) == 4
+
+            # # TODO: This is currently not implemented
+            @test_broken is_energy_preserving(series)
+        end
+    end
 
     @testset "multirate infinitesimal split methods interface" begin
         # NOTE: This is still considered experimental and might change at any time!

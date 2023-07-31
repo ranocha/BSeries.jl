@@ -22,9 +22,13 @@ jobs:
           - ubuntu-latest
         include:
           - version: '1'
-            os: windows-latest
-          - version: '1'
             os: macOS-latest
+          # Do not run tests on Windows since they often result in weird
+          # Python errors, e.g.,
+          #   `AttributeError: module 'brotli' has no attribute 'error'`
+          # in https://github.com/ranocha/BSeries.jl/pull/145
+          # - version: '1'
+          #   os: windows-latest
     steps:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1

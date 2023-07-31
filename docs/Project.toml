@@ -21,3 +21,13 @@ StaticArrays = "1"
 SymEngine = "0.8, 0.9.1"
 SymPy = "1.0.53"
 Symbolics = "3, 4, 5"
+
+[preferences.OrdinaryDiffEq]
+PrecompileAutoSpecialize = false
+PrecompileAutoSwitch = false
+PrecompileDefaultSpecialize = false
+PrecompileFunctionWrapperSpecialize = false
+PrecompileLowStorage = false
+PrecompileNoSpecialize = false
+PrecompileNonStiff = false
+PrecompileStiff = false

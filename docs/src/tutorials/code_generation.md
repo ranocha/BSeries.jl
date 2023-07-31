@@ -39,7 +39,7 @@ Finally, we generate a C function that evaluates the expressions above.
 
 
 ```@example code-generation
-build_function(du, α, p, q, h, target = Symbolics.CTarget())
+println(build_function(du, α, p, q, h, target = Symbolics.CTarget()))
 ```
 
 The [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl) function `build_function`
