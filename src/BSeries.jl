@@ -1898,6 +1898,10 @@ function _is_energy_preserving(trees, coefficients)
               Rational{Int128}})
         # These types support efficient computations in sparse matrices
         _is_energy_preserving_sparse(trees, coefficients)
+    elseif length(trees[1]) == 4
+        # We have an exception for the fourth order RootedTrees.
+        # we make a function for this case
+        return fourth_order_exception(coefficients)
     else
         _is_energy_preserving_dense(trees, coefficients)
     end
@@ -2216,6 +2220,17 @@ function equivalent_trees(tree)
     unique!(equivalent_trees_set)
 
     return equivalent_trees_set
+end
+
+# This function solves the issue for 'is_energy_preserving'
+# for Rooted Trees of order 4 with non-zero coefficients.
+function fourth_order_exception(coefficients)
+    if !iszero(coefficients[4])
+        return false
+    elseif coefficients[2] != coefficients[3]
+        return false
+    end
+    return true
 end
 
 end # module
