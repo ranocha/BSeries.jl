@@ -2067,6 +2067,18 @@ using Aqua: Aqua
             @test energy_preserving_order(rk, 10) == 4
         end
 
+        @testset "Non-zero 4th-order coefficients" begin
+            A = [0//1 0//1 0//1 0//1
+                 1//4 0//1 0//1 0//1
+                 -1//2 1//1 0//1 0//1
+                 -1//1 4//1 -2//1 0//1]
+            b = [1 // 6, 0// 1, 2 // 3, 1 // 6]
+            rk = RungeKuttaMethod(A, b)
+            # This method is E-P up to order 4,
+            # Its coefficients are non-zero for order 4
+            @test energy_preserving_order(rk, 10) == 4
+        end
+
         @testset "Effective Order" begin
             # References
             # Butcher, J.C. (1969). The effective order of Runge-Kutta methods.
