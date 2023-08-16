@@ -1916,12 +1916,13 @@ function _is_energy_preserving_dense(trees, coefficients)
     for (t_index, t) in enumerate(trees)
         # We do not need to consider the empty tree
         isempty(t) && continue
-
         # Check whether the level sequence corresponds to a bushy tree.
         # If so, we can exit early since the coefficients of bushy trees
         # must be zero in the modified equation of energy-preserving methods.
         if length(t) > 1 && is_bushy(t)
-            if !iszero(coefficients[t_index])
+            # Set the tolerance 
+            if !isapprox(coefficients[t_index],0; atol=1e-10)
+                println("flag")
                 return false
             end
         else
@@ -1952,16 +1953,18 @@ function _is_energy_preserving_dense(trees, coefficients)
 
     # We remove repeated columns
     unique!(energy_preserving_basis)
+    # Set the numerical tolerance
+    tolerance = 1e-8
 
     # The components of `energy_preserving_basis` are the columns of the matrix `M`.
     M = reduce(hcat, energy_preserving_basis)
-    rank_M = rank(M)
+    rank_M = rank(M, atol = tolerance)
 
     # We also create an extended matrix for which we append the vector of
     # coefficients
     Mv = [M coefficients]
-    rank_Mv = rank(Mv)
-
+    rank_Mv = rank(Mv, atol = tolerance)
+    
     # If the rank of M is equal to the rank of the extended Mv,
     # then the system is energy-preserving
     return rank_M == rank_Mv
