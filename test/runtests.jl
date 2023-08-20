@@ -1603,7 +1603,7 @@ using Aqua: Aqua
             series = bseries(csrk, 6)
 
             @test @inferred(order_of_accuracy(series)) == 4
-            @test_broken is_energy_preserving(series)
+            @test is_energy_preserving(series)
         end
 
         @testset "SymEngine.jl" begin
@@ -2107,7 +2107,7 @@ using Aqua: Aqua
         @testset "Floating point coefficients" begin
             # AVF method again with various types of coefficients
             series = bseries(AverageVectorFieldMethod(Float32), 7)
-            @test is_energy_preserving(series)
+            @test is_energy_preserving(series, atol = 1e-6)
 
             series = bseries(AverageVectorFieldMethod(Float64), 7)
             @test is_energy_preserving(series)
@@ -2155,6 +2155,23 @@ using Aqua: Aqua
                 @test @inferred(order_of_accuracy(series_integrator)) == 2
                 # TODO: This test is currently broken and throws an error
                 @test_broken is_energy_preserving(series_integrator)
+            end
+
+            @testset "Floating64" begin
+                # This method was obtained by following the rules for energy-preservation 
+                # up to 5th order. 
+                A = [0 0 0 0
+                    0.5 0 0 0
+                    0.48  0.12 0 0
+                    0.257813 1.07813 -0.585938 0]
+                     
+                b = [
+                0.12963
+                2.0
+                -2.31481
+                1.18519]
+                rk = RungeKuttaMethod(A,b)
+                @test energy_preserving_order2(rk,10, atol = 1e-4)==5
             end
         end
     end

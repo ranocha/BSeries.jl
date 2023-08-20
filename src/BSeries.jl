@@ -1769,7 +1769,7 @@ function energy_preserving_order(rk::RungeKuttaMethod, max_order; atol::Float64=
             return max_order
         end
         # Check energy preservation up to the given order
-        if is_energy_preserving2(rk, p + 1, atol = atol, rtol = rtol) == false
+        if is_energy_preserving(rk, p + 1, atol = atol, rtol = rtol) == false
             not_energy_preserving = true
         end
         p = p + 1
@@ -1790,7 +1790,7 @@ Keyword Arguments:
 """
 function is_energy_preserving(rk::RungeKuttaMethod, order; atol::Float64=1e-14, rtol::Float64=1e-14)
     series = bseries(rk, order)
-    return is_energy_preserving2(series, atol = atol, rtol=rtol)
+    return is_energy_preserving(series, atol = atol, rtol=rtol)
 end
 
 
