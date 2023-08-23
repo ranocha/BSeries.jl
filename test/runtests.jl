@@ -2163,15 +2163,14 @@ using Aqua: Aqua
                 A = [0 0 0 0
                     0.5 0 0 0
                     0.48  0.12 0 0
-                    0.257813 1.07813 -0.585938 0]
-                     
+                    0.257813 1.07813 -0.585938 0]  
                 b = [
                 0.12963
                 2.0
                 -2.31481
                 1.18519]
                 rk = RungeKuttaMethod(A,b)
-                @test energy_preserving_order2(rk,10, atol = 1e-4)==5
+                @test energy_preserving_order(rk,10, atol = 1e-4)==5
             end
         end
     end

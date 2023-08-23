@@ -17,7 +17,7 @@ end
 
 using Latexify: Latexify, LaTeXString
 using Combinatorics: Combinatorics, permutations
-using LinearAlgebra: LinearAlgebra, rank
+using LinearAlgebra: LinearAlgebra, rank, svd
 using SparseArrays: SparseArrays, sparse
 
 @reexport using Polynomials: Polynomials, Polynomial
@@ -1981,7 +1981,7 @@ end
 
 # This method is specialized for coefficients that can be used efficiently in
 # sparse arrays.
-function _is_energy_preserving_sparse(trees, coefficients; atol::Real=0.0, rtol::Real=0.0)
+function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=0.0, rtol::Float64=0.0)
     # For every tree, obtain the adjoint and check if it exists.
     # Provided that a tree can have several adjoints, for every tree `t`
     # we need to check if there is a linear combination of the coefficients
@@ -2036,7 +2036,11 @@ function _is_energy_preserving_sparse(trees, coefficients; atol::Real=0.0, rtol:
 
     # The components of `energy_preserving_basis` are the columns of the matrix `M`.
     M = sparse(rows, cols, vals, length(coefficients), maximum(cols))
-    rank_M = rank(M,  atol = atol, rtol = rtol)
+    # Compute the singular value decomposition (SVD) of the sparse matrix
+    U, Σ, V = svd(Matrix(M))
+
+    # Calculate the effective rank based on the singular values and tolerance
+    rank_M = sum(Σ .> rtol)
 
     # We also create an extended matrix for which we append the vector of
     # coefficients
@@ -2049,7 +2053,12 @@ function _is_energy_preserving_sparse(trees, coefficients; atol::Real=0.0, rtol:
         push!(vals, coeff)
     end
     Mv = sparse(rows, cols, vals, length(coefficients), col)
-    rank_Mv = rank(Mv, atol = atol, rtol = rtol)
+    # Compute the singular value decomposition (SVD) of the sparse matrix
+    U, Σv, V = svd(Matrix(Mv))
+
+    # Calculate the effective rank based on the singular values and tolerance
+    rank_Mv = sum(Σv .> rtol)
+
 
     # If the rank of M is equal to the rank of the extended Mv,
     # then the system is energy-preserving
