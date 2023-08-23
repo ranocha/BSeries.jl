@@ -1755,12 +1755,12 @@ energy-preserving for Hamiltonian problems.
 It requires a `max_order` so that it does not run forever if the order up to
 which the method is energy-preserving is too big or infinite.
 Keyword Arguments:
-- `atol::Float64=1e-14`: The absolute tolerance for energy preservation.
-- `rtol::Float64=1e-14`: The relative tolerance for energy preservation.
+- `atol::Real=1e-14`: The absolute tolerance for energy preservation.
+- `rtol::Real=1e-14`: The relative tolerance for energy preservation.
 
 See also [`is_energy_preserving`](@ref)
 """
-function energy_preserving_order(rk::RungeKuttaMethod, max_order; atol::Float64=1e-14, rtol::Float64=1e-14)
+function energy_preserving_order(rk::RungeKuttaMethod, max_order; atol::Real=1e-14, rtol::Real=1e-14)
     p = 0
     not_energy_preserving = false
     while not_energy_preserving == false
@@ -1781,14 +1781,14 @@ end
 This function checks whether the Runge-Kutta method `rk` is
 energy-preserving for Hamiltonian systems up to a given `order`.
 Keyword Arguments:
-- `atol::Float64=1e-14`: The absolute tolerance for energy preservation.
-- `rtol::Float64=1e-14`: The relative tolerance for energy preservation.
+- `atol::Real=1e-14`: The absolute tolerance for energy preservation.
+- `rtol::Real=1e-14`: The relative tolerance for energy preservation.
 
 # Arguments
 - `rk::RungeKuttaMethod`: The Runge-Kutta method to be evaluated.
 - `order::Int`: The order up to which energy preservation is checked.
 """
-function is_energy_preserving(rk::RungeKuttaMethod, order; atol::Float64=1e-14, rtol::Float64=1e-14)
+function is_energy_preserving(rk::RungeKuttaMethod, order; atol::Real=1e-14, rtol::Real=1e-14)
     series = bseries(rk, order)
     return is_energy_preserving(series, atol = atol, rtol=rtol)
 end
@@ -1802,8 +1802,8 @@ This function checks whether the B-series `series_integrator` of a time
 integration method is energy-preserving for Hamiltonian systems - up to the
 [`order`](@ref) of `series_integrator`.
 Keyword Arguments:
-- `atol::Float64=1e-14`: The absolute tolerance for energy preservation.
-- `rtol::Float64=1e-14`: The relative tolerance for energy preservation.
+- `atol::Real=1e-14`: The absolute tolerance for energy preservation.
+- `rtol::Real=1e-14`: The relative tolerance for energy preservation.
 
 # References
 
@@ -1813,7 +1813,7 @@ This code is based on the Theorem 2 of
   Foundations of Computational Mathematics 10 (2010): 673-693.
   [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
 """
-function is_energy_preserving(series_integrator; atol::Float64=1e-14, rtol::Float64=1e-14)
+function is_energy_preserving(series_integrator; atol::Real=1e-14, rtol::Real=1e-14)
     # This method requires the B-series of a map as input
     let t = first(keys(series_integrator))
         @assert isempty(t)
@@ -1877,7 +1877,7 @@ end
 # and the set of 'coefficients' corresponding to a B-series is
 # energy_preserving up to the 'uppermost_order', which we choose
 # to be 4 for computational optimization
-function _is_energy_preserving_low_order(trees, coefficients; atol::Float64=1e-14, rtol::Float64=1e-14)
+function _is_energy_preserving_low_order(trees, coefficients; atol::Real=1e-14, rtol::Real=1e-14)
     # Set the limit up to which this function will work
     uppermost_order = 4
     same_order_trees = empty(trees)
@@ -1899,9 +1899,9 @@ end
 # of coefficients.
 # Checks whether `trees` and `ocefficients` satisfify the energy_preserving
 # condition.
-function _is_energy_preserving(trees, coefficients; atol::Float64=0.0, rtol::Float64=0.0)
+function _is_energy_preserving(trees, coefficients; atol::Real=0.0, rtol::Real=0.0)
     # TODO: `Float32` would also be nice to have. However, the default tolerance
-    #       of the rank computation is based on `Float64`. Thus, it will usually
+    #       of the rank computation is based on `Real`. Thus, it will usually
     #       not work with coefficients given only in 32 bit precision.
     # For very few coefficients, dense operations are more efficient than
     # sparse operations.
@@ -1916,7 +1916,7 @@ function _is_energy_preserving(trees, coefficients; atol::Float64=0.0, rtol::Flo
     end
 end
 
-function _is_energy_preserving_dense(trees, coefficients; atol::Float64=0.0, rtol::Float64=0.0)
+function _is_energy_preserving_dense(trees, coefficients; atol::Real=0.0, rtol::Real=0.0)
     # For every tree, obtain the adjoint and check if it exists
     length_coeff = length(trees)
     # Provided that a tree can have several adjoints, for every tree `t`
@@ -1981,7 +1981,7 @@ end
 
 # This method is specialized for coefficients that can be used efficiently in
 # sparse arrays.
-function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=0.0, rtol::Float64=0.0)
+function _is_energy_preserving_sparse(trees, coefficients; atol::Real=0.0, rtol::Real=0.0)
     # For every tree, obtain the adjoint and check if it exists.
     # Provided that a tree can have several adjoints, for every tree `t`
     # we need to check if there is a linear combination of the coefficients
