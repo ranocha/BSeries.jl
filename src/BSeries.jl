@@ -1760,7 +1760,7 @@ Keyword Arguments:
 
 See also [`is_energy_preserving`](@ref)
 """
-function energy_preserving_order(rk::RungeKuttaMethod, max_order; atol::Real=1e-14, rtol::Real=1e-14)
+function energy_preserving_order(rk::RungeKuttaMethod, max_order; atol::Real=nothing, rtol::Real=nothing)
     p = 0
     not_energy_preserving = false
     while not_energy_preserving == false
@@ -1788,7 +1788,7 @@ Keyword Arguments:
 - `rk::RungeKuttaMethod`: The Runge-Kutta method to be evaluated.
 - `order::Int`: The order up to which energy preservation is checked.
 """
-function is_energy_preserving(rk::RungeKuttaMethod, order; atol::Real=1e-14, rtol::Real=1e-14)
+function is_energy_preserving(rk::RungeKuttaMethod, order; atol::Real=nothing, rtol::Real=nothing)
     series = bseries(rk, order)
     return is_energy_preserving(series, atol = atol, rtol=rtol)
 end
@@ -1813,7 +1813,7 @@ This code is based on the Theorem 2 of
   Foundations of Computational Mathematics 10 (2010): 673-693.
   [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
 """
-function is_energy_preserving(series_integrator; atol::Real=1e-14, rtol::Real=1e-14)
+function is_energy_preserving(series_integrator; atol::Real=nothing, rtol::Real=nothing)
     # This method requires the B-series of a map as input
     let t = first(keys(series_integrator))
         @assert isempty(t)
@@ -1877,7 +1877,7 @@ end
 # and the set of 'coefficients' corresponding to a B-series is
 # energy_preserving up to the 'uppermost_order', which we choose
 # to be 4 for computational optimization
-function _is_energy_preserving_low_order(trees, coefficients; atol::Real=1e-14, rtol::Real=1e-14)
+function _is_energy_preserving_low_order(trees, coefficients; atol::Real=nothing, rtol::Real=nothing)
     # Set the limit up to which this function will work
     uppermost_order = 4
     same_order_trees = empty(trees)
@@ -1899,7 +1899,7 @@ end
 # of coefficients.
 # Checks whether `trees` and `ocefficients` satisfify the energy_preserving
 # condition.
-function _is_energy_preserving(trees, coefficients; atol::Real=0.0, rtol::Real=0.0)
+function _is_energy_preserving(trees, coefficients; atol::Real=nothing, rtol::Real=nothing)
     # TODO: `Float32` would also be nice to have. However, the default tolerance
     #       of the rank computation is based on `Real`. Thus, it will usually
     #       not work with coefficients given only in 32 bit precision.
@@ -1916,7 +1916,7 @@ function _is_energy_preserving(trees, coefficients; atol::Real=0.0, rtol::Real=0
     end
 end
 
-function _is_energy_preserving_dense(trees, coefficients; atol::Real=0.0, rtol::Real=0.0)
+function _is_energy_preserving_dense(trees, coefficients; atol::Real=nothing, rtol::Real=nothing)
     # For every tree, obtain the adjoint and check if it exists
     length_coeff = length(trees)
     # Provided that a tree can have several adjoints, for every tree `t`
@@ -1934,8 +1934,14 @@ function _is_energy_preserving_dense(trees, coefficients; atol::Real=0.0, rtol::
         # must be zero in the modified equation of energy-preserving methods.
         if length(t) > 1 && is_bushy(t)
             # Set the tolerance 
-            if !isapprox(coefficients[t_index],0; atol=atol, rtol=rtol)
-                return false
+            if atol === nothing && rtol === nothing
+                if !isapprox(coefficients[t_index],0)
+                    return false
+                end
+            else    
+                if !isapprox(coefficients[t_index],0; atol=atol, rtol=rtol)
+                    return false
+                end
             end
         else
             # If the tree is not a bush, then generate all the equivalent trees
@@ -1967,13 +1973,20 @@ function _is_energy_preserving_dense(trees, coefficients; atol::Real=0.0, rtol::
     unique!(energy_preserving_basis)
     # The components of `energy_preserving_basis` are the columns of the matrix `M`.
     M = reduce(hcat, energy_preserving_basis)
-    rank_M = rank(M, atol = atol, rtol = rtol)
+    if atol === nothing && rtol === nothing
+        rank_M = rank(M)
+    else
+        rank_M = rank(M, atol = atol, rtol = rtol)
+    end
 
     # We also create an extended matrix for which we append the vector of
     # coefficients
     Mv = [M coefficients]
-    rank_Mv = rank(Mv,  atol = atol, rtol = rtol)
-    
+    if atol === nothing && rtol === nothing
+        rank_Mv = rank(Mv)
+    else
+        rank_Mv = rank(Mv,  atol = atol, rtol = rtol)
+    end
     # If the rank of M is equal to the rank of the extended Mv,
     # then the system is energy-preserving
     return rank_M == rank_Mv
@@ -1981,7 +1994,7 @@ end
 
 # This method is specialized for coefficients that can be used efficiently in
 # sparse arrays.
-function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=0.0, rtol::Float64=0.0)
+function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=nothing, rtol::Float64=nothing)
     # For every tree, obtain the adjoint and check if it exists.
     # Provided that a tree can have several adjoints, for every tree `t`
     # we need to check if there is a linear combination of the coefficients
@@ -2003,8 +2016,14 @@ function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=0.0, rt
         # If so, we can exit early since the coefficients of bushy trees
         # must be zero in the modified equation of energy-preserving methods.
         if length(t) > 1 && is_bushy(t)
-            if !isapprox(coefficients[t_index],0;  atol = atol, rtol = rtol)
-                return false
+            if atol === nothing && rtol === nothing
+                if !isapprox(coefficients[t_index],0)
+                    return false
+                end
+            else    
+                if !isapprox(coefficients[t_index],0; atol=atol, rtol=rtol)
+                    return false
+                end
             end
         else
             # If the tree is not a bush, then generate all the equivalent trees
@@ -2040,8 +2059,11 @@ function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=0.0, rt
     U, Σ, V = svd(Matrix(M))
 
     # Calculate the effective rank based on the singular values and tolerance
-    rank_M = sum(Σ .> rtol)
-
+    if rtol === nothing
+        rank_M = sum(Σ .> 0)
+    else
+        rank_M = sum(Σ .> rtol)
+    end
     # We also create an extended matrix for which we append the vector of
     # coefficients
     col = maximum(cols) + 1
@@ -2057,7 +2079,11 @@ function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=0.0, rt
     U, Σv, V = svd(Matrix(Mv))
 
     # Calculate the effective rank based on the singular values and tolerance
-    rank_Mv = sum(Σv .> rtol)
+    if rtol === nothing
+        rank_Mv = sum(Σv .> 0)
+    else
+        rank_Mv = sum(Σv .> rtol)
+    end
 
 
     # If the rank of M is equal to the rank of the extended Mv,
