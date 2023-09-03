@@ -1755,12 +1755,12 @@ energy-preserving for Hamiltonian problems.
 It requires a `max_order` so that it does not run forever if the order up to
 which the method is energy-preserving is too big or infinite.
 Keyword Arguments:
-- `atol::Real=1e-14`: The absolute tolerance for energy preservation.
-- `rtol::Real=1e-14`: The relative tolerance for energy preservation.
+- `atol::Real=0`: The absolute tolerance for energy preservation.
+- `rtol::Real=0`: The relative tolerance for energy preservation.
 
 See also [`is_energy_preserving`](@ref)
 """
-function energy_preserving_order(rk::RungeKuttaMethod, max_order; atol::Real=nothing, rtol::Real=nothing)
+function energy_preserving_order(rk::RungeKuttaMethod, max_order; atol::Real=0, rtol::Real=0)
     p = 0
     not_energy_preserving = false
     while not_energy_preserving == false
@@ -1781,14 +1781,14 @@ end
 This function checks whether the Runge-Kutta method `rk` is
 energy-preserving for Hamiltonian systems up to a given `order`.
 Keyword Arguments:
-- `atol::Real=1e-14`: The absolute tolerance for energy preservation.
-- `rtol::Real=1e-14`: The relative tolerance for energy preservation.
+- `atol::Real=0`: The absolute tolerance for energy preservation.
+- `rtol::Real=0`: The relative tolerance for energy preservation.
 
 # Arguments
 - `rk::RungeKuttaMethod`: The Runge-Kutta method to be evaluated.
 - `order::Int`: The order up to which energy preservation is checked.
 """
-function is_energy_preserving(rk::RungeKuttaMethod, order; atol::Real=nothing, rtol::Real=nothing)
+function is_energy_preserving(rk::RungeKuttaMethod, order; atol::Real=0, rtol::Real=0)
     series = bseries(rk, order)
     return is_energy_preserving(series, atol = atol, rtol=rtol)
 end
@@ -1802,8 +1802,8 @@ This function checks whether the B-series `series_integrator` of a time
 integration method is energy-preserving for Hamiltonian systems - up to the
 [`order`](@ref) of `series_integrator`.
 Keyword Arguments:
-- `atol::Real=1e-14`: The absolute tolerance for energy preservation.
-- `rtol::Real=1e-14`: The relative tolerance for energy preservation.
+- `atol::Real=0`: The absolute tolerance for energy preservation.
+- `rtol::Real=0`: The relative tolerance for energy preservation.
 
 # References
 
@@ -1813,7 +1813,7 @@ This code is based on the Theorem 2 of
   Foundations of Computational Mathematics 10 (2010): 673-693.
   [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
 """
-function is_energy_preserving(series_integrator; atol::Real=nothing, rtol::Real=nothing)
+function is_energy_preserving(series_integrator; atol::Real=0, rtol::Real=0)
     # This method requires the B-series of a map as input
     let t = first(keys(series_integrator))
         @assert isempty(t)
@@ -1848,7 +1848,7 @@ function is_energy_preserving(series_integrator; atol::Real=nothing, rtol::Real=
     # for order less than 4 because the energy-preserving basis has only one element.
     # The following function checks the energy-preserving condition up to order 4
     # together.
-    if _is_energy_preserving_low_order(trees, coefficients, atol = atol, rtol = rtol) == false
+    if _is_energy_preserving_low_order(trees, coefficients, atol,  rtol) == false
         return false
     end
 
@@ -1865,7 +1865,7 @@ function is_energy_preserving(series_integrator; atol::Real=nothing, rtol::Real=
                 push!(same_order_trees, trees[j])
             end
         end
-        if _is_energy_preserving(same_order_trees, same_order_coeffs, atol=atol, rtol=rtol) == false
+        if _is_energy_preserving(same_order_trees, same_order_coeffs,atol, rtol) == false
             return false
         end
     end
@@ -1877,7 +1877,7 @@ end
 # and the set of 'coefficients' corresponding to a B-series is
 # energy_preserving up to the 'uppermost_order', which we choose
 # to be 4 for computational optimization
-function _is_energy_preserving_low_order(trees, coefficients; atol::Real=nothing, rtol::Real=nothing)
+function _is_energy_preserving_low_order(trees, coefficients, atol, rtol)
     # Set the limit up to which this function will work
     uppermost_order = 4
     same_order_trees = empty(trees)
@@ -1890,7 +1890,7 @@ function _is_energy_preserving_low_order(trees, coefficients; atol::Real=nothing
         push!(same_order_trees, t)
         push!(same_order_coeffs, coefficients[index])
     end
-    return _is_energy_preserving(same_order_trees, same_order_coeffs, atol=atol, rtol=rtol)
+    return _is_energy_preserving(same_order_trees, same_order_coeffs, atol, rtol)
 end
 
 # This function is the application of Theorem 2 of the paper
@@ -1899,7 +1899,7 @@ end
 # of coefficients.
 # Checks whether `trees` and `ocefficients` satisfify the energy_preserving
 # condition.
-function _is_energy_preserving(trees, coefficients; atol::Real=nothing, rtol::Real=nothing)
+function _is_energy_preserving(trees, coefficients, atol, rtol)
     # TODO: `Float32` would also be nice to have. However, the default tolerance
     #       of the rank computation is based on `Real`. Thus, it will usually
     #       not work with coefficients given only in 32 bit precision.
@@ -1910,13 +1910,13 @@ function _is_energy_preserving(trees, coefficients; atol::Real=nothing, rtol::Re
               Rational{Int8}, Rational{Int16}, Rational{Int32}, Rational{Int64},
               Rational{Int128}})
         # These types support efficient computations in sparse matrices
-        _is_energy_preserving_sparse(trees, coefficients, atol = atol, rtol=rtol)
+        _is_energy_preserving_sparse(trees, coefficients, atol, rtol)
     else
-        _is_energy_preserving_dense(trees, coefficients, atol=atol, rtol=rtol)
+        _is_energy_preserving_dense(trees, coefficients, atol, rtol)
     end
 end
 
-function _is_energy_preserving_dense(trees, coefficients; atol::Real=nothing, rtol::Real=nothing)
+function _is_energy_preserving_dense(trees, coefficients, atol, rtol)
     # For every tree, obtain the adjoint and check if it exists
     length_coeff = length(trees)
     # Provided that a tree can have several adjoints, for every tree `t`
@@ -1933,12 +1933,19 @@ function _is_energy_preserving_dense(trees, coefficients; atol::Real=nothing, rt
         # If so, we can exit early since the coefficients of bushy trees
         # must be zero in the modified equation of energy-preserving methods.
         if length(t) > 1 && is_bushy(t)
-            # Set the tolerance 
-            if atol === nothing && rtol === nothing
+            if atol == 0 && rtol == 0
                 if !isapprox(coefficients[t_index],0)
                     return false
                 end
-            else    
+            elseif atol == 0 && rtol != 0
+                if !isapprox(coefficients[t_index],0; rtol=rtol)
+                    return false
+                end
+            elseif atol != 0 && rtol == 0
+                if !isapprox(coefficients[t_index],0; atol=atol)
+                    return false
+                end
+            else
                 if !isapprox(coefficients[t_index],0; atol=atol, rtol=rtol)
                     return false
                 end
@@ -1956,7 +1963,7 @@ function _is_energy_preserving_dense(trees, coefficients; atol::Real=nothing, rt
                 # Check if the rightmost energy-preserving tree is in the
                 # set of trees
                 idx = findfirst(isequal(energy_preserving_pair), trees)
-                if idx !== nothing # i.e., energy_preserving_pair in trees
+                if idx !== 0 # i.e., energy_preserving_pair in trees
                     # Generate a k-th canonical vector
                     ek[idx] = 1 * (-1)^m
                     # Add ej + ek and push it into energy_preserving_basis
@@ -1973,20 +1980,14 @@ function _is_energy_preserving_dense(trees, coefficients; atol::Real=nothing, rt
     unique!(energy_preserving_basis)
     # The components of `energy_preserving_basis` are the columns of the matrix `M`.
     M = reduce(hcat, energy_preserving_basis)
-    if atol === nothing && rtol === nothing
-        rank_M = rank(M)
-    else
-        rank_M = rank(M, atol = atol, rtol = rtol)
-    end
+    rank_M = rank(M)
 
     # We also create an extended matrix for which we append the vector of
     # coefficients
     Mv = [M coefficients]
-    if atol === nothing && rtol === nothing
-        rank_Mv = rank(Mv)
-    else
-        rank_Mv = rank(Mv,  atol = atol, rtol = rtol)
-    end
+    
+    rank_Mv = rank(Mv)
+    
     # If the rank of M is equal to the rank of the extended Mv,
     # then the system is energy-preserving
     return rank_M == rank_Mv
@@ -1994,7 +1995,7 @@ end
 
 # This method is specialized for coefficients that can be used efficiently in
 # sparse arrays.
-function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=nothing, rtol::Float64=nothing)
+function _is_energy_preserving_sparse(trees, coefficients, atol, rtol)
     # For every tree, obtain the adjoint and check if it exists.
     # Provided that a tree can have several adjoints, for every tree `t`
     # we need to check if there is a linear combination of the coefficients
@@ -2016,11 +2017,19 @@ function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=nothing
         # If so, we can exit early since the coefficients of bushy trees
         # must be zero in the modified equation of energy-preserving methods.
         if length(t) > 1 && is_bushy(t)
-            if atol === nothing && rtol === nothing
+            if atol == 0 && rtol == 0
                 if !isapprox(coefficients[t_index],0)
                     return false
                 end
-            else    
+            elseif atol == 0 && rtol != 0
+                if !isapprox(coefficients[t_index],0; rtol=rtol)
+                    return false
+                end
+            elseif atol != 0 && rtol == 0
+                if !isapprox(coefficients[t_index],0; atol=atol)
+                    return false
+                end
+            else
                 if !isapprox(coefficients[t_index],0; atol=atol, rtol=rtol)
                     return false
                 end
@@ -2039,7 +2048,7 @@ function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=nothing
                 # Check if the rightmost energy-preserving tree is in the
                 # set of trees
                 idx = findfirst(isequal(energy_preserving_pair), trees)
-                if idx !== nothing # i.e., energy_preserving_pair in trees
+                if idx !== 0 # i.e., energy_preserving_pair in trees
                     push!(rows, idx)
                     push!(cols, col)
                     push!(vals, (-1)^m)
@@ -2059,7 +2068,7 @@ function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=nothing
     U, Σ, V = svd(Matrix(M))
 
     # Calculate the effective rank based on the singular values and tolerance
-    if rtol === nothing
+    if rtol == 0
         rank_M = sum(Σ .> 0)
     else
         rank_M = sum(Σ .> rtol)
@@ -2079,11 +2088,7 @@ function _is_energy_preserving_sparse(trees, coefficients; atol::Float64=nothing
     U, Σv, V = svd(Matrix(Mv))
 
     # Calculate the effective rank based on the singular values and tolerance
-    if rtol === nothing
-        rank_Mv = sum(Σv .> 0)
-    else
-        rank_Mv = sum(Σv .> rtol)
-    end
+    rank_Mv = sum(Σv)
 
 
     # If the rank of M is equal to the rank of the extended Mv,
