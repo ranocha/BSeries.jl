@@ -1778,6 +1778,8 @@ function energy_preserving_order(rk::RungeKuttaMethod, max_order; atol::Real=0, 
 end
 
 """
+is_energy_preserving(rk::RungeKuttaMethod, order)::Bool
+
 This function checks whether the Runge-Kutta method `rk` is
 energy-preserving for Hamiltonian systems up to a given `order`.
 Keyword Arguments:
@@ -1901,7 +1903,7 @@ end
 # condition.
 function _is_energy_preserving(trees, coefficients, atol, rtol)
     # TODO: `Float32` would also be nice to have. However, the default tolerance
-    #       of the rank computation is based on `Real`. Thus, it will usually
+    #       of the rank computation is based on `Float64`. Thus, it will usually
     #       not work with coefficients given only in 32 bit precision.
     # For very few coefficients, dense operations are more efficient than
     # sparse operations.
@@ -1963,7 +1965,7 @@ function _is_energy_preserving_dense(trees, coefficients, atol, rtol)
                 # Check if the rightmost energy-preserving tree is in the
                 # set of trees
                 idx = findfirst(isequal(energy_preserving_pair), trees)
-                if idx !== 0 # i.e., energy_preserving_pair in trees
+                if idx !== nothing # i.e., energy_preserving_pair in trees
                     # Generate a k-th canonical vector
                     ek[idx] = 1 * (-1)^m
                     # Add ej + ek and push it into energy_preserving_basis
@@ -1975,19 +1977,15 @@ function _is_energy_preserving_dense(trees, coefficients, atol, rtol)
     end
     # We remove the empty columns (those full of zeros)
     filter!(!iszero, energy_preserving_basis)
-
     # We remove repeated columns
     unique!(energy_preserving_basis)
     # The components of `energy_preserving_basis` are the columns of the matrix `M`.
     M = reduce(hcat, energy_preserving_basis)
     rank_M = rank(M)
-
     # We also create an extended matrix for which we append the vector of
     # coefficients
     Mv = [M coefficients]
-    
     rank_Mv = rank(Mv)
-    
     # If the rank of M is equal to the rank of the extended Mv,
     # then the system is energy-preserving
     return rank_M == rank_Mv
@@ -2048,7 +2046,7 @@ function _is_energy_preserving_sparse(trees, coefficients, atol, rtol)
                 # Check if the rightmost energy-preserving tree is in the
                 # set of trees
                 idx = findfirst(isequal(energy_preserving_pair), trees)
-                if idx !== 0 # i.e., energy_preserving_pair in trees
+                if idx !== nothing # i.e., energy_preserving_pair in trees
                     push!(rows, idx)
                     push!(cols, col)
                     push!(vals, (-1)^m)
@@ -2065,14 +2063,7 @@ function _is_energy_preserving_sparse(trees, coefficients, atol, rtol)
     # The components of `energy_preserving_basis` are the columns of the matrix `M`.
     M = sparse(rows, cols, vals, length(coefficients), maximum(cols))
     # Compute the singular value decomposition (SVD) of the sparse matrix
-    U, Σ, V = svd(Matrix(M))
-
-    # Calculate the effective rank based on the singular values and tolerance
-    if rtol == 0
-        rank_M = sum(Σ .> 0)
-    else
-        rank_M = sum(Σ .> rtol)
-    end
+    rank_M = rank(M)
     # We also create an extended matrix for which we append the vector of
     # coefficients
     col = maximum(cols) + 1
@@ -2085,12 +2076,7 @@ function _is_energy_preserving_sparse(trees, coefficients, atol, rtol)
     end
     Mv = sparse(rows, cols, vals, length(coefficients), col)
     # Compute the singular value decomposition (SVD) of the sparse matrix
-    U, Σv, V = svd(Matrix(Mv))
-
-    # Calculate the effective rank based on the singular values and tolerance
-    rank_Mv = sum(Σv)
-
-
+    rank_Mv = rank(Mv)
     # If the rank of M is equal to the rank of the extended Mv,
     # then the system is energy-preserving
     return rank_M == rank_Mv
