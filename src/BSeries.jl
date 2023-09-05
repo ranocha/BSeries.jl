@@ -1927,8 +1927,19 @@ function _is_energy_preserving_dense(trees, coefficients, tol)
         # If so, we can exit early since the coefficients of bushy trees
         # must be zero in the modified equation of energy-preserving methods.
         if length(t) > 1 && is_bushy(t)
-            if !iszero(coefficients[t_index])
-                return false
+            if (typeof(coefficients[t_index]) == Float64 || typeof(coefficients[t_index]) == Float32 || typeof(coefficients[t_index]) == Float16) && tol == 0
+                tol = 1e-14
+                if !isapprox(coefficients[t_index], 0, atol = tol)
+                    return false
+                end
+            elseif tol != 0
+                if !isapprox(coefficients[t_index], 0, atol = tol)
+                    return false
+                end
+            else
+                if !iszero(coefficients[t_index])
+                    return false
+                end
             end
         else
             # If the tree is not a bush, then generate all the equivalent trees
@@ -1997,8 +2008,19 @@ function _is_energy_preserving_sparse(trees, coefficients, tol)
         # If so, we can exit early since the coefficients of bushy trees
         # must be zero in the modified equation of energy-preserving methods.
         if length(t) > 1 && is_bushy(t)
-            if !iszero(coefficients[t_index])
-                return false
+            if (typeof(coefficients[t_index]) == Float64 || typeof(coefficients[t_index]) == Float32 || typeof(coefficients[t_index]) == Float16) && tol == 0
+                tol = 1e-14
+                if !isapprox(coefficients[t_index], 0, atol = tol)
+                    return false
+                end
+            elseif tol != 0
+                if !isapprox(coefficients[t_index], 0, atol = tol)
+                    return false
+                end
+            else
+                if !iszero(coefficients[t_index])
+                    return false
+                end
             end
         else
             # If the tree is not a bush, then generate all the equivalent trees
