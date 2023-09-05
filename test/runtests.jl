@@ -2115,6 +2115,18 @@ using Aqua: Aqua
             series = bseries(AverageVectorFieldMethod(BigFloat), 7)
             # TODO: This test is currently broken and throws an error
             @test_broken is_energy_preserving(series)
+
+            # Generated from MatLab
+            A = [0.0000000000000000E+00	0.0000000000000000E+00	0.0000000000000000E+00	0.0000000000000000E+00	
+            -2.0314781009861151E-02	0.0000000000000000E+00	0.0000000000000000E+00	0.0000000000000000E+00	
+            1.0721250651661693E+01	-1.0078547105299583E+01	0.0000000000000000E+00	0.0000000000000000E+00	
+            -4.1299845612430317E+01	4.0239538957660457E+01	2.0603066547698594E+00	0.0000000000000000E+00]
+            b = [2.0623108969503225E+00	
+            -1.7306596124709785E+00	
+            5.6957376564633877E-01	
+            9.8774949874317328E-02	]
+            rk = RungeKuttaMethod(A,b)
+            @test energy_preserving_order(rk, 10) == 4
         end
 
         @testset "Symbolic coefficients" begin
