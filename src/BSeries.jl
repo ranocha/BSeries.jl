@@ -1755,7 +1755,8 @@ energy-preserving for Hamiltonian problems.
 It requires a `max_order` so that it does not run forever if the order up to
 which the method is energy-preserving is too big or infinite.
 Keyword Arguments:
-- `tol::Real=1e-14`: The absolute tolerance for energy preservation.
+- `tol::Real=1e-0`: The absolute tolerance for energy preservation. If the elements of
+`rk` are Floating Points, the default tolerance is set to tol = 1e-14.
 
 See also [`is_energy_preserving`](@ref)
 """
@@ -1782,7 +1783,8 @@ end
 This function checks whether the Runge-Kutta method `rk` is
 energy-preserving for Hamiltonian systems up to a given `order`.
 Keyword Arguments:
-- `tol::Real=1e-14`: The absolute tolerance for energy preservation.
+- `tol::Real=1e-0`: The absolute tolerance for energy preservation. If the elements of
+`rk` are Floating Points, the default tolerance is set to tol = 1e-14.
 """
 function is_energy_preserving(rk::RungeKuttaMethod, order; tol::Real=0)
     series = bseries(rk, order)
@@ -1796,7 +1798,8 @@ This function checks whether the B-series `series_integrator` of a time
 integration method is energy-preserving for Hamiltonian systems - up to the
 [`order`](@ref) of `series_integrator`.
 Keyword Arguments:
-- `tol::Real=1e-14`: The absolute tolerance for energy preservation.
+- `tol::Real=1e-0`: The absolute tolerance for energy preservation. If the elements of
+`rk` are Floating Points, the default tolerance is set to tol = 1e-14.
 
 # References
 
@@ -1813,6 +1816,9 @@ function is_energy_preserving(series_integrator; tol::Real=0)
         @assert isone(series_integrator[t])
     end
 
+    # tolerance
+    V = eltype(coefficients)
+    tol = energy_preserving_default_tolerance(V, tol)
     # Theorem 2 of Celledoni et al. (2010) requires working with the modified
     # equation. The basic idea is to check whether the modified equation lies
     # in a certain subspace spanned by energy-preserving pairs of trees.
@@ -1922,24 +1928,12 @@ function _is_energy_preserving_dense(trees, coefficients, tol)
     for (t_index, t) in enumerate(trees)
         # We do not need to consider the empty tree
         isempty(t) && continue
-
         # Check whether the level sequence corresponds to a bushy tree.
         # If so, we can exit early since the coefficients of bushy trees
         # must be zero in the modified equation of energy-preserving methods.
         if length(t) > 1 && is_bushy(t)
-            if (typeof(coefficients[t_index]) == Float64 || typeof(coefficients[t_index]) == Float32 || typeof(coefficients[t_index]) == Float16) && tol == 0
-                tol = 1e-14
-                if !isapprox(coefficients[t_index], 0, atol = tol)
-                    return false
-                end
-            elseif tol != 0
-                if !isapprox(coefficients[t_index], 0, atol = tol)
-                    return false
-                end
-            else
-                if !iszero(coefficients[t_index])
-                    return false
-                end
+            if !isapprox(coefficients[t_index], 0, atol = tol)
+                return false
             end
         else
             # If the tree is not a bush, then generate all the equivalent trees
@@ -2003,24 +1997,12 @@ function _is_energy_preserving_sparse(trees, coefficients, tol)
     for (t_index, t) in enumerate(trees)
         # We do not need to consider the empty tree
         isempty(t) && continue
-
         # Check whether the level sequence corresponds to a bushy tree.
         # If so, we can exit early since the coefficients of bushy trees
         # must be zero in the modified equation of energy-preserving methods.
         if length(t) > 1 && is_bushy(t)
-            if (typeof(coefficients[t_index]) == Float64 || typeof(coefficients[t_index]) == Float32 || typeof(coefficients[t_index]) == Float16) && tol == 0
-                tol = 1e-14
-                if !isapprox(coefficients[t_index], 0, atol = tol)
-                    return false
-                end
-            elseif tol != 0
-                if !isapprox(coefficients[t_index], 0, atol = tol)
-                    return false
-                end
-            else
-                if !iszero(coefficients[t_index])
-                    return false
-                end
+            if !isapprox(coefficients[t_index], 0, atol = tol)
+                return false
             end
         else
             # If the tree is not a bush, then generate all the equivalent trees
@@ -2244,6 +2226,18 @@ function equivalent_trees(tree)
     unique!(equivalent_trees_set)
 
     return equivalent_trees_set
+end
+
+# This function calculates the default tolernace for 'is_energy_preserving()'
+function energy_preserving_default_tolerance(V, tol)
+    if tol == 0
+        if V <: AbstractFloat
+            tol = 100 * eps(T)
+        else
+            tol = zero(T)
+        end
+    end
+    return tol
 end
 
 end # module

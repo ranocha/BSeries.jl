@@ -2116,7 +2116,10 @@ using Aqua: Aqua
             # TODO: This test is currently broken and throws an error
             @test_broken is_energy_preserving(series)
 
-            # Generated from MatLab
+            # Generated using RK-Opt 
+            # References:
+            # Ketcheson et al., (2020). RK-Opt: A package for the design of numerical ODE solvers.
+            # Journal of Open Source Software, 5(54), 2514, https://doi.org/10.21105/joss.02514
             A = [0.0000000000000000E+00	0.0000000000000000E+00	0.0000000000000000E+00	0.0000000000000000E+00	
             -2.0314781009861151E-02	0.0000000000000000E+00	0.0000000000000000E+00	0.0000000000000000E+00	
             1.0721250651661693E+01	-1.0078547105299583E+01	0.0000000000000000E+00	0.0000000000000000E+00	
