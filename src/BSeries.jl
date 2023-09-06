@@ -1817,7 +1817,7 @@ function is_energy_preserving(series_integrator; tol::Real=0)
     end
 
     # tolerance
-    V = eltype(coefficients)
+    V = eltype(series_integrator[rootedtree([0])])
     tol = energy_preserving_default_tolerance(V, tol)
     # Theorem 2 of Celledoni et al. (2010) requires working with the modified
     # equation. The basic idea is to check whether the modified equation lies
@@ -2232,9 +2232,9 @@ end
 function energy_preserving_default_tolerance(V, tol)
     if tol == 0
         if V <: AbstractFloat
-            tol = 100 * eps(T)
+            tol = 100 * eps(V)
         else
-            tol = zero(T)
+            tol = zero(V)
         end
     end
     return tol
