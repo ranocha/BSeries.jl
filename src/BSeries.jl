@@ -1755,12 +1755,12 @@ energy-preserving for Hamiltonian problems.
 It requires a `max_order` so that it does not run forever if the order up to
 which the method is energy-preserving is too big or infinite.
 Keyword Arguments:
-- `tol::Real=1e-0`: The absolute tolerance for energy preservation. If the elements of
+- `tol = nothing`: The absolute tolerance for energy preservation. If the elements of
 `rk` are Floating Points, the default tolerance is set to tol = 1e-14.
 
 See also [`is_energy_preserving`](@ref)
 """
-function energy_preserving_order(rk::RungeKuttaMethod, max_order; tol::Real=0)
+function energy_preserving_order(rk::RungeKuttaMethod, max_order; tol=nothing)
     p = 0
     not_energy_preserving = false
     while not_energy_preserving == false
@@ -1783,10 +1783,10 @@ end
 This function checks whether the Runge-Kutta method `rk` is
 energy-preserving for Hamiltonian systems up to a given `order`.
 Keyword Arguments:
-- `tol::Real=1e-0`: The absolute tolerance for energy preservation. If the elements of
+- `tol = nothing`: The absolute tolerance for energy preservation. If the elements of
 `rk` are Floating Points, the default tolerance is set to tol = 1e-14.
 """
-function is_energy_preserving(rk::RungeKuttaMethod, order; tol::Real=0)
+function is_energy_preserving(rk::RungeKuttaMethod, order; tol=nothing)
     series = bseries(rk, order)
     return is_energy_preserving(series, tol=tol)
 end
@@ -1798,7 +1798,7 @@ This function checks whether the B-series `series_integrator` of a time
 integration method is energy-preserving for Hamiltonian systems - up to the
 [`order`](@ref) of `series_integrator`.
 Keyword Arguments:
-- `tol::Real=1e-0`: The absolute tolerance for energy preservation. If the elements of
+- `tol = nothing`: The absolute tolerance for energy preservation. If the elements of
 `rk` are Floating Points, the default tolerance is set to tol = 1e-14.
 
 # References
@@ -1809,7 +1809,7 @@ This code is based on the Theorem 2 of
   Foundations of Computational Mathematics 10 (2010): 673-693.
   [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
 """
-function is_energy_preserving(series_integrator; tol::Real=0)
+function is_energy_preserving(series_integrator; tol=nothing)
     # This method requires the B-series of a map as input
     let t = first(keys(series_integrator))
         @assert isempty(t)
@@ -2230,7 +2230,7 @@ end
 
 # This function calculates the default tolernace for 'is_energy_preserving()'
 function energy_preserving_default_tolerance(V, tol)
-    if tol == 0
+    if tol === nothing
         if V <: AbstractFloat
             tol = 100 * eps(V)
         else

@@ -2129,6 +2129,8 @@ using Aqua: Aqua
             5.6957376564633877E-01	
             9.8774949874317328E-02	]
             rk = RungeKuttaMethod(A,b)
+            series = bseries(rk)
+            @test order_of_accuracy(series) == 4
             @test energy_preserving_order(rk, 10) == 4
         end
 
