@@ -2236,6 +2236,7 @@ function energy_preserving_default_tolerance(V, tol)
             # For floating point numbers, we cannot expect exact calculations in general.
             tol = 100 * eps(V)
         else
+            # If something like rational numbers are used, we do not expect numerical errors.
             tol = zero(V)
         end
     end
