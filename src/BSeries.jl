@@ -1817,7 +1817,7 @@ function is_energy_preserving(series_integrator; tol=nothing)
     end
 
     # tolerance
-    V = eltype(series_integrator[rootedtree([0])])
+    V = valtype(series_integrator)
     tol = energy_preserving_default_tolerance(V, tol)
     # Theorem 2 of Celledoni et al. (2010) requires working with the modified
     # equation. The basic idea is to check whether the modified equation lies
