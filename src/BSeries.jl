@@ -2230,6 +2230,7 @@ end
 
 # This function calculates the default tolerance for 'is_energy_preserving'
 function energy_preserving_default_tolerance(V, tol)
+    # We use `nothing` as default value
     if tol === nothing
         if V <: AbstractFloat
             tol = 100 * eps(V)
