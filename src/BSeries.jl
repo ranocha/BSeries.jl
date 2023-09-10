@@ -2228,7 +2228,7 @@ function equivalent_trees(tree)
     return equivalent_trees_set
 end
 
-# This function calculates the default tolernace for 'is_energy_preserving()'
+# This function calculates the default tolerance for 'is_energy_preserving'
 function energy_preserving_default_tolerance(V, tol)
     if tol === nothing
         if V <: AbstractFloat
