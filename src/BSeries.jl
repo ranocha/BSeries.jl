@@ -1820,7 +1820,7 @@ function is_energy_preserving(series_integrator; tol=nothing)
     end
 
     # tolerance
-    V = eltype(series_integrator[rootedtree([0])])
+    V = valtype(series_integrator)
     tol = energy_preserving_default_tolerance(V, tol)
     # Theorem 2 of Celledoni et al. (2010) requires working with the modified
     # equation. The basic idea is to check whether the modified equation lies
@@ -2231,12 +2231,15 @@ function equivalent_trees(tree)
     return equivalent_trees_set
 end
 
-# This function calculates the default tolernace for 'is_energy_preserving()'
+# This function calculates the default tolerance for 'is_energy_preserving'
 function energy_preserving_default_tolerance(V, tol)
+    # We use `nothing` as default value
     if tol === nothing
         if V <: AbstractFloat
+            # For floating point numbers, we cannot expect exact calculations in general.
             tol = 100 * eps(V)
         else
+            # If something like rational numbers are used, we do not expect numerical errors.
             tol = zero(V)
         end
     end
