@@ -1748,15 +1748,16 @@ function renormalize!(series)
 end
 
 """
-    energy_preserving_order(rk::RungeKuttaMethod, max_order; tol::Real=0)
+    energy_preserving_order(rk::RungeKuttaMethod, max_order; tol=nothing)
 
 This function checks up to which order a Runge-Kutta method `rk` is
 energy-preserving for Hamiltonian problems.
 It requires a `max_order` so that it does not run forever if the order up to
 which the method is energy-preserving is too big or infinite.
 Keyword Arguments:
-- `tol = nothing`: The absolute tolerance for energy preservation. If the elements of
-`rk` are Floating Points, the default tolerance is set to tol = 1e-14.
+- `tol = nothing`: The absolute tolerance for energy preservation. Default value 
+is `tol = 100 * eps(V)` if `valtype(rk) == AbstractFloat`,  and `tol = zero(V)`
+for rational numbers.
 
 See also [`is_energy_preserving`](@ref)
 """
@@ -1778,13 +1779,14 @@ function energy_preserving_order(rk::RungeKuttaMethod, max_order; tol=nothing)
 end
 
 """
-    is_energy_preserving(rk::RungeKuttaMethod, order; tol::Real=0)::Bool
+    is_energy_preserving(rk::RungeKuttaMethod, order; tol=nothing)::Bool
 
 This function checks whether the Runge-Kutta method `rk` is
 energy-preserving for Hamiltonian systems up to a given `order`.
 Keyword Arguments:
-- `tol = nothing`: The absolute tolerance for energy preservation. If the elements of
-`rk` are Floating Points, the default tolerance is set to tol = 1e-14.
+- `tol = nothing`: The absolute tolerance for energy preservation. Default value 
+is `tol = 100 * eps(V)` if `valtype(rk) == AbstractFloat`,  and `tol = zero(V)`
+for rational numbers.
 """
 function is_energy_preserving(rk::RungeKuttaMethod, order; tol=nothing)
     series = bseries(rk, order)
@@ -1792,15 +1794,16 @@ function is_energy_preserving(rk::RungeKuttaMethod, order; tol=nothing)
 end
 
 """
-    is_energy_preserving(series_integrator; tol::Real=0)::Bool
+    is_energy_preserving(series_integrator; tol=nothing)::Bool
 
 This function checks whether the B-series `series_integrator` of a time
 integration method is energy-preserving for Hamiltonian systems - up to the
 [`order`](@ref) of `series_integrator`.
 Keyword Arguments:
-- `tol = nothing`: The absolute tolerance for energy preservation. If the elements of
-`rk` are Floating Points, the default tolerance is set to tol = 1e-14.
-
+- `tol = nothing`: The absolute tolerance for energy preservation. Default value 
+is `tol = 100 * eps(V)` if `valtype(series_integrator) == AbstractFloat`,  and `tol = zero(V)`
+for rational numbers.
+    
 # References
 
 This code is based on the Theorem 2 of
