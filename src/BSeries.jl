@@ -1756,7 +1756,7 @@ It requires a `max_order` so that it does not run forever if the order up to
 which the method is energy-preserving is too big or infinite.
 Keyword Arguments:
 - `tol = nothing`: The absolute tolerance for energy preservation. Default value 
-is `tol = 100 * eps(V)` if `valtype(rk) == AbstractFloat`,  and `tol = zero(V)`
+is `tol = 100 * eps(V)` if `valtype(rk) <: AbstractFloat`,  and `tol = zero(V)`
 for rational numbers.
 
 See also [`is_energy_preserving`](@ref)
@@ -1785,7 +1785,7 @@ This function checks whether the Runge-Kutta method `rk` is
 energy-preserving for Hamiltonian systems up to a given `order`.
 Keyword Arguments:
 - `tol = nothing`: The absolute tolerance for energy preservation. Default value 
-is `tol = 100 * eps(V)` if `valtype(rk) == AbstractFloat`,  and `tol = zero(V)`
+is `tol = 100 * eps(V)` if `valtype(rk) <: AbstractFloat`,  and `tol = zero(V)`
 for rational numbers.
 """
 function is_energy_preserving(rk::RungeKuttaMethod, order; tol=nothing)
@@ -1801,7 +1801,7 @@ integration method is energy-preserving for Hamiltonian systems - up to the
 [`order`](@ref) of `series_integrator`.
 Keyword Arguments:
 - `tol = nothing`: The absolute tolerance for energy preservation. Default value 
-is `tol = 100 * eps(V)` if `valtype(series_integrator) == AbstractFloat`,  and `tol = zero(V)`
+is `tol = 100 * eps(V)` if `valtype(series_integrator) <: AbstractFloat`,  and `tol = zero(V)`
 for rational numbers.
     
 # References
