@@ -1756,7 +1756,7 @@ It requires a `max_order` so that it does not run forever if the order up to
 which the method is energy-preserving is too big or infinite.
 Keyword Arguments:
 - `tol = nothing`: The absolute tolerance for energy preservation. Default value 
-is `tol = 100 * eps(V)` if `valtype(rk) == AbstractFloat`,  and `tol = zero(V)`
+is `tol = 100 * eps(V)` if `valtype(rk) <: AbstractFloat`,  and `tol = zero(V)`
 for rational numbers.
 
 See also [`is_energy_preserving`](@ref)
