@@ -10,6 +10,6 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 [compat]
 Aqua = "0.6.1, 0.7"
 StaticArrays = "1"
-SymEngine = "0.8, 0.9.1"
+SymEngine = "0.8, 0.9.1, 0.10"
 SymPy = "1"
 Symbolics = "4, 5"
