@@ -1,6 +1,8 @@
 module BSeries
 
-@doc read(joinpath(dirname(@__DIR__), "README.md"), String) BSeries
+@doc replace(read(joinpath(dirname(@__DIR__), "README.md"), String),
+             "[LICENSE.md](LICENSE.md)" => "[License](@ref)",
+             "[CONTRIBUTING.md](CONTRIBUTING.md)" => "[Contributing](@ref)") BSeries
 
 import Base: +, -, *, /, \
 
