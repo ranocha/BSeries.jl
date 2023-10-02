@@ -2161,16 +2161,9 @@ using Aqua: Aqua
 
     @testset "Aqua" begin
         Aqua.test_all(BSeries;
-                      # We would like to check for ambiguities but cannot do so right now because
-                      # of https://github.com/JuliaTesting/Aqua.jl/issues/79
-                      # Thus, we do not test for ambiguities here but run an additional test
-                      # below excluding ambiguity tests with Base.
-                      ambiguities = false,
-                      # ambiguities=(; exclude=[
-                      #   isapprox, Base.var"#isapprox##kw", # with Polynomials.jl
-                      #   getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
-                      #   /, # https://github.com/jump-dev/MutableArithmetics.jl/issues/161
-                      # ])
+                      ambiguities=(; exclude=[
+                        getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
+                      ]),
                       # Requires.jl is not loaded on new versions of Julia
                       stale_deps = (; ignore = [:Requires]),
                       # We would like to test the Project.toml formatting but there are some
