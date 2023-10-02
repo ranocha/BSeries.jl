@@ -2161,9 +2161,9 @@ using Aqua: Aqua
 
     @testset "Aqua" begin
         Aqua.test_all(BSeries;
-                      ambiguities=(; exclude=[
-                        getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
-                      ]),
+                      ambiguities = (; exclude = [
+                                         getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
+                                     ]),
                       # Requires.jl is not loaded on new versions of Julia
                       stale_deps = (; ignore = [:Requires]),
                       # We would like to test the Project.toml formatting but there are some
