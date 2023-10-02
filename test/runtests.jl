@@ -2160,24 +2160,28 @@ using Aqua: Aqua
     end
 
     @testset "Aqua" begin
-        Aqua.test_all(BSeries;
-                      ambiguities = (; exclude = [
-                                         getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
-                                     ]),
-                      # Requires.jl is not loaded on new versions of Julia
-                      stale_deps = (; ignore = [:Requires]),
-                      # We would like to test the Project.toml formatting but there are some
-                      # CI issues, see https://github.com/ranocha/BSeries.jl/pull/119
-                      project_toml_formatting = false)
+        if VERSION < v"1.7"
+            Aqua.test_all(BSeries;
+                          # We would like to check for ambiguities but cannot do so right now because
+                          # of https://github.com/JuliaTesting/Aqua.jl/issues/79
+                          # Thus, we do not test for ambiguities here but run an additional test
+                          # below excluding ambiguity tests with Base.
+                          ambiguities = false,
+                          # We would like to test the Project.toml formatting but there are some
+                          # CI issues, see https://github.com/ranocha/BSeries.jl/pull/119
+                          project_toml_formatting = false)
+        else
+            Aqua.test_all(BSeries;
+                          ambiguities = (; exclude = [
+                                             getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
+                                         ]),
+                          # Requires.jl is not loaded on new versions of Julia
+                          stale_deps = (; ignore = [:Requires]))
+        end
 
         # No Base and as extra test for the reason described above
         @testset "ambiguities" begin
             Aqua.test_ambiguities([BSeries])
-        end
-
-        # Project.toml formatting only on newer versions of Julia
-        if VERSION >= v"1.9"
-            Aqua.test_project_toml_formatting(BSeries)
         end
     end
 end # @testset "BSeries"
