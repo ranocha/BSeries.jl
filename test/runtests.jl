@@ -2166,10 +2166,7 @@ using Aqua: Aqua
                           # of https://github.com/JuliaTesting/Aqua.jl/issues/79
                           # Thus, we do not test for ambiguities here but run an additional test
                           # below excluding ambiguity tests with Base.
-                          ambiguities = false,
-                          # We would like to test the Project.toml formatting but there are some
-                          # CI issues, see https://github.com/ranocha/BSeries.jl/pull/119
-                          project_toml_formatting = false)
+                          ambiguities = false)
         else
             Aqua.test_all(BSeries;
                           ambiguities = (; exclude = [
