@@ -19,7 +19,7 @@ Plots = "1"
 PyCall = "1"
 StaticArrays = "1"
 SymEngine = "0.8, 0.9.1, 0.10, 0.11"
-SymPy = "1.0.53"
+SymPy = "1.0.53, 2"
 Symbolics = "3, 4, 5"
 
 [preferences.OrdinaryDiffEq]
