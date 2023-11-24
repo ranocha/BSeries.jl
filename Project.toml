@@ -33,7 +33,7 @@ Reexport = "1"
 Requires = "1"
 RootedTrees = "2.16"
 SymEngine = "0.8, 0.9.1, 0.10, 0.11"
-SymPy = "1"
+SymPy = "1, 2"
 Symbolics = "4, 5"
 julia = "1.6"
 
