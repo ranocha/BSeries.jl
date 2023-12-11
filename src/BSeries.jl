@@ -890,8 +890,7 @@ function bseries(mis::MultirateInfinitesimalSplitMethod, order)
 
     poly_one = Polynomial{V, :x}([one(V)])
     poly_zero = zero(poly_one)
-    prototype_polynomial = TruncatedBSeries{
-                                            BicoloredRootedTree{Int, Vector{Int},
+    prototype_polynomial = TruncatedBSeries{BicoloredRootedTree{Int, Vector{Int},
                                                                 Vector{Bool}},
                                             typeof(poly_one)}()
     prototype_polynomial[rootedtree(Int[], Bool[])] = poly_one
