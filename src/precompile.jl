@@ -122,90 +122,75 @@ function _precompile_()
                           Vector{Rational{Int64}}, Int64})   # time: 0.28764844
     Base.precompile(Tuple{typeof(bseries),
                           AdditiveRungeKuttaMethod{Rational{Int64},
-                                                   Vector{
-                                                          RungeKuttaMethod{Rational{Int64},
-                                                                           Matrix{
-                                                                                  Rational{
-                                                                                           Int64
-                                                                                           }
-                                                                                  },
-                                                                           Vector{
-                                                                                  Rational{
-                                                                                           Int64
-                                                                                           }
-                                                                                  }}}},
+                                                   Vector{RungeKuttaMethod{Rational{Int64},
+                                                                           Matrix{Rational{Int64}},
+                                                                           Vector{Rational{Int64}}}}},
                           Int64})   # time: 0.24456108
     Base.precompile(Tuple{typeof(bseries),
-                          RosenbrockMethod{Float64, Matrix{Float64}, Vector{Float64}}, Int64
-                          })   # time: 0.11124245
+                          RosenbrockMethod{Float64, Matrix{Float64}, Vector{Float64}},
+                          Int64})   # time: 0.11124245
     Base.precompile(Tuple{Core.kwftype(typeof(compose)),
                           NamedTuple{(:normalize_stepsize,), Tuple{Bool}}, typeof(compose),
-                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64
-                                                                                      }},
-                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64
-                                                                                      }},
-                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64
-                                                                                      }}})   # time: 0.052562617
+                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                           Rational{Int64}},
+                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                           Rational{Int64}},
+                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                           Rational{Int64}}})   # time: 0.052562617
     Base.precompile(Tuple{typeof(modified_equation),
                           TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Float64}})   # time: 0.029089022
     Base.precompile(Tuple{typeof(modified_equation),
-                          TruncatedBSeries{
-                                           BicoloredRootedTree{Int64, Vector{Int64},
+                          TruncatedBSeries{BicoloredRootedTree{Int64, Vector{Int64},
                                                                Vector{Bool}},
                                            Rational{Int64}}})   # time: 0.026970008
     Base.precompile(Tuple{typeof(-),
-                          TruncatedBSeries{
-                                           BicoloredRootedTree{Int64, Vector{Int64},
+                          TruncatedBSeries{BicoloredRootedTree{Int64, Vector{Int64},
                                                                Vector{Bool}},
                                            Rational{Int64}},
-                          TruncatedBSeries{
-                                           BicoloredRootedTree{Int64, Vector{Int64},
+                          TruncatedBSeries{BicoloredRootedTree{Int64, Vector{Int64},
                                                                Vector{Bool}},
                                            Rational{Int64}}})   # time: 0.024954015
     Base.precompile(Tuple{typeof(bseries), Function, Int64})   # time: 0.021058364
     Base.precompile(Tuple{typeof(order_of_accuracy),
-                          TruncatedBSeries{
-                                           BicoloredRootedTree{Int64, Vector{Int64},
+                          TruncatedBSeries{BicoloredRootedTree{Int64, Vector{Int64},
                                                                Vector{Bool}},
                                            Rational{Int64}}})   # time: 0.018548366
     Base.precompile(Tuple{typeof(-),
-                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64
-                                                                                      }},
-                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64
-                                                                                      }}})   # time: 0.015549354
+                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                           Rational{Int64}},
+                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                           Rational{Int64}}})   # time: 0.015549354
     Base.precompile(Tuple{Type{ExactSolution},
-                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64
-                                                                                      }}})   # time: 0.014666914
+                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                           Rational{Int64}}})   # time: 0.014666914
     Base.precompile(Tuple{typeof(order_of_accuracy),
-                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64
-                                                                                      }}})   # time: 0.012643992
+                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                           Rational{Int64}}})   # time: 0.012643992
     Base.precompile(Tuple{typeof(-),
                           TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Float64},
                           TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Float64}})   # time: 0.010377383
     Base.precompile(Tuple{typeof(modified_equation),
-                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64
-                                                                                      }}})   # time: 0.009575064
+                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                           Rational{Int64}}})   # time: 0.009575064
     Base.precompile(Tuple{Type{ExactSolution},
-                          TruncatedBSeries{
-                                           BicoloredRootedTree{Int64, Vector{Int64},
+                          TruncatedBSeries{BicoloredRootedTree{Int64, Vector{Int64},
                                                                Vector{Bool}},
                                            Rational{Int64}}})   # time: 0.008866523
     Base.precompile(Tuple{typeof(getindex),
-                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64
-                                                                                      }},
+                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                           Rational{Int64}},
                           RootedTree{Int64,
                                      SubArray{Int64, 1, Vector{Int64},
                                               Tuple{UnitRange{Int64}}, true}}})   # time: 0.008717881
     Base.precompile(Tuple{Type{ExactSolution},
                           TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Float64}})   # time: 0.007198428
     Base.precompile(Tuple{typeof(modifying_integrator),
-                          TruncatedBSeries{
-                                           BicoloredRootedTree{Int64, Vector{Int64},
+                          TruncatedBSeries{BicoloredRootedTree{Int64, Vector{Int64},
                                                                Vector{Bool}},
                                            Rational{Int64}}})   # time: 0.001966412
     Base.precompile(Tuple{typeof(modifying_integrator),
-                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64
-                                                                                      }}})   # time: 0.001889854
+                          TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                           Rational{Int64}}})   # time: 0.001889854
     Base.precompile(Tuple{typeof(modifying_integrator),
                           TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Float64}})   # time: 0.001581901
 end
