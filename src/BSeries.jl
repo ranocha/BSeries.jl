@@ -404,8 +404,8 @@ julia> series = bseries(3) do t, series
            end
        end
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 5 entries:
-  RootedTree{Int64}: Int64[]   => 1//1
-  RootedTree{Int64}: [1]       => 1//1
+  RootedTree{Int64}: Int64[]   => 1
+  RootedTree{Int64}: [1]       => 1
   RootedTree{Int64}: [1, 2]    => 1//2
   RootedTree{Int64}: [1, 2, 3] => 1//4
   RootedTree{Int64}: [1, 2, 2] => 1//3
@@ -497,8 +497,8 @@ We can generate this as follows.
 ```jldoctest
 julia> series = bseries(AverageVectorFieldMethod(), 3)
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 5 entries:
-  RootedTree{Int64}: Int64[]   => 1//1
-  RootedTree{Int64}: [1]       => 1//1
+  RootedTree{Int64}: Int64[]   => 1
+  RootedTree{Int64}: [1]       => 1
   RootedTree{Int64}: [1, 2]    => 1//2
   RootedTree{Int64}: [1, 2, 3] => 1//4
   RootedTree{Int64}: [1, 2, 2] => 1//3
@@ -671,12 +671,12 @@ single entry one.
 ```jldoctest
 julia> M = fill(1//1, 1, 1)
 1×1 Matrix{Rational{Int64}}:
- 1//1
+ 1
 
 julia> series = bseries(ContinuousStageRungeKuttaMethod(M), 4)
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
-  RootedTree{Int64}: Int64[]      => 1//1
-  RootedTree{Int64}: [1]          => 1//1
+  RootedTree{Int64}: Int64[]      => 1
+  RootedTree{Int64}: [1]          => 1
   RootedTree{Int64}: [1, 2]       => 1//2
   RootedTree{Int64}: [1, 2, 3]    => 1//4
   RootedTree{Int64}: [1, 2, 2]    => 1//3
@@ -687,15 +687,15 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entri
 
 julia> series - bseries(AverageVectorFieldMethod(), order(series))
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
-  RootedTree{Int64}: Int64[]      => 0//1
-  RootedTree{Int64}: [1]          => 0//1
-  RootedTree{Int64}: [1, 2]       => 0//1
-  RootedTree{Int64}: [1, 2, 3]    => 0//1
-  RootedTree{Int64}: [1, 2, 2]    => 0//1
-  RootedTree{Int64}: [1, 2, 3, 4] => 0//1
-  RootedTree{Int64}: [1, 2, 3, 3] => 0//1
-  RootedTree{Int64}: [1, 2, 3, 2] => 0//1
-  RootedTree{Int64}: [1, 2, 2, 2] => 0//1
+  RootedTree{Int64}: Int64[]      => 0
+  RootedTree{Int64}: [1]          => 0
+  RootedTree{Int64}: [1, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3]    => 0
+  RootedTree{Int64}: [1, 2, 2]    => 0
+  RootedTree{Int64}: [1, 2, 3, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2] => 0
 ```
 
 # References
