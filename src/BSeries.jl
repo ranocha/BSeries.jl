@@ -19,8 +19,9 @@ end
 
 using Latexify: Latexify, LaTeXString
 using Combinatorics: Combinatorics, permutations
-using LinearAlgebra: LinearAlgebra, rank
+using LinearAlgebra: LinearAlgebra, rank, dot
 using SparseArrays: SparseArrays, sparse
+using SymPy
 
 @reexport using Polynomials: Polynomials, Polynomial
 
@@ -43,6 +44,8 @@ export MultirateInfinitesimalSplitMethod
 export renormalize!
 
 export is_energy_preserving, energy_preserving_order
+
+export ContinuousStageRungeKuttaMethod
 
 # Types used for traits
 # These traits may decide between different algorithms based on the
@@ -77,6 +80,7 @@ struct TruncatedBSeries{T <: AbstractRootedTree, V} <: AbstractDict{T, V}
 end
 
 TruncatedBSeries{T, V}() where {T, V} = TruncatedBSeries{T, V}(OrderedDict{T, V}())
+
 
 # general interface methods of `AbstractDict` for `TruncatedBSeries`
 @inline Base.iterate(series::TruncatedBSeries) = iterate(series.coef)
@@ -623,6 +627,96 @@ function bseries(ros::RosenbrockMethod, order)
         end
     end
 
+    return series
+end
+
+"""
+    ContinuousStageRungeKuttaMethod
+
+A struct that describes a CSRK method. This kind of `struct` should be constructed 
+via [ContinuousStageRungeKuttaMethod] 
+    `csrk = ContinuousStageRungeKuttaMethod(M)`
+in order to later call the 'bseries' function. 
+
+# References
+
+- Yuto Miyatake and John C. Butcher.
+  "A characterization of energy-preserving methods and the construction of
+  parallel integrators for Hamiltonian systems."
+  SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
+  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
+"""
+struct ContinuousStageRungeKuttaMethod{MatT <: AbstractMatrix} <: RootedTrees.AbstractTimeIntegrationMethod
+    A::MatT
+end
+
+Base.eltype(::ContinuousStageRungeKuttaMethod{T}) where {T} = T
+
+
+"""
+    bseries(csrk::ContinuousStageRungeKuttaMethod, order)
+
+Compute the B-series of the [`ContinuousStageRungeKuttaMethod`](@ref) `csrk`
+up to the prescribed integer `order` as described by Miyatake & Butcher (2015).
+    
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+
+# Example:
+The energy-preserving 4x4 matrix given by Miyatake & Butcher (2015) is
+```
+M = [-6//5   72//5  -36//1  24//1;
+        72//5  -144//5 -48//1  72//1;
+        -36//1 -48//1   720//1 -720//1;
+        24//1   72//1  -720//1  720//1]
+```
+
+Then, we calculate the B-series with the following code:
+
+```
+csrk = ContinuousStageRungeKuttaMethod(M)
+series = bseries(csrk, 4)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
+  RootedTree{Int64}: Int64[]      => 1//1
+  RootedTree{Int64}: [1]          => 1//1
+  RootedTree{Int64}: [1, 2]       => 1//2
+  RootedTree{Int64}: [1, 2, 3]    => 1//6
+  RootedTree{Int64}: [1, 2, 2]    => 1//3
+  RootedTree{Int64}: [1, 2, 3, 4] => 1//24
+  RootedTree{Int64}: [1, 2, 3, 3] => 1//12
+  RootedTree{Int64}: [1, 2, 3, 2] => 1//8
+  RootedTree{Int64}: [1, 2, 2, 2] => 1//4
+
+```
+# References
+- Yuto Miyatake and John C. Butcher.
+  "A characterization of energy-preserving methods and the construction of
+  parallel integrators for Hamiltonian systems."
+  SIAM Journal on Numerical Analysis 54, no. 3 (2016): 
+  [DOI: 10.1137/15M1020861](https://doi.org/10.1137/15M1020861) 
+"""
+function bseries(csrk::ContinuousStageRungeKuttaMethod, order)
+    csrk = csrk.A
+    V_tmp = eltype(csrk)
+    if V_tmp <: Integer
+        # If people use integer coefficients, they will likely want to have results
+        # as exact as possible. However, general terms are not integers. Thus, we
+        # use rationals instead.
+        V = Rational{V_tmp}
+    else
+        V = V_tmp
+    end
+    series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
+    series[rootedtree(Int[])] = one(V)
+    for o in 1:order
+        for t in RootedTreeIterator(o)
+            series[copy(t)] = N(elementary_differentials_csrk(csrk, t))
+        end
+    end
     return series
 end
 
@@ -2217,6 +2311,88 @@ function equivalent_trees(tree)
     unique!(equivalent_trees_set)
 
     return equivalent_trees_set
+end
+
+
+# This function generates a polynomial 
+#       A_{t,z} = [t,t^2/2,..., t^s/s]*M*[1, z, ..., z^(s-1)]^T
+# for a given square matrix M of dimension s and chars 't' and 'z'.  
+function PolynomialA(M,t,z)
+    # get the dimension of the matrix
+    s = size(M,1)
+    # we need symbolic variables to work with
+    variable1 = Sym(t)
+    variable2 = Sym(z)
+    # conjugate the variable 1, since  this will be the variable of the left polynomial
+    # and the function 'dot' assumes it to be conjugated
+    variable1 = conjugate(variable1)
+    # generate the components of the polynomial with powers of t
+    poli_z = Array{SymPy.Sym}(undef, s)
+    for i in 1:s
+        poli_z[i] = variable2^(i-1)
+    end
+    # generate the components of the polynomial with powers of z
+    poli_t = Array{SymPy.Sym}(undef, s)
+    for i in 1:s
+        poli_t[i] = (1 // i)*(variable1^i)
+    end
+    # multiply matrix times vector
+    result = M * poli_z
+    # use dot product for the two vectors
+    return dot(poli_t,result)
+end
+
+
+"""
+    elementary_differentials_csrk(M,tree)
+
+This function calculates the CSRK elementary differential for a given 
+square matrix 'M' and a given RootedTree according to [@ref].
+
+# References
+Butcher, John & Miyatake, Yuto. (2015). A Characterization of Energy-Preserving
+Methods and the Construction of Parallel Integrators for Hamiltonian Systems. 
+SIAM Journal on Numerical Analysis. 54. 10.1137/15M1020861. 
+(https://www.researchgate.net/publication/276211444_A_Characterization_of_Energy-Preserving_Methods_and_the_Construction_of_Parallel_Integrators_for_Hamiltonian_Systems)
+
+"""
+function elementary_differentials_csrk(M,rootedtree)
+    # we extract the level_sequence of 'rootedtree'
+    tree = rootedtree.level_sequence
+    m = maximum(tree)
+    l = length(tree)
+    # Since we will integrate with symbolic variables for 
+    # every node in the tree, we create the variables called 
+    # 'xi' for 1 <= i <= m, because m is the most distant node from the root. 
+    variables = []
+    for i in 1:m
+        var_name = "x$i"
+        var = Sym(var_name)
+        push!(variables, var)
+    end
+    # we will calculate an integral for every node in the level_sequence from right to left
+    inverse_counter = l-1
+    # stablish initial integrand, which is the rightmost leaf (last node of the level sequence)
+    if l > 1
+        integrand = integrate(PolynomialA(M,variables[tree[end]-1],variables[tree[end]]),(variables[tree[end]],0,1))
+    else
+        # if the RootedTree is [1] or [], the elementary differential will be 1.
+        return 1
+    end
+    # Start a cycle for integrating 
+    while inverse_counter > 1
+        # we define the pseudo_integrand as the product between the last integral and the new polynomial (since the polynomials are
+        # multiplying each others inside the biggest integral). For a node 'i', this new Polynomial is computed for the variables
+        # 'xi' and 'x(i-1)'. 
+        pseudo_integrand = PolynomialA(M,variables[tree[inverse_counter]-1],variables[tree[inverse_counter]])*integrand
+        # integrate this new pseudo_integrand with respect to the variable 'xi'
+        integrand = integrate(pseudo_integrand,(variables[tree[inverse_counter]],0,1))
+        inverse_counter -= 1
+    end
+    # Once we have covered every node except for the base, multiply for the Basis_Polynomial, i.e. the Polynomial B
+    # defined by B_{x1} = A_{1, x1}.
+    # return the integral with respect to x1.
+    return integrate(PolynomialA(M,1,variables[1])*integrand,(variables[1],0,1))
 end
 
 end # module
