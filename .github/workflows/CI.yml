@@ -67,8 +67,8 @@ jobs:
       - uses: codecov/codecov-action@v4
         with:
           file: lcov.info
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
       # The standard setup of Coveralls is just annoying for parallel builds, see, e.g.,
       # https://github.com/trixi-framework/Trixi.jl/issues/691
       # https://github.com/coverallsapp/github-action/issues/47
