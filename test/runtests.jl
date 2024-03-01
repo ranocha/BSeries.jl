@@ -11,6 +11,7 @@ using SymPy: SymPy
 using Symbolics: Symbolics
 
 using Aqua: Aqua
+using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_imports
 
 @testset "BSeries" begin
     @testset "lazy representation of exact ODE solution" begin
@@ -2183,5 +2184,11 @@ using Aqua: Aqua
         @testset "ambiguities" begin
             Aqua.test_ambiguities([BSeries])
         end
+    end
+
+    @testset "ExplicitImports" begin
+        @test check_no_implicit_imports(BSeries) === nothing
+
+        @test check_no_stale_explicit_imports(BSeries) === nothing
     end
 end # @testset "BSeries"
