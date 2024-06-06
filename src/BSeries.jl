@@ -769,7 +769,7 @@ function RootedTrees.elementary_weight(t::RootedTree,
 end
 
 # See Miyatake & Butcher (2016), p. 1998, right before eq. (2.8)
-function RootedTrees.derivative_weight(t::RootedTree, 
+function RootedTrees.derivative_weight(t::RootedTree,
                                        A_τζ, csrk::ContinuousStageRungeKuttaMethod)
 
     # The derivative weight ϕ_τ is given as
