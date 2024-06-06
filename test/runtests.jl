@@ -20,6 +20,18 @@ using Aqua: Aqua
         @test exact == ExactSolution(exact)
     end
 
+    @testset "non-conflicting exports" begin
+        # classical RK4
+        A = [0 0 0 0
+             1//2 0 0 0
+             0 1//2 0 0
+             0 0 1 0]
+        b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+        rk = @inferred RungeKuttaMethod(A, b)
+        t = @inferred rootedtree([1, 2])
+        @test_nowarn @inferred derivative_weight(t, rk)
+    end
+
     @testset "latexify" begin
         # explicit midpoint method
         A = @SArray [0 0; 1//2 0]
