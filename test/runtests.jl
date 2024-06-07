@@ -50,7 +50,7 @@ using Aqua: Aqua
                 A = [0 0; 1/(2 * α) 0]
                 b = [1 - α, α]
                 c = [0, 1 / (2 * α)]
-                series_integrator = bseries(A, b, c, 3)
+                series_integrator = @inferred bseries(A, b, c, 3)
                 @test_nowarn latexify(series_integrator)
             end
 
@@ -58,11 +58,11 @@ using Aqua: Aqua
                 A = [0 0; 1//2 0]
                 b = [0, 1]
                 c = [0, 1 // 2]
-                series_integrator = bseries(A, b, c, 1)
+                series_integrator = @inferred bseries(A, b, c, 1)
                 @test_nowarn latexify(series_integrator)
 
                 h = SymEngine.symbols("h")
-                coefficients = modified_equation(series_integrator)
+                coefficients = @inferred modified_equation(series_integrator)
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
                 val2 = @test_nowarn latexify(coefficients / h, cdot = false)
@@ -90,11 +90,11 @@ using Aqua: Aqua
                 A = [0 0; 1//2 0]
                 b = [0, 1]
                 c = [0, 1 // 2]
-                series_integrator = bseries(A, b, c, 1)
+                series_integrator = @inferred bseries(A, b, c, 1)
                 @test_nowarn latexify(series_integrator)
 
                 h = SymPy.symbols("h", real = true)
-                coefficients = modified_equation(series_integrator)
+                coefficients = @inferred modified_equation(series_integrator)
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
                 val2 = @test_nowarn latexify(coefficients / h, cdot = false)
@@ -108,19 +108,22 @@ using Aqua: Aqua
                 A = [0 0; 1/(2 * α) 0]
                 b = [1 - α, α]
                 c = [0, 1 / (2 * α)]
-                series_integrator = bseries(A, b, c, 3)
-                @test_nowarn latexify(series_integrator)
+                series_integrator = @inferred bseries(A, b, c, 3)
+                # Do not test warnings due to deprecation warnings from Symbolics
+                # see https://github.com/ranocha/BSeries.jl/pull/210
+                # @test_nowarn latexify(series_integrator)
+                latexify(series_integrator)
             end
 
             @testset "Divide by h" begin
                 A = [0 0; 1//2 0]
                 b = [0, 1]
                 c = [0, 1 // 2]
-                series_integrator = bseries(A, b, c, 1)
+                series_integrator = @inferred bseries(A, b, c, 1)
                 @test_nowarn latexify(series_integrator)
 
                 Symbolics.@variables h
-                coefficients = modified_equation(series_integrator)
+                coefficients = @inferred modified_equation(series_integrator)
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
                 val2 = @test_nowarn latexify(coefficients / h, cdot = false)
