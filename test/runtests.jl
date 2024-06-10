@@ -1229,7 +1229,11 @@ using Aqua: Aqua
             s3_reference = -(α * β * u3^2 + α * γ * u2^2 + β * γ * u1^2) / 12
             for i in eachindex(f)
                 s3 = SymPyPythonCall.subs(1 // 2 *
-                                          SymPyPythonCall.diff(SymPyPythonCall.diff((series[i] - f[i]) / f[i], dt), dt),
+                                          SymPyPythonCall.diff(SymPyPythonCall.diff((series[i] -
+                                                                                     f[i]) /
+                                                                                    f[i],
+                                                                                    dt),
+                                                               dt),
                                           dt => 0)
                 @test iszero(SymPyPythonCall.expand(s3 - s3_reference))
             end
@@ -1239,8 +1243,14 @@ using Aqua: Aqua
                            (β * u1^2 * u3^2 + γ * u2^2 * u1^2 + α * u3^2 * u2^2)
             for i in eachindex(f)
                 s5 = SymPyPythonCall.subs(1 // 24 *
-                SymPyPythonCall.diff(SymPyPythonCall.diff(SymPyPythonCall.diff(SymPyPythonCall.diff((series[i] - f[i]) / f[i],   dt), dt), dt),   dt),
-                                dt => 0)
+                                          SymPyPythonCall.diff(SymPyPythonCall.diff(SymPyPythonCall.diff(SymPyPythonCall.diff((series[i] -
+                                                                                                                               f[i]) /
+                                                                                                                              f[i],
+                                                                                                                              dt),
+                                                                                                         dt),
+                                                                                    dt),
+                                                               dt),
+                                          dt => 0)
                 @test iszero(SymPyPythonCall.expand(s5 - s5_reference))
             end
         end
