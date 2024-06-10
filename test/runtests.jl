@@ -136,7 +136,7 @@ using Aqua: Aqua
                 coefficients = @inferred modified_equation(series_integrator)
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
-                val2 = @test_nowarn latexify(coefficients / h, cdot = false)
+                val2 = @test_nowarn latexify(SymPyPythonCall.simplify(coefficients / h), cdot = false)
                 @test val1 == val2
             end
         end
@@ -890,7 +890,7 @@ using Aqua: Aqua
             c = @SArray [0 // 1]
 
             # tested with the Python package BSeries
-            series2 = @inferred modified_equation(f, u, dt, A, b, c, 2)
+            series2 = modified_equation(f, u, dt, A, b, c, 2)
             series2_reference = [
                 -dt * (-p * q * (p - 1) + p * (2 - q)^2) / 2 + p * (2 - q),
                 -dt * (p * q * (2 - q) + q * (p - 1)^2) / 2 + q * (p - 1),
@@ -898,7 +898,7 @@ using Aqua: Aqua
             @test mapreduce(isequal, &, series2, series2_reference)
 
             # tested with the Python package BSeries
-            series3 = @inferred modified_equation(f, u, dt, A, b, c, 3)
+            series3 = modified_equation(f, u, dt, A, b, c, 3)
             series3_reference = [
                 -dt^2 * p * q * (2 - q) * (p - 1) / 6 +
                 dt^2 *
@@ -914,7 +914,7 @@ using Aqua: Aqua
             @test mapreduce(iszero ∘ SymPy.expand, &, series3 - series3_reference)
 
             # tested with the Python package BSeries
-            series4 = @inferred modified_equation(f, u, dt, A, b, c, 4)
+            series4 = modified_equation(f, u, dt, A, b, c, 4)
             series4_reference = [
                 -dt^3 *
                 (-2 * p^2 * q * (2 - q) * (p - 1) + 2 * p * q * (2 - q) * (p - 1) * (q - 2)) /
