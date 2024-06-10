@@ -136,7 +136,8 @@ using Aqua: Aqua
                 coefficients = @inferred modified_equation(series_integrator)
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
-                val2 = @test_nowarn latexify(SymPyPythonCall.simplify(coefficients / h), cdot = false)
+                val2 = @test_nowarn latexify(SymPyPythonCall.simplify(coefficients / h),
+                                             cdot = false)
                 @test val1 == val2
             end
         end
