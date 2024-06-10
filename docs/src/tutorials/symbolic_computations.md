@@ -119,7 +119,7 @@ latexify(series, reduce_order_by = 1, cdot = false) |> println
 
 ```@example modified-equation-sympy
 using Latexify
-h = SymPy.symbols("h", real = true)
+h = SymPyPythonCall.symbols("h", real = true)
 latexify(series / h, cdot = false) |> println
 ```
 
