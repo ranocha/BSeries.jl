@@ -6,7 +6,8 @@ computations in [BSeries.jl](https://github.com/ranocha/BSeries.jl) support
 at least
 
 - [SymEngine.jl](https://github.com/symengine/SymEngine.jl),
-- [SymPy.jl](https://github.com/JuliaPy/SymPy.jl), and
+- [SymPy.jl](https://github.com/JuliaPy/SymPy.jl),
+- [SymPyPythonCall.jl](https://github.com/jverzani/SymPyPythonCall.jl), and
 - [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
 
 as symbolic backends. You can find some performance comparisons of them in the
@@ -87,12 +88,12 @@ latexify(series / h, cdot=false) |> println
 ```
 
 We can also use other packages for the symbolic computations, of course.
-SymPy.jl often provides very clean expressions.
+SymPyPythonCall.jl often provides very clean expressions.
 
 ```@example modified-equation-sympy
-using BSeries, SymPy
+using BSeries, SymPyPythonCall
 
-α = SymPy.symbols("α", real=true)
+α = SymPyPythonCall.symbols("α", real = true)
 A = [0 0; 1/(2α) 0]
 b = [1-α, α]
 c = [0, 1/(2α)]
@@ -105,20 +106,21 @@ SymEngine.jl.
 
 ```@example modified-equation-sympy
 using Latexify
-latexify(series, reduce_order_by=1, dt=SymPy.symbols("h"), cdot=false) |> println
+latexify(series, reduce_order_by = 1, dt = SymPyPythonCall.symbols("h"),
+         cdot = false) |> println
 ```
 
 We can also use the simplified versions.
 
 ```@example modified-equation-sympy
 using Latexify
-latexify(series, reduce_order_by=1, cdot=false) |> println
+latexify(series, reduce_order_by = 1, cdot = false) |> println
 ```
 
 ```@example modified-equation-sympy
 using Latexify
-h = SymPy.symbols("h", real=true)
-latexify(series / h, cdot=false) |> println
+h = SymPy.symbols("h", real = true)
+latexify(series / h, cdot = false) |> println
 ```
 
 Alternatively, we can also use Symbolics.jl.
@@ -137,7 +139,7 @@ series = modified_equation(A, b, c, 3)
 ```@example modified-equation-symbolics
 using Latexify
 Symbolics.@variables h
-latexify(series / h, cdot=false) |> println
+latexify(series / h, cdot = false) |> println
 ```
 
 
@@ -163,14 +165,14 @@ If even `Int128` is not enough, one can specify the type `BigInt`, which has adj
 You can also create purely symbolic B-series as starting point of exploratory research, e.g.,
 
 ```@example ex:symbolic-series
-using BSeries, SymPy
+using BSeries, SymPyPythonCall
 
 series = bseries(5) do t, series
-    return symbols("a_$(butcher_representation(t))", real=true)
+    return symbols("a_$(butcher_representation(t))", real = true)
 end
 ```
 
-This B-series can be used as any other B-series, e.g., to compute a 
+This B-series can be used as any other B-series, e.g., to compute a
 modified equation:
 
 ```@example ex:symbolic-series

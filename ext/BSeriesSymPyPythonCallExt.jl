@@ -13,6 +13,8 @@ function BSeries.compute_derivative(expression::SymPyPythonCall.Sym,
     SymPyPythonCall.diff(expression, variable)
 end
 
-BSeries.latexify_default_dt(::Type{SymPyPythonCall.Sym}) = SymPyPythonCall.symbols("h", real = true)
+function BSeries.latexify_default_dt(::Type{SymPyPythonCall.Sym})
+    SymPyPythonCall.symbols("h", real = true)
+end
 
 end # module
