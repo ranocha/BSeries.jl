@@ -6,9 +6,10 @@ using BSeries.Latexify: latexify
 using LinearAlgebra: I
 using StaticArrays: @SArray, @SMatrix, @SVector
 
+using Symbolics: Symbolics
 using SymEngine: SymEngine
 using SymPy: SymPy
-using Symbolics: Symbolics
+using SymPyPythonCall: SymPyPythonCall
 
 using Aqua: Aqua
 
@@ -76,7 +77,7 @@ using Aqua: Aqua
                 A = [0 0; 1/(2 * α) 0]
                 b = [1 - α, α]
                 c = [0, 1 / (2 * α)]
-                series_integrator = bseries(A, b, c, 3)
+                series_integrator = @inferred bseries(A, b, c, 3)
 
                 # Call this once to avoid failing tests with `@test_nowarn`
                 # caused by deprecation warnings from PyCall.jl. See also
@@ -94,6 +95,38 @@ using Aqua: Aqua
                 @test_nowarn latexify(series_integrator)
 
                 h = SymPy.symbols("h", real = true)
+                coefficients = @inferred modified_equation(series_integrator)
+                val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
+                                             cdot = false)
+                val2 = @test_nowarn latexify(coefficients / h, cdot = false)
+                @test val1 == val2
+            end
+        end
+
+        @testset "SymPyPythonCall.jl" begin
+            @testset "Symbolic coefficients" begin
+                α = SymPyPythonCall.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred bseries(A, b, c, 3)
+
+                # Call this once to avoid failing tests with `@test_nowarn`
+                # caused by deprecation warnings from PyCall.jl. See also
+                # https://github.com/JuliaPy/PyCall.jl/pull/1042
+                deepcopy(α)
+
+                @test_nowarn latexify(series_integrator)
+            end
+
+            @testset "Divide by h" begin
+                A = [0 0; 1//2 0]
+                b = [0, 1]
+                c = [0, 1 // 2]
+                series_integrator = @inferred bseries(A, b, c, 1)
+                @test_nowarn latexify(series_integrator)
+
+                h = SymPyPythonCall.symbols("h", real = true)
                 coefficients = @inferred modified_equation(series_integrator)
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
@@ -839,6 +872,75 @@ using Aqua: Aqua
             @test mapreduce(iszero ∘ SymPy.expand, &, series4 - series4_reference)
         end
 
+        @testset "SymPyPythonCall.jl" begin
+            # Lotka-Volterra model
+            dt = SymPyPythonCall.symbols("dt")
+            p, q = u = SymPyPythonCall.symbols("p, q")
+            f = [p * (2 - q), q * (p - 1)]
+
+            # Explicit Euler method
+            A = @SMatrix [0 // 1;;]
+            b = @SArray [1 // 1]
+            c = @SArray [0 // 1]
+
+            # tested with the Python package BSeries
+            series2 = @inferred modified_equation(f, u, dt, A, b, c, 2)
+            series2_reference = [
+                -dt * (-p * q * (p - 1) + p * (2 - q)^2) / 2 + p * (2 - q),
+                -dt * (p * q * (2 - q) + q * (p - 1)^2) / 2 + q * (p - 1),
+            ]
+            @test mapreduce(isequal, &, series2, series2_reference)
+
+            # tested with the Python package BSeries
+            series3 = @inferred modified_equation(f, u, dt, A, b, c, 3)
+            series3_reference = [
+                -dt^2 * p * q * (2 - q) * (p - 1) / 6 +
+                dt^2 *
+                (-p^2 * q * (2 - q) - p * q * (2 - q) * (p - 1) - p * q * (p - 1)^2 +
+                 p * (2 - q)^3) / 3 - dt * (-p * q * (p - 1) + p * (2 - q)^2) / 2 +
+                p * (2 - q),
+                dt^2 * p * q * (2 - q) * (p - 1) / 6 +
+                dt^2 *
+                (-p * q^2 * (p - 1) + p * q * (2 - q)^2 + p * q * (2 - q) * (p - 1) +
+                 q * (p - 1)^3) / 3 - dt * (p * q * (2 - q) + q * (p - 1)^2) / 2 +
+                q * (p - 1),
+            ]
+            @test mapreduce(iszero ∘ SymPy.expand, &, series3 - series3_reference)
+
+            # tested with the Python package BSeries
+            series4 = @inferred modified_equation(f, u, dt, A, b, c, 4)
+            series4_reference = [
+                -dt^3 *
+                (-2 * p^2 * q * (2 - q) * (p - 1) + 2 * p * q * (2 - q) * (p - 1) * (q - 2)) /
+                12 -
+                dt^3 * (-p^2 * q * (2 - q)^2 + p * q^2 * (p - 1)^2 +
+                 p * q * (1 - p) * (2 - q) * (p - 1) + p * q * (2 - q) * (p - 1) * (q - 2)) /
+                12 -
+                dt^3 * (p^2 * q^2 * (p - 1) - 2 * p^2 * q * (2 - q)^2 -
+                 p^2 * q * (2 - q) * (p - 1) - p * q * (2 - q)^2 * (p - 1) -
+                 p * q * (2 - q) * (p - 1)^2 - p * q * (p - 1)^3 + p * (2 - q)^4) / 4 -
+                dt^2 * p * q * (2 - q) * (p - 1) / 6 +
+                dt^2 *
+                (-p^2 * q * (2 - q) - p * q * (2 - q) * (p - 1) - p * q * (p - 1)^2 +
+                 p * (2 - q)^3) / 3 - dt * (-p * q * (p - 1) + p * (2 - q)^2) / 2 +
+                p * (2 - q),
+                -dt^3 *
+                (-2 * p * q^2 * (2 - q) * (p - 1) + 2 * p * q * (2 - q) * (p - 1)^2) / 12 -
+                dt^3 *
+                (p^2 * q * (2 - q)^2 - p * q^2 * (p - 1)^2 + p * q * (2 - q)^2 * (p - 1) +
+                 p * q * (2 - q) * (p - 1)^2) / 12 -
+                dt^3 * (-p^2 * q^2 * (2 - q) - p * q^2 * (2 - q) * (p - 1) -
+                 2 * p * q^2 * (p - 1)^2 + p * q * (2 - q)^3 + p * q * (2 - q)^2 * (p - 1) +
+                 p * q * (2 - q) * (p - 1)^2 + q * (p - 1)^4) / 4 +
+                dt^2 * p * q * (2 - q) * (p - 1) / 6 +
+                dt^2 *
+                (-p * q^2 * (p - 1) + p * q * (2 - q)^2 + p * q * (2 - q) * (p - 1) +
+                 q * (p - 1)^3) / 3 - dt * (p * q * (2 - q) + q * (p - 1)^2) / 2 +
+                q * (p - 1),
+            ]
+            @test mapreduce(iszero ∘ SymPy.expand, &, series4 - series4_reference)
+        end
+
         @testset "Symbolics.jl" begin
             # Lotka-Volterra model
             Symbolics.@variables dt
@@ -1100,6 +1202,46 @@ using Aqua: Aqua
                                            dt),
                                 dt => 0)
                 @test iszero(SymPy.expand(s5 - s5_reference))
+            end
+        end
+
+        @testset "SymPyPythonCall.jl" begin
+            dt = SymPyPythonCall.symbols("dt")
+            α, β, γ = SymPyPythonCall.symbols("alpha, beta, gamma")
+            u1, u2, u3 = u = SymPyPythonCall.symbols("u1 u2 u3")
+            f = [α * u[2] * u[3], β * u[3] * u[1], γ * u[1] * u[2]]
+
+            # Implicit midpoint method
+            A = @SMatrix [1 // 2;;]
+            b = @SArray [1 // 1]
+            c = @SArray [1 // 2]
+
+            # See eq. (12) of
+            # - Philippe Chartier, Ernst Hairer and Gilles Vilmart (2007)
+            #   Numerical integrators based on modified differential equations
+            #   [DOI: 10.1090/S0025-5718-07-01967-9](https://doi.org/10.1090/S0025-5718-07-01967-9)
+
+            series = modifying_integrator(f, u, dt, A, b, c, 5)
+            # Dirty workaround used also for the other symbolic setups - just make
+            # it consistent here, although we could use another approach with SymPyPythonCall.jl.
+            # We differentiate the expression and set `dt` to zero to get the corresponding
+            # coefficient divided by factorial(how often we needed to differentiate).
+            s3_reference = -(α * β * u3^2 + α * γ * u2^2 + β * γ * u1^2) / 12
+            for i in eachindex(f)
+                s3 = SymPyPythonCall.subs(1 // 2 *
+                                          SymPyPythonCall.diff(SymPyPythonCall.diff((series[i] - f[i]) / f[i], dt), dt),
+                                          dt => 0)
+                @test iszero(SymPyPythonCall.expand(s3 - s3_reference))
+            end
+
+            s5_reference = 6 // 5 * s3_reference^2 +
+                           1 // 60 * α * β * γ *
+                           (β * u1^2 * u3^2 + γ * u2^2 * u1^2 + α * u3^2 * u2^2)
+            for i in eachindex(f)
+                s5 = SymPyPythonCall.subs(1 // 24 *
+                SymPyPythonCall.diff(SymPyPythonCall.diff(SymPyPythonCall.diff(SymPyPythonCall.diff((series[i] - f[i]) / f[i],   dt), dt), dt),   dt),
+                                dt => 0)
+                @test iszero(SymPyPythonCall.expand(s5 - s5_reference))
             end
         end
 
@@ -1668,6 +1810,25 @@ using Aqua: Aqua
             @test_broken is_energy_preserving(series)
         end
 
+        @testset "SymPyPythonCall.jl" begin
+            # Examples in Section 5.3.1
+            α = SymPyPythonCall.symbols("α", real = true)
+            α1 = 1 / (36 * α - 7)
+            M = [α1+4 -6 * α1-6 6*α1
+                 -6 * α1-6 36 * α1+12 -36*α1
+                 6*α1 -36*α1 36*α1]
+            csrk = @inferred ContinuousStageRungeKuttaMethod(M)
+
+            # TODO: This is no type stable at the moment
+            # series = @inferred bseries(csrk, 5)
+            series = bseries(csrk, 5)
+
+            @test @inferred(order_of_accuracy(series)) == 4
+
+            # TODO: This is currently not implemented
+            @test_broken is_energy_preserving(series)
+        end
+
         @testset "Symbolics.jl" begin
             # Examples in Section 5.3.1
             Symbolics.@variables α
@@ -2150,6 +2311,19 @@ using Aqua: Aqua
                 # This method is second-order accurate. Thus, it is
                 # energy-preserving up to order two.
                 α = SymPy.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 2))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                # TODO: This test is currently broken and throws an error
+                @test_broken is_energy_preserving(series_integrator)
+            end
+
+            @testset "SymPyPythonCall.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymPyPythonCall.symbols("α", real = true)
                 A = [0 0; 1/(2 * α) 0]
                 b = [1 - α, α]
                 c = [0, 1 / (2 * α)]

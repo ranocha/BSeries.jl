@@ -1,4 +1,4 @@
-module SymPyExt
+module BSeriesSymPyExt
 
 if isdefined(Base, :get_extension)
     using SymPy: SymPy
