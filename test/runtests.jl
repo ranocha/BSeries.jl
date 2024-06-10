@@ -8,8 +8,14 @@ using StaticArrays: @SArray, @SMatrix, @SVector
 
 using Symbolics: Symbolics
 using SymEngine: SymEngine
-using SymPy: SymPy
+# see
+# https://juliapy.github.io/PythonCall.jl/stable/pycall/#Tips
+# https://github.com/JuliaPy/PyCall.jl/issues/1056
 using SymPyPythonCall: SymPyPythonCall
+ENV["PYTHON"] = SymPyPythonCall.PythonCall.python_executable_path()
+import Pkg
+Pkg.build("SymPy")
+using SymPy: SymPy
 
 using Aqua: Aqua
 
