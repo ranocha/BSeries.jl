@@ -2339,7 +2339,7 @@ using Aqua: Aqua
                 series_integrator = @inferred(bseries(A, b, c, 2))
                 @test @inferred(order_of_accuracy(series_integrator)) == 2
                 # TODO: This test is currently broken and throws an error
-                @test_broken is_energy_preserving(series_integrator)
+                @test_skip is_energy_preserving(series_integrator)
             end
 
             @testset "SymPyPythonCall.jl" begin
@@ -2352,7 +2352,7 @@ using Aqua: Aqua
                 series_integrator = @inferred(bseries(A, b, c, 2))
                 @test @inferred(order_of_accuracy(series_integrator)) == 2
                 # TODO: This test is currently broken and throws an error
-                @test_broken is_energy_preserving(series_integrator)
+                @test_skip is_energy_preserving(series_integrator)
             end
 
             @testset "Symbolics.jl" begin
