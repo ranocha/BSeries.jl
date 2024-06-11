@@ -104,6 +104,8 @@ using Aqua: Aqua
                 coefficients = @inferred modified_equation(series_integrator)
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
+                @show typeof(h)
+                @test typeof BSeries.latexify_default_dt(valtype(coefficients / h))==typeof(h)
                 val2 = @test_nowarn latexify(coefficients / h, cdot = false)
                 @test val1 == val2
             end
@@ -136,8 +138,9 @@ using Aqua: Aqua
                 coefficients = @inferred modified_equation(series_integrator)
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
-                val2 = @test_nowarn latexify(SymPyPythonCall.simplify(coefficients / h),
-                                             cdot = false)
+                @show typeof(h)
+                @test typeof BSeries.latexify_default_dt(valtype(coefficients / h))==typeof(h)
+                val2 = @test_nowarn latexify(coefficients / h, cdot = false)
                 @test val1 == val2
             end
         end
@@ -1805,7 +1808,7 @@ using Aqua: Aqua
             end
 
             # TODO: This is currently not implemented
-            @test_broken is_energy_preserving(series)
+            @test_skip is_energy_preserving(series)
         end
 
         @testset "SymPy.jl" begin
@@ -1824,7 +1827,7 @@ using Aqua: Aqua
             @test @inferred(order_of_accuracy(series)) == 4
 
             # TODO: This is currently not implemented
-            @test_broken is_energy_preserving(series)
+            @test_skip is_energy_preserving(series)
         end
 
         @testset "SymPyPythonCall.jl" begin
@@ -1843,7 +1846,7 @@ using Aqua: Aqua
             @test @inferred(order_of_accuracy(series)) == 4
 
             # TODO: This is currently not implemented
-            @test_broken is_energy_preserving(series)
+            @test_skip is_energy_preserving(series)
         end
 
         @testset "Symbolics.jl" begin
@@ -1864,7 +1867,7 @@ using Aqua: Aqua
             # @test @inferred(order_of_accuracy(series)) == 4
 
             # # TODO: This is currently not implemented
-            @test_broken is_energy_preserving(series)
+            @test_skip is_energy_preserving(series)
         end
     end
 
