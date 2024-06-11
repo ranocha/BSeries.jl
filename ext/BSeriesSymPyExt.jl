@@ -8,10 +8,13 @@ end
 
 using BSeries: BSeries
 
-function BSeries.compute_derivative(expression::SymPy.Sym, variable::SymPy.Sym)
+function BSeries.compute_derivative(expression::SymPy.Sym{SymPy.PyCall.PyObject},
+                                    variable::SymPy.Sym{SymPy.PyCall.PyObject})
     SymPy.diff(expression, variable)
 end
 
-BSeries.latexify_default_dt(::Type{SymPy.Sym}) = SymPy.symbols("h", real = true)
+function BSeries.latexify_default_dt(::Type{SymPy.Sym{SymPy.PyCall.PyObject}})
+    SymPy.symbols("h", real = true)
+end
 
 end # module

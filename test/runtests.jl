@@ -105,7 +105,8 @@ using Aqua: Aqua
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
                 @show typeof(h)
-                @test typeof(BSeries.latexify_default_dt(valtype(coefficients / h)))==typeof(h)
+                @test typeof(BSeries.latexify_default_dt(valtype(coefficients / h))) ==
+                      typeof(h)
                 val2 = @test_nowarn latexify(coefficients / h, cdot = false)
                 @test val1 == val2
             end
@@ -139,7 +140,8 @@ using Aqua: Aqua
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
                 @show typeof(h)
-                @test typeof(BSeries.latexify_default_dt(valtype(coefficients / h)))==typeof(h)
+                @test typeof(BSeries.latexify_default_dt(valtype(coefficients / h))) ==
+                      typeof(h)
                 val2 = @test_nowarn latexify(coefficients / h, cdot = false)
                 @test val1 == val2
             end
