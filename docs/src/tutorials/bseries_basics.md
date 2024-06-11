@@ -9,7 +9,7 @@ methods, generically or when applied to a specific ordinary differential equatio
 # These must first be installed using: import Pkg; Pkg.add("package_name")
 using BSeries
 using Latexify  # Only needed for some pretty-printing cells below using `latexify`
-import SymPy; sp=SymPy;
+import SymPyPythonCall; sp = SymPyPythonCall;
 ```
 
 ## B-series for a generic ODE
@@ -20,7 +20,7 @@ Here is a generic 2-stage, 2nd-order method:
 
 
 ```@example bseries-basics
-α = sp.symbols("α", real=true)
+α = sp.symbols("α", real = true)
 A = [0 0; 1/(2*α) 0]; b = [1-α, α]; c = [0, 1/(2*α)]
 coeffs2 = bseries(A, b, c, 3)
 latexify(coeffs2, cdot=false)
@@ -155,9 +155,9 @@ u_2'(t) & = t.
 
 
 ```@example bseries-basics
-λ = sp.symbols("λ", real=true)
-y, t = sp.symbols("y t", real=true)
-h = sp.symbols("h", real=true)
+λ = sp.symbols("λ", real = true)
+y, t = sp.symbols("y t", real = true)
+h = sp.symbols("h", real = true)
 
 u = [y, t]
 ff = [λ*(u[1]-sin(t))+cos(t), 1]

@@ -1605,15 +1605,19 @@ function compute_derivative end
 @static if !isdefined(Base, :get_extension)
     function __init__()
         @require Symbolics="0c5d862f-8b57-4792-8d23-62f2024744c7" begin
-            include("../ext/SymbolicsExt.jl")
+            include("../ext/BSeriesSymbolicsExt.jl")
         end
 
         @require SymEngine="123dc426-2d89-5057-bbad-38513e3affd8" begin
-            include("../ext/SymEngineExt.jl")
+            include("../ext/BSeriesSymEngineExt.jl")
         end
 
         @require SymPy="24249f21-da20-56a4-8eb1-6a02cf4ae2e6" begin
-            include("../ext/SymPyExt.jl")
+            include("../ext/BSeriesSymPyExt.jl")
+        end
+
+        @require SymPyPythonCall="bc8888f7-b21e-4b7c-a06a-5d9c9496438c" begin
+            include("../ext/BSeriesSymPyPythonCallExt.jl")
         end
     end
 end
