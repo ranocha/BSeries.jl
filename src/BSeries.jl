@@ -1537,7 +1537,7 @@ function elementary_differentials(f::AbstractVector, u, order)
     differentials = OrderedDict{RootedTree{Int, Vector{Int}}, typeof(f)}()
 
     t = rootedtree(Int[])
-    differentials[t] = one.(f)
+    differentials[t] = u
 
     t = rootedtree([1])
     differentials[t] = f
