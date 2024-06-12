@@ -1537,7 +1537,16 @@ function elementary_differentials(f::AbstractVector, u, order)
     differentials = OrderedDict{RootedTree{Int, Vector{Int}}, typeof(f)}()
 
     t = rootedtree(Int[])
-    differentials[t] = one.(f)
+    if typeof(u) == typeof(f)
+        differentials[t] = u
+    else
+        # `u` may be a tuple of symbolic variables
+        # Since we determine the type of the values of `differentials` based on
+        # the type of `f`, we need to create a vector of the same type as `f`.
+        val = zero(f)
+        val .= u
+        differentials[t] = val
+    end
 
     t = rootedtree([1])
     differentials[t] = f

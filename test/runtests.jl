@@ -640,7 +640,19 @@ using Aqua: Aqua
         end
     end # @testset "modified_equation"
 
-    @testset "elementary differentials" begin
+    @testset "elementary differentials and evaluate" begin
+        @testset "Rooted trees" begin
+            @testset "Issue #213" begin
+                y, h = SymPyPythonCall.symbols("y, h")
+                u = [y]
+                f = [-y]
+                series = @inferred bseries(AverageVectorFieldMethod(), 3)
+                expansion = first(evaluate(f, u, h, series))
+                reference = y - h * y + h^2 * y / 2 - h^3 * y / 4
+                @test expansion == reference
+            end
+        end
+
         @testset "Bicolored trees" begin
             @testset "Lotka-Volterra" begin
                 # Verified with Mathematica
