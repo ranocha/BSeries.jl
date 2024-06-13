@@ -1763,16 +1763,20 @@ function renormalize!(series)
 end
 
 """
-    energy_preserving_order(rk::RungeKuttaMethod, max_order)
+    energy_preserving_order(rk::RungeKuttaMethod, max_order; tol=nothing)
 
 This function checks up to which order a Runge-Kutta method `rk` is
 energy-preserving for Hamiltonian problems.
 It requires a `max_order` so that it does not run forever if the order up to
 which the method is energy-preserving is too big or infinite.
+Keyword Arguments:
+- `tol = nothing`: The absolute tolerance for energy preservation. Default value 
+is `tol = 100 * eps(V)` if `valtype(rk) <: AbstractFloat`,  and `tol = zero(V)`
+for rational numbers.
 
 See also [`is_energy_preserving`](@ref)
 """
-function energy_preserving_order(rk::RungeKuttaMethod, max_order)
+function energy_preserving_order(rk::RungeKuttaMethod, max_order; tol=nothing)
     p = 0
     not_energy_preserving = false
     while not_energy_preserving == false
@@ -1781,7 +1785,7 @@ function energy_preserving_order(rk::RungeKuttaMethod, max_order)
             return max_order
         end
         # Check energy preservation up to the given order
-        if is_energy_preserving(rk, p + 1) == false
+        if is_energy_preserving(rk, p + 1, tol=tol) == false
             not_energy_preserving = true
         end
         p = p + 1
@@ -1790,23 +1794,31 @@ function energy_preserving_order(rk::RungeKuttaMethod, max_order)
 end
 
 """
-    is_energy_preserving(rk::RungeKuttaMethod, order)::Bool
+    is_energy_preserving(rk::RungeKuttaMethod, order; tol=nothing)::Bool
 
 This function checks whether the Runge-Kutta method `rk` is
 energy-preserving for Hamiltonian systems up to a given `order`.
+Keyword Arguments:
+- `tol = nothing`: The absolute tolerance for energy preservation. Default value 
+is `tol = 100 * eps(V)` if `valtype(rk) <: AbstractFloat`,  and `tol = zero(V)`
+for rational numbers.
 """
-function is_energy_preserving(rk::RungeKuttaMethod, order)
+function is_energy_preserving(rk::RungeKuttaMethod, order; tol=nothing)
     series = bseries(rk, order)
-    return is_energy_preserving(series)
+    return is_energy_preserving(series, tol=tol)
 end
 
 """
-    is_energy_preserving(series_integrator)::Bool
+    is_energy_preserving(series_integrator; tol=nothing)::Bool
 
 This function checks whether the B-series `series_integrator` of a time
 integration method is energy-preserving for Hamiltonian systems - up to the
 [`order`](@ref) of `series_integrator`.
-
+Keyword Arguments:
+- `tol = nothing`: The absolute tolerance for energy preservation. Default value 
+is `tol = 100 * eps(V)` if `valtype(series_integrator) <: AbstractFloat`,  and `tol = zero(V)`
+for rational numbers.
+    
 # References
 
 This code is based on the Theorem 2 of
@@ -1815,13 +1827,16 @@ This code is based on the Theorem 2 of
   Foundations of Computational Mathematics 10 (2010): 673-693.
   [DOI: 10.1007/s10208-010-9073-1](https://link.springer.com/article/10.1007/s10208-010-9073-1)
 """
-function is_energy_preserving(series_integrator)
+function is_energy_preserving(series_integrator; tol=nothing)
     # This method requires the B-series of a map as input
     let t = first(keys(series_integrator))
         @assert isempty(t)
         @assert isone(series_integrator[t])
     end
 
+    # tolerance
+    V = valtype(series_integrator)
+    tol = energy_preserving_default_tolerance(V, tol)
     # Theorem 2 of Celledoni et al. (2010) requires working with the modified
     # equation. The basic idea is to check whether the modified equation lies
     # in a certain subspace spanned by energy-preserving pairs of trees.
@@ -1850,7 +1865,7 @@ function is_energy_preserving(series_integrator)
     # for order less than 4 because the energy-preserving basis has only one element.
     # The following function checks the energy-preserving condition up to order 4
     # together.
-    if _is_energy_preserving_low_order(trees, coefficients) == false
+    if _is_energy_preserving_low_order(trees, coefficients, tol) == false
         return false
     end
 
@@ -1867,7 +1882,7 @@ function is_energy_preserving(series_integrator)
                 push!(same_order_trees, trees[j])
             end
         end
-        if _is_energy_preserving(same_order_trees, same_order_coeffs) == false
+        if _is_energy_preserving(same_order_trees, same_order_coeffs, tol) == false
             return false
         end
     end
@@ -1879,7 +1894,7 @@ end
 # and the set of 'coefficients' corresponding to a B-series is
 # energy_preserving up to the 'uppermost_order', which we choose
 # to be 4 for computational optimization
-function _is_energy_preserving_low_order(trees, coefficients)
+function _is_energy_preserving_low_order(trees, coefficients, tol)
     # Set the limit up to which this function will work
     uppermost_order = 4
     same_order_trees = empty(trees)
@@ -1892,7 +1907,7 @@ function _is_energy_preserving_low_order(trees, coefficients)
         push!(same_order_trees, t)
         push!(same_order_coeffs, coefficients[index])
     end
-    return _is_energy_preserving(same_order_trees, same_order_coeffs)
+    return _is_energy_preserving(same_order_trees, same_order_coeffs, tol)
 end
 
 # This function is the application of Theorem 2 of the paper
@@ -1901,7 +1916,7 @@ end
 # of coefficients.
 # Checks whether `trees` and `ocefficients` satisfify the energy_preserving
 # condition.
-function _is_energy_preserving(trees, coefficients)
+function _is_energy_preserving(trees, coefficients, tol)
     # TODO: `Float32` would also be nice to have. However, the default tolerance
     #       of the rank computation is based on `Float64`. Thus, it will usually
     #       not work with coefficients given only in 32 bit precision.
@@ -1912,13 +1927,13 @@ function _is_energy_preserving(trees, coefficients)
               Rational{Int8}, Rational{Int16}, Rational{Int32}, Rational{Int64},
               Rational{Int128}})
         # These types support efficient computations in sparse matrices
-        _is_energy_preserving_sparse(trees, coefficients)
+        _is_energy_preserving_sparse(trees, coefficients, tol)
     else
-        _is_energy_preserving_dense(trees, coefficients)
+        _is_energy_preserving_dense(trees, coefficients, tol)
     end
 end
 
-function _is_energy_preserving_dense(trees, coefficients)
+function _is_energy_preserving_dense(trees, coefficients, tol)
     # For every tree, obtain the adjoint and check if it exists
     length_coeff = length(trees)
     # Provided that a tree can have several adjoints, for every tree `t`
@@ -1931,12 +1946,11 @@ function _is_energy_preserving_dense(trees, coefficients)
     for (t_index, t) in enumerate(trees)
         # We do not need to consider the empty tree
         isempty(t) && continue
-
         # Check whether the level sequence corresponds to a bushy tree.
         # If so, we can exit early since the coefficients of bushy trees
         # must be zero in the modified equation of energy-preserving methods.
         if length(t) > 1 && is_bushy(t)
-            if !iszero(coefficients[t_index])
+            if !isapprox(coefficients[t_index], 0, atol = tol)
                 return false
             end
         else
@@ -1984,7 +1998,7 @@ end
 
 # This method is specialized for coefficients that can be used efficiently in
 # sparse arrays.
-function _is_energy_preserving_sparse(trees, coefficients)
+function _is_energy_preserving_sparse(trees, coefficients, tol)
     # For every tree, obtain the adjoint and check if it exists.
     # Provided that a tree can have several adjoints, for every tree `t`
     # we need to check if there is a linear combination of the coefficients
@@ -2001,12 +2015,11 @@ function _is_energy_preserving_sparse(trees, coefficients)
     for (t_index, t) in enumerate(trees)
         # We do not need to consider the empty tree
         isempty(t) && continue
-
         # Check whether the level sequence corresponds to a bushy tree.
         # If so, we can exit early since the coefficients of bushy trees
         # must be zero in the modified equation of energy-preserving methods.
         if length(t) > 1 && is_bushy(t)
-            if !iszero(coefficients[t_index])
+            if !isapprox(coefficients[t_index], 0, atol = tol)
                 return false
             end
         else
@@ -2231,6 +2244,21 @@ function equivalent_trees(tree)
     unique!(equivalent_trees_set)
 
     return equivalent_trees_set
+end
+
+# This function calculates the default tolerance for 'is_energy_preserving'
+function energy_preserving_default_tolerance(V, tol)
+    # We use `nothing` as default value
+    if tol === nothing
+        if V <: AbstractFloat
+            # For floating point numbers, we cannot expect exact calculations in general.
+            tol = 100 * eps(V)
+        else
+            # If something like rational numbers are used, we do not expect numerical errors.
+            tol = zero(V)
+        end
+    end
+    return tol
 end
 
 end # module
