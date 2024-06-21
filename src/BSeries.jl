@@ -44,6 +44,8 @@ export renormalize!
 
 export is_energy_preserving, energy_preserving_order
 
+export order_of_symplecticity, is_symplectic
+
 # Types used for traits
 # These traits may decide between different algorithms based on the
 # corresponding complexity etc.
@@ -330,11 +332,13 @@ end
 
 Determine the order of accuracy of the B-series `series`. By default, the
 comparison with the coefficients of the exact solution is performed using
-`isequal`. If keyword arguments such as absolute/relative tolerances `atol`/`rtol`
-are given or floating point numbers are used, the comparison is performed using
-`isapprox` and the keyword arguments `kwargs...` are forwarded.
+`isequal`. If keyword arguments such as absolute/relative tolerances
+`atol`/`rtol` are given or floating point numbers are used, the comparison
+is performed using `isapprox` and the keyword arguments `kwargs...` are
+forwarded.
 
-See also [`order`](@ref), [`ExactSolution`](@ref).
+See also [`order`](@ref), [`ExactSolution`](@ref),
+[`order_of_symplecticity`](@ref).
 """
 function order_of_accuracy(series::TruncatedBSeries; kwargs...)
     if isempty(kwargs) && !(valtype(series) <: AbstractFloat)
@@ -1770,7 +1774,7 @@ energy-preserving for Hamiltonian problems.
 It requires a `max_order` so that it does not run forever if the order up to
 which the method is energy-preserving is too big or infinite.
 
-See also [`is_energy_preserving`](@ref)
+See also [`is_energy_preserving`](@ref).
 """
 function energy_preserving_order(rk::RungeKuttaMethod, max_order)
     p = 0
@@ -2232,5 +2236,85 @@ function equivalent_trees(tree)
 
     return equivalent_trees_set
 end
+
+#####################################################################
+# Symplectic = preserving quadratic invariants
+
+"""
+    satisfied_for_trees_of_order(condition, series, order,
+                                 iterator = RootedTreeIterator)
+
+Checks whether a given `condition` is satisfied for all pairs of trees
+`t1` and `t2` with given `order == order(t1) + order(t2)` for a given
+`series`. Which trees are considered is determined by the `iterator`.
+
+The `condition` is called as `condition(series, t1, t2)` and should return
+`true` if the condition is satisfied and `false` otherwise.
+"""
+function satisfied_for_trees_up_to_order(condition, series, order,
+                                         iterator = RootedTreeIterator)
+    for o1 in 1:order-1
+        o2 = order - o1
+        for t1 in iterator(o1)
+            for t2 in iterator(o2)
+                if !condition(series, t1, t2)
+                    return false
+                end
+            end
+        end
+    end
+    return true
+end
+
+"""
+    order_of_symplecticity(series_integrator; kwargs...)
+
+Determine the order of symplecticity of the B-series `series_integrator`,
+i.e., the order up to which quadratic invariants are conserved.
+By default, the comparison of the coefficients entering the conditions is
+performed using `isequal`. If keyword arguments such as absolute/relative
+tolerances `atol`/`rtol` are given or floating point numbers are used, the
+comparison is performed using `isapprox` and the keyword arguments
+`kwargs...` are forwarded.
+
+See also [`is_symplectic`](@ref),
+[`order`](@ref), [`order_of_accuracy`](@ref).
+"""
+function order_of_symplecticity(series::TruncatedBSeries; kwargs...)
+    if isempty(kwargs) && !(valtype(series) <: AbstractFloat)
+        compare = isequal
+    else
+        compare = (a, b) -> isapprox(a, b; kwargs...)
+    end
+
+    condition = let compare = compare,
+                    t12 = copy(first(keys(series))),
+                    t21 = copy(first(keys(series)))
+        function (series, t1, t2)
+            butcher_product!(t12, t1, t2)
+            butcher_product!(t21, t2, t1)
+            compare(series[t12] + series[t21], series[t1] * series[t2])
+        end
+    end
+    iterator = _iterator_type(series)
+
+    for o in 1:order(series)
+        if !satisfied_for_trees_up_to_order(condition, series, o, iterator)
+            return o - 1
+        end
+    end
+
+    return order(series)
+end
+
+"""
+    is_symplectic(series_integrator)::Bool
+
+This function checks whether the B-series `series_integrator` of a time
+integration method is symplectic (conserves quadratic invariants) - up to the
+[`order`](@ref) of `series_integrator`.
+
+See also [`order_of_symplecticity`](@ref).
+"""
 
 end # module
