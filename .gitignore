@@ -5,6 +5,7 @@
 **/.ipynb_checkpoints/
 **/*.gif
 **/Manifest.toml
+
 docs/build
 docs/src/contributing.md
 docs/src/license.md
@@ -12,3 +13,7 @@ docs/src/benchmark_python_*.txt
 docs/dev/*.pdf
 docs/dev/*.png
 
+run*/
+**/.CondaPkg/
+
+**/*.code-workspace
