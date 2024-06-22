@@ -2382,7 +2382,31 @@ using Aqua: Aqua
         end
     end
 
-    @testset "Energy preservation (Hamiltonian systems)" begin
+    @testset "Symplecticity (preserving quadratic invariants)" begin
+        @testset "Classical RK4 method (rational coefficients)" begin
+            A = [0//1 0//1 0//1 0//1
+                 1//2 0//1 0//1 0//1
+                 0//1 1//2 0//1 0//1
+                 0//1 0//1 1//1 0//1]
+            b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+            rk = RungeKuttaMethod(A, b)
+            series = bseries(rk, 6)
+            @test @inferred(order_of_symplecticity(series)) == 4
+            @test @inferred(is_symplectic(series)) == false
+        end
+
+        @testset "Classical RK4 method (floating point)" begin
+            A = [0 0 0 0
+                 0.5 0 0 0
+                 0 0.5 0 0
+                 0 0 1 0]
+            b = [1 / 6, 1 / 3, 1 / 3, 1 / 6]
+            rk = RungeKuttaMethod(A, b)
+            series = bseries(rk, 6)
+            @test @inferred(order_of_symplecticity(series)) == 4
+            @test @inferred(is_symplectic(series)) == false
+        end
+
         # TODO
         # @testset "Pseudo-energy-preserving order 4" begin
         #     # References
