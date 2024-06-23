@@ -2452,6 +2452,31 @@ using Aqua: Aqua
             end
         end
 
+        @testset "Gauss method (s = 2)" begin
+            # Butcher (2016)
+            # Numerical methods for ordinary differential equations
+            # Section 342
+            A = [1/4 1/4-sqrt(3)/6;
+                 1/4+sqrt(3)/6 1/4]
+            b = [1/2, 1/2]
+            rk = @inferred RungeKuttaMethod(A, b)
+            series = @inferred bseries(rk, 9)
+            @test @inferred(is_symplectic(series))
+        end
+
+        @testset "Gauss method (s = 3)" begin
+            # Butcher (2016)
+            # Numerical methods for ordinary differential equations
+            # Section 342
+            A = [5/36 2/9-sqrt(15)/15 5/36-sqrt(15)/30;
+                 5/36+sqrt(15)/24 2/9 5/36-sqrt(15)/24;
+                 5/36+sqrt(15)/30 2/9+sqrt(15)/15 5/36]
+            b = [5/18, 4/9, 5/18]
+            rk = @inferred RungeKuttaMethod(A, b)
+            series = @inferred bseries(rk, 9)
+            @test @inferred(is_symplectic(series))
+        end
+
         @testset "Symplectic Euler method" begin
             @testset "rational coefficients" begin
                 ex_euler = @inferred RungeKuttaMethod(@SMatrix([0 // 1]), @SVector [1])
