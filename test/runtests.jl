@@ -2475,8 +2475,9 @@ using Aqua: Aqua
             rk = @inferred RungeKuttaMethod(A, b)
             series = @inferred bseries(rk, 9)
             @test @inferred(order_of_accuracy(series)) == 4
-            # FIXME: For some reason, this fails...
-            @test_skip @inferred(is_symplectic(series))
+            atol = eps(valtype(series))
+            rtol = sqrt(eps(valtype(series)))
+            @test @inferred(is_symplectic(series; atol = atol, rtol = rtol))
         end
 
         @testset "Gauss method (s = 3)" begin
@@ -2490,7 +2491,9 @@ using Aqua: Aqua
             rk = @inferred RungeKuttaMethod(A, b)
             series = @inferred bseries(rk, 9)
             @test @inferred(order_of_accuracy(series)) == 6
-            @test @inferred(is_symplectic(series))
+            atol = eps(valtype(series))
+            rtol = sqrt(eps(valtype(series)))
+            @test @inferred(is_symplectic(series; atol = atol, rtol = rtol))
         end
 
         @testset "Pseudo-symplectic method PS(2, 4, 2)" begin

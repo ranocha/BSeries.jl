@@ -2258,6 +2258,7 @@ function satisfied_for_trees_up_to_order(condition, series, order,
         for t1 in iterator(o1)
             for t2 in iterator(o2)
                 if !condition(series, t1, t2)
+                    @info "condition not satisfied" t1 t2
                     return false
                 end
             end
