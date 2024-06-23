@@ -2289,20 +2289,11 @@ function order_of_symplecticity(series::TruncatedBSeries; kwargs...)
 
     t12 = copy(first(keys(series)))
     t21 = copy(first(keys(series)))
-    if t12 isa RootedTree
-        buffer = similar(t12.level_sequence, (2 * order(series),))
-        buffers = (; buffer = buffer)
-    elseif t12 isa ColoredRootedTree
-        # TODO
-        buffers = (;)
-    else
-        buffers = (;)
-    end
 
-    condition = let compare = compare, t12 = t12, t21 = t21, buffers = buffers
+    condition = let compare = compare, t12 = t12, t21 = t21
         function (series, t1, t2)
-            butcher_product!(t12, t1, t2; buffers...)
-            butcher_product!(t21, t2, t1; buffers...)
+            butcher_product!(t12, t1, t2)
+            butcher_product!(t21, t2, t1)
             compare(series[t12] + series[t21], series[t1] * series[t2])
         end
     end
