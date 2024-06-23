@@ -21,10 +21,10 @@ using Aqua: Aqua
 
 @testset "BSeries" begin
     @testset "lazy representation of exact ODE solution" begin
-        exact = ExactSolution{Rational{Int}}()
+        exact = @inferred ExactSolution{Rational{Int}}()
         terms = collect(Iterators.take(exact, 5))
         @test terms == [1 // 1, 1 // 1, 1 // 2, 1 // 6, 1 // 3]
-        @test exact == ExactSolution(exact)
+        @test exact == @inferred ExactSolution(exact)
     end
 
     @testset "non-conflicting exports" begin
@@ -45,7 +45,7 @@ using Aqua: Aqua
         b = @SArray [0, 1 // 1]
         c = @SArray [0, 1 // 2]
 
-        series_integrator = bseries(A, b, c, 2)
+        series_integrator = @inferred bseries(A, b, c, 2)
         @test_nowarn latexify(series_integrator)
         @test_nowarn latexify(series_integrator, cdot = false)
         @test_nowarn latexify(series_integrator, dt = SymEngine.symbols("h"))
@@ -2454,59 +2454,59 @@ using Aqua: Aqua
         #     @test energy_preserving_order(rk, 10) == 4
         # end
 
-        # @testset "Symbolic coefficients" begin
-        #     @testset "SymEngine.jl" begin
-        #         # This method is second-order accurate. Thus, it is
-        #         # energy-preserving up to order two.
-        #         α = SymEngine.symbols("α")
-        #         A = [0 0; 1/(2 * α) 0]
-        #         b = [1 - α, α]
-        #         c = [0, 1 / (2 * α)]
-        #         series_integrator = @inferred(bseries(A, b, c, 2))
-        #         @test @inferred(order_of_accuracy(series_integrator)) == 2
-        #         # TODO: This test is currently broken and throws an error
-        #         @test_broken is_energy_preserving(series_integrator)
-        #     end
+        @testset "Symbolic coefficients" begin
+            @testset "SymEngine.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # symplectic up to order two.
+                α = SymEngine.symbols("α")
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
+            end
 
-        #     @testset "SymPy.jl" begin
-        #         # This method is second-order accurate. Thus, it is
-        #         # energy-preserving up to order two.
-        #         α = SymPy.symbols("α", real = true)
-        #         A = [0 0; 1/(2 * α) 0]
-        #         b = [1 - α, α]
-        #         c = [0, 1 / (2 * α)]
-        #         series_integrator = @inferred(bseries(A, b, c, 2))
-        #         @test @inferred(order_of_accuracy(series_integrator)) == 2
-        #         # TODO: This test is currently broken and throws an error
-        #         @test_skip is_energy_preserving(series_integrator)
-        #     end
+            @testset "SymPy.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymPy.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
+            end
 
-        #     @testset "SymPyPythonCall.jl" begin
-        #         # This method is second-order accurate. Thus, it is
-        #         # energy-preserving up to order two.
-        #         α = SymPyPythonCall.symbols("α", real = true)
-        #         A = [0 0; 1/(2 * α) 0]
-        #         b = [1 - α, α]
-        #         c = [0, 1 / (2 * α)]
-        #         series_integrator = @inferred(bseries(A, b, c, 2))
-        #         @test @inferred(order_of_accuracy(series_integrator)) == 2
-        #         # TODO: This test is currently broken and throws an error
-        #         @test_skip is_energy_preserving(series_integrator)
-        #     end
+            @testset "SymPyPythonCall.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymPyPythonCall.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
+            end
 
-        #     @testset "Symbolics.jl" begin
-        #         # This method is second-order accurate. Thus, it is
-        #         # energy-preserving up to order two.
-        #         Symbolics.@variables α
-        #         A = [0 0; 1/(2 * α) 0]
-        #         b = [1 - α, α]
-        #         c = [0, 1 / (2 * α)]
-        #         series_integrator = @inferred(bseries(A, b, c, 2))
-        #         @test @inferred(order_of_accuracy(series_integrator)) == 2
-        #         # TODO: This test is currently broken and throws an error
-        #         @test_broken is_energy_preserving(series_integrator)
-        #     end
-        # end
+            @testset "Symbolics.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                Symbolics.@variables α
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
+            end
+        end
     end
 
     @testset "Aqua" begin
