@@ -2444,6 +2444,7 @@ using Aqua: Aqua
                 b = [1]
                 rk = RungeKuttaMethod(A, b)
                 series = @inferred bseries(rk, 9)
+                @test @inferred(order_of_accuracy(series)) == 2
                 @test @inferred is_symplectic(series)
             end
 
@@ -2452,6 +2453,7 @@ using Aqua: Aqua
                 b = [1]
                 rk = RungeKuttaMethod(A, b)
                 series = @inferred bseries(rk, 9)
+                @test @inferred(order_of_accuracy(series)) == 2
                 @test @inferred is_symplectic(series)
             end
         end
@@ -2460,11 +2462,13 @@ using Aqua: Aqua
             # Butcher (2016)
             # Numerical methods for ordinary differential equations
             # Section 342
-            A = [1/4 1 / 4-sqrt(3) / 6;
-                 1 / 4+sqrt(3) / 6 1/4]
+            A = [1/4 (1 / 4-sqrt(3) / 6);
+                 (1 / 4+sqrt(3) / 6) 1/4]
             b = [1 / 2, 1 / 2]
             rk = @inferred RungeKuttaMethod(A, b)
             series = @inferred bseries(rk, 9)
+            @test @inferred(order_of_accuracy(series)) == 4
+            # FIXME: For some reason, this does not work
             @test @inferred(is_symplectic(series))
         end
 
@@ -2478,6 +2482,7 @@ using Aqua: Aqua
             b = [5 / 18, 4 / 9, 5 / 18]
             rk = @inferred RungeKuttaMethod(A, b)
             series = @inferred bseries(rk, 9)
+            @test @inferred(order_of_accuracy(series)) == 6
             @test @inferred(is_symplectic(series))
         end
 
@@ -2491,7 +2496,7 @@ using Aqua: Aqua
             b = [(3k - 1) // (8k - 3), (-2 * (2k - 1)^2) // (8k - 3), k]
             c = [0, (8k - 3) // (8k - 4), 1]
             rk = @inferred RungeKuttaMethod(A, b)
-            series = @inferred bseries(rkh, 6)
+            series = @inferred bseries(rk, 6)
             @test @inferred(order_of_accuracy(series)) == 2
             @test @inferred(order_of_symplecticity(series)) == 4
             @test @inferred(is_symplectic(series)) == false
@@ -2502,7 +2507,7 @@ using Aqua: Aqua
                 ex_euler = @inferred RungeKuttaMethod(@SMatrix([0 // 1]), @SVector [1])
                 im_euler = @inferred RungeKuttaMethod(@SMatrix([1 // 1]), @SVector [1])
                 ark = @inferred AdditiveRungeKuttaMethod([ex_euler, im_euler])
-                series = @inferred bseries(rk, 9)
+                series = @inferred bseries(ark, 9)
                 # needs to be implemented for colored rooted trees
                 @test_skip @inferred is_symplectic(series)
             end
@@ -2511,7 +2516,7 @@ using Aqua: Aqua
                 ex_euler = @inferred RungeKuttaMethod(@SMatrix([0.0]), @SVector [1.0])
                 im_euler = @inferred RungeKuttaMethod(@SMatrix([1.0]), @SVector [1.0])
                 ark = @inferred AdditiveRungeKuttaMethod([ex_euler, im_euler])
-                series = @inferred bseries(rk, 9)
+                series = @inferred bseries(ark, 9)
                 # needs to be implemented for colored rooted trees
                 @test_skip @inferred is_symplectic(series)
             end
@@ -2531,7 +2536,7 @@ using Aqua: Aqua
                     [1 // 2, 1 // 2],
                 ]
                 ark = AdditiveRungeKuttaMethod(As, bs)
-                series = @inferred bseries(rk, 9)
+                series = @inferred bseries(ark, 9)
                 # needs to be implemented for colored rooted trees
                 @test_skip @inferred is_symplectic(series)
             end
@@ -2549,7 +2554,7 @@ using Aqua: Aqua
                     [0.5, 0.5],
                 ]
                 ark = AdditiveRungeKuttaMethod(As, bs)
-                series = @inferred bseries(rk, 9)
+                series = @inferred bseries(ark, 9)
                 # needs to be implemented for colored rooted trees
                 @test_skip @inferred is_symplectic(series)
             end
@@ -2568,30 +2573,10 @@ using Aqua: Aqua
                 [1 // 6, 2 // 3, 1 // 6],
             ]
             ark = AdditiveRungeKuttaMethod(As, bs)
-            series = @inferred bseries(rk, 9)
+            series = @inferred bseries(ark, 9)
             # needs to be implemented for colored rooted trees
             @test_skip @inferred is_symplectic(series)
         end
-
-        # TODO
-        # @testset "Pseudo-energy-preserving order 4" begin
-        #     # References
-        #     # Celledoni, Elena; McLachlan, Robert I.; McLaren, David I.;
-        #     # Owren, Brynjulf; G. Reinout W. Quispel; Wright, William M.
-        #     # Energy-preserving Runge-Kutta methods.
-        #     # ESAIM: Mathematical Modelling and Numerical Analysis -
-        #     # Modélisation Mathématique et Analyse Numérique,
-        #     # Volume 43 (2009) no. 4, pp. 645-649.
-        #     # doi : 10.1051/m2an/2009020. http://www.numdam.org/articles/10.1051/m2an/2009020/
-        #     A = [0 0 0
-        #          1//3 0 0
-        #          -5//48 15//16 0]
-        #     b = [1 // 10, 1 // 2, 2 // 5]
-        #     rk = RungeKuttaMethod(A, b)
-
-        #     # This method is E-P up to order 4
-        #     @test energy_preserving_order(rk, 10) == 4
-        # end
 
         @testset "Symbolic coefficients" begin
             @testset "SymEngine.jl" begin
