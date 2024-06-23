@@ -2447,8 +2447,8 @@ using Aqua: Aqua
 
         @testset "Implicit midpoint method (symplectic)" begin
             @testset "rational coefficients" begin
-                A = [1 // 2;;]
-                b = [1]
+                A = @SMatrix [1 // 2;;]
+                b = @SVector [1]
                 rk = RungeKuttaMethod(A, b)
                 series = @inferred bseries(rk, 9)
                 @test @inferred(order_of_accuracy(series)) == 2
@@ -2456,8 +2456,8 @@ using Aqua: Aqua
             end
 
             @testset "floating point coefficients" begin
-                A = [0.5;;]
-                b = [1]
+                A = @SMatrix [0.5;;]
+                b = @SVector [1]
                 rk = RungeKuttaMethod(A, b)
                 series = @inferred bseries(rk, 9)
                 @test @inferred(order_of_accuracy(series)) == 2
@@ -2511,8 +2511,14 @@ using Aqua: Aqua
 
         @testset "Symplectic Euler method" begin
             @testset "rational coefficients" begin
-                ex_euler = @inferred RungeKuttaMethod(@SMatrix([0 // 1]), @SVector [1])
-                im_euler = @inferred RungeKuttaMethod(@SMatrix([1 // 1]), @SVector [1])
+                if VERSION >= v"1.10"
+                    ex_euler = @inferred RungeKuttaMethod(@SMatrix([0 // 1]), @SVector [1])
+                    im_euler = @inferred RungeKuttaMethod(@SMatrix([1 // 1]), @SVector [1])
+                else
+                    # On Julia v1.6, the `@inferred` check fails in CI
+                    ex_euler = RungeKuttaMethod(@SMatrix([0 // 1]), @SVector [1])
+                    im_euler = RungeKuttaMethod(@SMatrix([1 // 1]), @SVector [1])
+                end
                 ark = @inferred AdditiveRungeKuttaMethod([ex_euler, im_euler])
                 series = @inferred bseries(ark, 9)
                 # needs to be implemented for colored rooted trees
@@ -2520,8 +2526,14 @@ using Aqua: Aqua
             end
 
             @testset "floating point coefficients" begin
-                ex_euler = @inferred RungeKuttaMethod(@SMatrix([0.0]), @SVector [1.0])
-                im_euler = @inferred RungeKuttaMethod(@SMatrix([1.0]), @SVector [1.0])
+                if VERSION >= v"1.10"
+                    ex_euler = @inferred RungeKuttaMethod(@SMatrix([0.0]), @SVector [1.0])
+                    im_euler = @inferred RungeKuttaMethod(@SMatrix([1.0]), @SVector [1.0])
+                else
+                    # On Julia v1.6, the `@inferred` check fails in CI
+                    ex_euler = RungeKuttaMethod(@SMatrix([0.0]), @SVector [1.0])
+                    im_euler = RungeKuttaMethod(@SMatrix([1.0]), @SVector [1.0])
+                end
                 ark = @inferred AdditiveRungeKuttaMethod([ex_euler, im_euler])
                 series = @inferred bseries(ark, 9)
                 # needs to be implemented for colored rooted trees
