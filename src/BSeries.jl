@@ -2281,6 +2281,30 @@ See also [`is_symplectic`](@ref),
 [`order`](@ref), [`order_of_accuracy`](@ref).
 """
 function order_of_symplecticity(series::TruncatedBSeries; kwargs...)
+    # TODO: Implement this for colored trees
+    #       Theorem IV.7.2 of Hairer, Lubich, Wanner (2006) states the
+    #       following conditions.
+    #       1) If the coefficients a(t) satisfy
+    #            a(u ∘ v) + a(v ∘ u) = a(u) * a(v) for u ∈ TP_p, v ∈ TP_q,
+    #          and
+    #            a(τ) is independent of the colour of the root of τ,
+    #          the method exactly conserves quadratic invariants Q(p, q)
+    #          and it is symplectic for general Hamiltonian systems.
+    #        2) If the coefficients a(τ) satisfy only
+    #             a(u ∘ v) + a(v ∘ u) = a(u) * a(v) for u ∈ TP_p, v ∈ TP_q,
+    #           the method exactly conserves quadratic invariants Q(p,q)
+    #           for problems of the form p' = f1(q), q' = f2(p), and it
+    #           is symplectic for separable Hamiltonian systems where
+    #           H(p,q) = T(p) + U(q).
+    #        How do we want to handle the two cases? The general interface
+    #        should be that we check the first condition by default. Then,
+    #        we need to different `iterator`s for the two cases.
+    #        It should also be possible to specify that we want to check
+    #        only the second case, i.e., separable Hamiltonian systems.
+    if !(keytype(series) <: RootedTree)
+        throw(ArgumentError("This method is only implemented for single-colored rooted trees"))
+    end
+
     if isempty(kwargs) && !(valtype(series) <: AbstractFloat)
         compare = isequal
     else

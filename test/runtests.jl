@@ -2509,7 +2509,7 @@ using Aqua: Aqua
                 ark = @inferred AdditiveRungeKuttaMethod([ex_euler, im_euler])
                 series = @inferred bseries(ark, 9)
                 # needs to be implemented for colored rooted trees
-                @test_skip @inferred is_symplectic(series)
+                @test_throws ArgumentError @inferred is_symplectic(series)
             end
 
             @testset "floating point coefficients" begin
