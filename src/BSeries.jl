@@ -2253,7 +2253,7 @@ The `condition` is called as `condition(series, t1, t2)` and should return
 """
 function satisfied_for_trees_up_to_order(condition, series, order,
                                          iterator = RootedTreeIterator)
-    for o1 in 1:order-1
+    for o1 in 1:(order - 1)
         o2 = order - o1
         for t1 in iterator(o1)
             for t2 in iterator(o2)
@@ -2288,8 +2288,9 @@ function order_of_symplecticity(series::TruncatedBSeries; kwargs...)
     end
 
     condition = let compare = compare,
-                    t12 = copy(first(keys(series))),
-                    t21 = copy(first(keys(series)))
+        t12 = copy(first(keys(series))),
+        t21 = copy(first(keys(series)))
+
         function (series, t1, t2)
             butcher_product!(t12, t1, t2)
             butcher_product!(t21, t2, t1)
@@ -2316,5 +2317,8 @@ integration method is symplectic (conserves quadratic invariants) - up to the
 
 See also [`order_of_symplecticity`](@ref).
 """
+function is_symplectic(series::TruncatedBSeries)
+    order_of_symplecticity(series) == order(series)
+end
 
 end # module
