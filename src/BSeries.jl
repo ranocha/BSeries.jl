@@ -2323,6 +2323,15 @@ function order_of_symplecticity(series::TruncatedBSeries; kwargs...)
     end
     iterator = _iterator_type(series)
 
+    if order(series) < 1
+        return 0
+    end
+
+    t = first(iterator(0))
+    if !compare(series[t], one(valtype(series)))
+        return 0
+    end
+
     for o in 1:order(series)
         if !satisfied_for_trees_up_to_order(condition, series, o, iterator)
             return o - 1

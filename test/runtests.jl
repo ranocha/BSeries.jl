@@ -2438,6 +2438,13 @@ using Aqua: Aqua
             end
         end
 
+        @testset "Not a series of a consistent integrator" begin
+            series = @inferred bseries(AverageVectorFieldMethod(), 6)
+            series[rootedtree(Int[])] = 0
+            @test @inferred(order_of_symplecticity(series)) == 0
+            @test @inferred(is_symplectic(series)) == false
+        end
+
         @testset "Implicit midpoint method (symplectic)" begin
             @testset "rational coefficients" begin
                 A = [1 // 2;;]
