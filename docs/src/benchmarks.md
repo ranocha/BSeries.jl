@@ -118,6 +118,7 @@ of the Python packages
 
 - [`BSeries`](https://github.com/ketch/BSeries)
 - [`pybs`](https://github.com/henriksu/pybs)
+- [`orderconditions`](https://gitlab.com/v_dallerit/orderconditions)
 
 If you know about similar open source packages out there, please inform us, e.g.,
 by [creating an issue](https://github.com/ranocha/BSeries.jl/issues/new/choose)
@@ -303,6 +304,26 @@ end
 @time begin
   series = bseries(AverageVectorFieldMethod(), up_to_order)
   println(is_energy_preserving(series))
+end
+
+
+println("\nSymplecticity (= conservation of quadratic invariants)")
+@time begin
+  # implicit midpoint method = first Gauss method
+  A = @SArray [1//2;;]
+  b = @SArray [1//1]
+  rk = RungeKuttaMethod(A, b)
+  series = bseries(rk, up_to_order)
+  println(is_symplectic(series))
+end
+
+@time begin
+  # implicit midpoint method = first Gauss method
+  A = @SArray [1//2;;]
+  b = @SArray [1//1]
+  rk = RungeKuttaMethod(A, b)
+  series = bseries(rk, up_to_order)
+  println(is_symplectic(series))
 end
 ```
 

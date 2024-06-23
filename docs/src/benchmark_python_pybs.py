@@ -63,3 +63,23 @@ end_time = time.time()
 with open(io_file, 'a') as io:
   print(result, file=io)
   print("", end_time - start_time, "seconds", file=io)
+
+
+with open(io_file, 'a') as io:
+  print("\nSymplecticity (= conservation of quadratic invariants)", file=io)
+
+start_time = time.time()
+a = rk_methods.RKimplicitMidpoint.phi()
+result = pybs.series.symplectic_up_to_order(a, up_to_order)
+end_time = time.time()
+with open(io_file, 'a') as io:
+  print(result, file=io)
+  print("", end_time - start_time, "seconds", file=io)
+
+start_time = time.time()
+a = rk_methods.RKimplicitMidpoint.phi()
+result = pybs.series.symplectic_up_to_order(a, up_to_order)
+end_time = time.time()
+with open(io_file, 'a') as io:
+  print(result, file=io)
+  print("", end_time - start_time, "seconds", file=io)
