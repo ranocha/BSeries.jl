@@ -2383,60 +2383,64 @@ using Aqua: Aqua
     end
 
     @testset "Symplecticity (preserving quadratic invariants)" begin
-        @testset "Classical RK4 method (rational coefficients)" begin
-            A = [0//1 0//1 0//1 0//1
-                 1//2 0//1 0//1 0//1
-                 0//1 1//2 0//1 0//1
-                 0//1 0//1 1//1 0//1]
-            b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
-            rk = RungeKuttaMethod(A, b)
-            series = bseries(rk, 6)
-            @test @inferred(order_of_symplecticity(series)) == 4
-            @test @inferred(is_symplectic(series)) == false
-        end
+        @testset "Classical RK4 method" begin
+            @testset "rational coefficients" begin
+                A = [0//1 0//1 0//1 0//1
+                     1//2 0//1 0//1 0//1
+                     0//1 1//2 0//1 0//1
+                     0//1 0//1 1//1 0//1]
+                b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+                rk = RungeKuttaMethod(A, b)
+                series = bseries(rk, 6)
+                @test @inferred(order_of_symplecticity(series)) == 4
+                @test @inferred(is_symplectic(series)) == false
+            end
 
-        @testset "Classical RK4 method (floating point)" begin
-            A = [0 0 0 0
-                 0.5 0 0 0
-                 0 0.5 0 0
-                 0 0 1 0]
-            b = [1 / 6, 1 / 3, 1 / 3, 1 / 6]
-            rk = RungeKuttaMethod(A, b)
-            series = bseries(rk, 6)
-            @test @inferred(order_of_symplecticity(series)) == 4
-            @test @inferred(is_symplectic(series)) == false
-        end
+            @testset "floating point coefficients" begin
+                A = [0 0 0 0
+                     0.5 0 0 0
+                     0 0.5 0 0
+                     0 0 1 0]
+                b = [1 / 6, 1 / 3, 1 / 3, 1 / 6]
+                rk = RungeKuttaMethod(A, b)
+                series = bseries(rk, 6)
+                @test @inferred(order_of_symplecticity(series)) == 4
+                @test @inferred(is_symplectic(series)) == false
+            end
 
-        @testset "Classical RK4 method (rational coefficients, kwargs)" begin
-            A = [0//1 0//1 0//1 0//1
-                 1//2 0//1 0//1 0//1
-                 0//1 1//2 0//1 0//1
-                 0//1 0//1 1//1 0//1]
-            b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
-            rk = RungeKuttaMethod(A, b)
-            series = bseries(rk, 6)
-            # With big tolerances, the series is "symplectic"
-            @test @inferred(order_of_symplecticity(series; atol = 1)) == 6
-            @test @inferred(is_symplectic(series; atol = 1)) == true
-            @test @inferred(order_of_symplecticity(series; rtol = 0.2)) == 5
-            @test @inferred(is_symplectic(series; rtol = 0.2)) == false
+            @testset "rational coefficients, kwargs" begin
+                A = [0//1 0//1 0//1 0//1
+                     1//2 0//1 0//1 0//1
+                     0//1 1//2 0//1 0//1
+                     0//1 0//1 1//1 0//1]
+                b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+                rk = RungeKuttaMethod(A, b)
+                series = bseries(rk, 6)
+                # With big tolerances, the series is "symplectic"
+                @test @inferred(order_of_symplecticity(series; atol = 1)) == 6
+                @test @inferred(is_symplectic(series; atol = 1)) == true
+                @test @inferred(order_of_symplecticity(series; rtol = 0.2)) == 5
+                @test @inferred(is_symplectic(series; rtol = 0.2)) == false
+            end
         end
 
         @testset "Average Vector Field (AVF)" begin
             series = @inferred bseries(AverageVectorFieldMethod(), 6)
-            @test @inferred(order_of_symplecticity(series)) == @inferred(order_of_accuracy(series)) == 2
+            @test @inferred(order_of_symplecticity(series)) ==
+                  @inferred(order_of_accuracy(series)) == 2
             @test @inferred(is_symplectic(series)) == false
 
             @testset "$T" for T in [Float32, Float64, BigFloat]
                 series = @inferred bseries(AverageVectorFieldMethod(T), 6)
-                @test @inferred(order_of_symplecticity(series)) == @inferred(order_of_accuracy(series)) == 2
+                @test @inferred(order_of_symplecticity(series)) ==
+                      @inferred(order_of_accuracy(series)) == 2
                 @test @inferred(is_symplectic(series)) == false
             end
         end
 
         @testset "Implicit midpoint method (symplectic)" begin
             @testset "rational coefficients" begin
-                A = [1//2;;]
+                A = [1 // 2;;]
                 b = [1]
                 rk = RungeKuttaMethod(A, b)
                 series = @inferred bseries(rk, 9)
@@ -2456,9 +2460,9 @@ using Aqua: Aqua
             # Butcher (2016)
             # Numerical methods for ordinary differential equations
             # Section 342
-            A = [1/4 1/4-sqrt(3)/6;
-                 1/4+sqrt(3)/6 1/4]
-            b = [1/2, 1/2]
+            A = [1/4 1 / 4-sqrt(3) / 6;
+                 1 / 4+sqrt(3) / 6 1/4]
+            b = [1 / 2, 1 / 2]
             rk = @inferred RungeKuttaMethod(A, b)
             series = @inferred bseries(rk, 9)
             @test @inferred(is_symplectic(series))
@@ -2468,10 +2472,10 @@ using Aqua: Aqua
             # Butcher (2016)
             # Numerical methods for ordinary differential equations
             # Section 342
-            A = [5/36 2/9-sqrt(15)/15 5/36-sqrt(15)/30;
-                 5/36+sqrt(15)/24 2/9 5/36-sqrt(15)/24;
-                 5/36+sqrt(15)/30 2/9+sqrt(15)/15 5/36]
-            b = [5/18, 4/9, 5/18]
+            A = [5/36 2 / 9-sqrt(15) / 15 5 / 36-sqrt(15) / 30;
+                 5 / 36+sqrt(15) / 24 2/9 5 / 36-sqrt(15) / 24;
+                 5 / 36+sqrt(15) / 30 2 / 9+sqrt(15) / 15 5/36]
+            b = [5 / 18, 4 / 9, 5 / 18]
             rk = @inferred RungeKuttaMethod(A, b)
             series = @inferred bseries(rk, 9)
             @test @inferred(is_symplectic(series))
