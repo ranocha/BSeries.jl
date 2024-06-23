@@ -66,7 +66,7 @@ with open(io_file, 'a') as io:
 
 
 with open(io_file, 'a') as io:
-  print("\nSymplecticity (= conservation of quadratic invariants)", file=io)
+  print("\nSymplecticity (conservation of quadratic invariants)", file=io)
 
 start_time = time.time()
 a = rk_methods.RKimplicitMidpoint.phi()

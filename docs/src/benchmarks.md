@@ -307,7 +307,7 @@ end
 end
 
 
-println("\nSymplecticity (= conservation of quadratic invariants)")
+println("\nSymplecticity (conservation of quadratic invariants)")
 @time begin
   # implicit midpoint method = first Gauss method
   A = @SArray [1//2;;]
