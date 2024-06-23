@@ -2481,6 +2481,20 @@ using Aqua: Aqua
             @test @inferred(is_symplectic(series))
         end
 
+        @testset "Pseudo-symplectic method PS(2, 4, 2)" begin
+            k = 3
+            A = [0 0 0;
+                 (8 * k - 3)//(8k - 4) 0 0;
+                 (16k^2 - 8 * k + 1)//(2 * k * (8k - 3)) (2k - 1)//(2 * k * (8k - 3)) 0]
+            b = [(3k - 1) // (8k - 3), (-2 * (2k - 1)^2) // (8k - 3), k]
+            c = [0, (8k - 3) // (8k - 4), 1]
+            rk = @inferred RungeKuttaMethod(A, b)
+            series = @inferred bseries(rkh, 6)
+            @test @inferred(order_of_accuracy(series)) == 2
+            @test @inferred(order_of_symplecticity(series)) == 4
+            @test @inferred(is_symplectic(series)) == false
+        end
+
         @testset "Symplectic Euler method" begin
             @testset "rational coefficients" begin
                 ex_euler = @inferred RungeKuttaMethod(@SMatrix([0 // 1]), @SVector [1])
