@@ -21,10 +21,10 @@ using Aqua: Aqua
 
 @testset "BSeries" begin
     @testset "lazy representation of exact ODE solution" begin
-        exact = ExactSolution{Rational{Int}}()
+        exact = @inferred ExactSolution{Rational{Int}}()
         terms = collect(Iterators.take(exact, 5))
         @test terms == [1 // 1, 1 // 1, 1 // 2, 1 // 6, 1 // 3]
-        @test exact == ExactSolution(exact)
+        @test exact == @inferred ExactSolution(exact)
     end
 
     @testset "non-conflicting exports" begin
@@ -45,7 +45,7 @@ using Aqua: Aqua
         b = @SArray [0, 1 // 1]
         c = @SArray [0, 1 // 2]
 
-        series_integrator = bseries(A, b, c, 2)
+        series_integrator = @inferred bseries(A, b, c, 2)
         @test_nowarn latexify(series_integrator)
         @test_nowarn latexify(series_integrator, cdot = false)
         @test_nowarn latexify(series_integrator, dt = SymEngine.symbols("h"))
@@ -2378,6 +2378,279 @@ using Aqua: Aqua
                 @test @inferred(order_of_accuracy(series_integrator)) == 2
                 # TODO: This test is currently broken and throws an error
                 @test_broken is_energy_preserving(series_integrator)
+            end
+        end
+    end
+
+    @testset "Symplecticity (preserving quadratic invariants)" begin
+        @testset "Classical RK4 method" begin
+            @testset "rational coefficients" begin
+                A = [0//1 0//1 0//1 0//1
+                     1//2 0//1 0//1 0//1
+                     0//1 1//2 0//1 0//1
+                     0//1 0//1 1//1 0//1]
+                b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+                rk = RungeKuttaMethod(A, b)
+                series = bseries(rk, 6)
+                @test @inferred(order_of_symplecticity(series)) == 4
+                @test @inferred(is_symplectic(series)) == false
+            end
+
+            @testset "floating point coefficients" begin
+                A = [0 0 0 0
+                     0.5 0 0 0
+                     0 0.5 0 0
+                     0 0 1 0]
+                b = [1 / 6, 1 / 3, 1 / 3, 1 / 6]
+                rk = RungeKuttaMethod(A, b)
+                series = bseries(rk, 6)
+                @test @inferred(order_of_symplecticity(series)) == 4
+                @test @inferred(is_symplectic(series)) == false
+            end
+
+            @testset "rational coefficients, kwargs" begin
+                A = [0//1 0//1 0//1 0//1
+                     1//2 0//1 0//1 0//1
+                     0//1 1//2 0//1 0//1
+                     0//1 0//1 1//1 0//1]
+                b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+                rk = RungeKuttaMethod(A, b)
+                series = bseries(rk, 6)
+                # With big tolerances, the series is "symplectic"
+                @test @inferred(order_of_symplecticity(series; atol = 1)) == 6
+                @test @inferred(is_symplectic(series; atol = 1)) == true
+                @test @inferred(order_of_symplecticity(series; rtol = 0.2)) == 5
+                @test @inferred(is_symplectic(series; rtol = 0.2)) == false
+            end
+        end
+
+        @testset "Average Vector Field (AVF)" begin
+            series = @inferred bseries(AverageVectorFieldMethod(), 6)
+            @test @inferred(order_of_symplecticity(series)) ==
+                  @inferred(order_of_accuracy(series)) == 2
+            @test @inferred(is_symplectic(series)) == false
+
+            @testset "$T" for T in [Float32, Float64, BigFloat]
+                series = @inferred bseries(AverageVectorFieldMethod(T), 6)
+                @test @inferred(order_of_symplecticity(series)) ==
+                      @inferred(order_of_accuracy(series)) == 2
+                @test @inferred(is_symplectic(series)) == false
+            end
+        end
+
+        @testset "Not a series of a consistent integrator" begin
+            series = @inferred bseries(AverageVectorFieldMethod(), 6)
+            series[rootedtree(Int[])] = 0
+            @test @inferred(order_of_symplecticity(series)) == 0
+            @test @inferred(is_symplectic(series)) == false
+        end
+
+        @testset "Implicit midpoint method (symplectic)" begin
+            @testset "rational coefficients" begin
+                A = @SMatrix [1 // 2;;]
+                b = @SVector [1]
+                rk = RungeKuttaMethod(A, b)
+                series = @inferred bseries(rk, 9)
+                @test @inferred(order_of_accuracy(series)) == 2
+                @test @inferred is_symplectic(series)
+            end
+
+            @testset "floating point coefficients" begin
+                A = @SMatrix [0.5;;]
+                b = @SVector [1]
+                rk = RungeKuttaMethod(A, b)
+                series = @inferred bseries(rk, 9)
+                @test @inferred(order_of_accuracy(series)) == 2
+                @test @inferred is_symplectic(series)
+            end
+        end
+
+        @testset "Gauss method (s = 2)" begin
+            # Butcher (2016)
+            # Numerical methods for ordinary differential equations
+            # Section 342
+            A = [1/4 (1 / 4-sqrt(3) / 6);
+                 (1 / 4+sqrt(3) / 6) 1/4]
+            b = [1 / 2, 1 / 2]
+            rk = @inferred RungeKuttaMethod(A, b)
+            series = @inferred bseries(rk, 9)
+            @test @inferred(order_of_accuracy(series)) == 4
+            atol = eps(valtype(series))
+            rtol = sqrt(eps(valtype(series)))
+            @test @inferred(is_symplectic(series; atol = atol, rtol = rtol))
+        end
+
+        @testset "Gauss method (s = 3)" begin
+            # Butcher (2016)
+            # Numerical methods for ordinary differential equations
+            # Section 342
+            A = [5/36 2 / 9-sqrt(15) / 15 5 / 36-sqrt(15) / 30;
+                 5 / 36+sqrt(15) / 24 2/9 5 / 36-sqrt(15) / 24;
+                 5 / 36+sqrt(15) / 30 2 / 9+sqrt(15) / 15 5/36]
+            b = [5 / 18, 4 / 9, 5 / 18]
+            rk = @inferred RungeKuttaMethod(A, b)
+            series = @inferred bseries(rk, 9)
+            @test @inferred(order_of_accuracy(series)) == 6
+            atol = eps(valtype(series))
+            rtol = sqrt(eps(valtype(series)))
+            @test @inferred(is_symplectic(series; atol = atol, rtol = rtol))
+        end
+
+        @testset "Pseudo-symplectic method PS(2, 4, 2)" begin
+            # Aubry, Chartier (1998)
+            # Pseudo-symplectic Runge-Kutta methods
+            k = 3
+            A = [0 0 0;
+                 (8 * k - 3)//(8k - 4) 0 0;
+                 (16k^2 - 8 * k + 1)//(2 * k * (8k - 3)) (2k - 1)//(2 * k * (8k - 3)) 0]
+            b = [(3k - 1) // (8k - 3), (-2 * (2k - 1)^2) // (8k - 3), k]
+            c = [0, (8k - 3) // (8k - 4), 1]
+            rk = @inferred RungeKuttaMethod(A, b)
+            series = @inferred bseries(rk, 6)
+            @test @inferred(order_of_accuracy(series)) == 2
+            @test @inferred(order_of_symplecticity(series)) == 4
+            @test @inferred(is_symplectic(series)) == false
+        end
+
+        @testset "Symplectic Euler method" begin
+            @testset "rational coefficients" begin
+                if VERSION >= v"1.10"
+                    ex_euler = @inferred RungeKuttaMethod(@SMatrix([0 // 1]), @SVector [1])
+                    im_euler = @inferred RungeKuttaMethod(@SMatrix([1 // 1]), @SVector [1])
+                else
+                    # On Julia v1.6, the `@inferred` check fails in CI
+                    ex_euler = RungeKuttaMethod(@SMatrix([0 // 1]), @SVector [1])
+                    im_euler = RungeKuttaMethod(@SMatrix([1 // 1]), @SVector [1])
+                end
+                ark = @inferred AdditiveRungeKuttaMethod([ex_euler, im_euler])
+                series = @inferred bseries(ark, 9)
+                # needs to be implemented for colored rooted trees
+                @test_throws ArgumentError @inferred is_symplectic(series)
+            end
+
+            @testset "floating point coefficients" begin
+                if VERSION >= v"1.10"
+                    ex_euler = @inferred RungeKuttaMethod(@SMatrix([0.0]), @SVector [1.0])
+                    im_euler = @inferred RungeKuttaMethod(@SMatrix([1.0]), @SVector [1.0])
+                else
+                    # On Julia v1.6, the `@inferred` check fails in CI
+                    ex_euler = RungeKuttaMethod(@SMatrix([0.0]), @SVector [1.0])
+                    im_euler = RungeKuttaMethod(@SMatrix([1.0]), @SVector [1.0])
+                end
+                ark = @inferred AdditiveRungeKuttaMethod([ex_euler, im_euler])
+                series = @inferred bseries(ark, 9)
+                # needs to be implemented for colored rooted trees
+                @test_skip @inferred is_symplectic(series)
+            end
+        end
+
+        @testset "Störmer-Verlet" begin
+            @testset "rational coefficients" begin
+                # Hairer, Lubich, Wanner (2002)
+                # Geometric numerical integration
+                # Table II.2.1
+                As = [
+                    [0 0; 1//2 1//2],
+                    [1//2 0; 1//2 0],
+                ]
+                bs = [
+                    [1 // 2, 1 // 2],
+                    [1 // 2, 1 // 2],
+                ]
+                ark = AdditiveRungeKuttaMethod(As, bs)
+                series = @inferred bseries(ark, 9)
+                # needs to be implemented for colored rooted trees
+                @test_skip @inferred is_symplectic(series)
+            end
+
+            @testset "floating point coefficients" begin
+                # Hairer, Lubich, Wanner (2002)
+                # Geometric numerical integration
+                # Table II.2.1
+                As = [
+                    [0.0 0.0; 0.5 0.52],
+                    [0.5 0.0; 0.5 0.0],
+                ]
+                bs = [
+                    [0.5, 0.5],
+                    [0.5, 0.5],
+                ]
+                ark = AdditiveRungeKuttaMethod(As, bs)
+                series = @inferred bseries(ark, 9)
+                # needs to be implemented for colored rooted trees
+                @test_skip @inferred is_symplectic(series)
+            end
+        end
+
+        @testset "Lobatto IIIA-IIIB pair (s = 3)" begin
+            # Hairer, Lubich, Wanner (2002)
+            # Geometric numerical integration
+            # Table II.2.2
+            As = [
+                [0 0 0; 5//24 1//3 -1//24; 1//6 2//3 1//6],
+                [1//6 -1//6 0; 1//6 1//3 0; 1//6 5//6 0],
+            ]
+            bs = [
+                [1 // 6, 2 // 3, 1 // 6],
+                [1 // 6, 2 // 3, 1 // 6],
+            ]
+            ark = AdditiveRungeKuttaMethod(As, bs)
+            series = @inferred bseries(ark, 9)
+            # needs to be implemented for colored rooted trees
+            @test_skip @inferred is_symplectic(series)
+        end
+
+        @testset "Symbolic coefficients" begin
+            @testset "SymEngine.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # symplectic up to order two.
+                α = SymEngine.symbols("α")
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
+            end
+
+            @testset "SymPy.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymPy.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
+            end
+
+            @testset "SymPyPythonCall.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymPyPythonCall.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
+            end
+
+            @testset "Symbolics.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                Symbolics.@variables α
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
             end
         end
     end
