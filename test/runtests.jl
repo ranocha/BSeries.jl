@@ -2482,6 +2482,8 @@ using Aqua: Aqua
         end
 
         @testset "Pseudo-symplectic method PS(2, 4, 2)" begin
+            # Aubry, Chartier (1998)
+            # Pseudo-symplectic Runge-Kutta methods
             k = 3
             A = [0 0 0;
                  (8 * k - 3)//(8k - 4) 0 0;
