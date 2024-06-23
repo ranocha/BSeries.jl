@@ -2407,6 +2407,21 @@ using Aqua: Aqua
             @test @inferred(is_symplectic(series)) == false
         end
 
+        @testset "Classical RK4 method (rational coefficients, kwargs)" begin
+            A = [0//1 0//1 0//1 0//1
+                 1//2 0//1 0//1 0//1
+                 0//1 1//2 0//1 0//1
+                 0//1 0//1 1//1 0//1]
+            b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+            rk = RungeKuttaMethod(A, b)
+            series = bseries(rk, 6)
+            # With big tolerances, the series is "symplectic"
+            @test @inferred(order_of_symplecticity(series; atol = 1)) == 6
+            @test @inferred(is_symplectic(series; atol = 1)) == true
+            @test @inferred(order_of_symplecticity(series; rtol = 0.2)) == 5
+            @test @inferred(is_symplectic(series; rtol = 0.2)) == false
+        end
+
         # TODO
         # @testset "Pseudo-energy-preserving order 4" begin
         #     # References
