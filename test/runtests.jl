@@ -2434,6 +2434,100 @@ using Aqua: Aqua
             end
         end
 
+        @testset "Implicit midpoint method (symplectic)" begin
+            @testset "rational coefficients" begin
+                A = [1//2;;]
+                b = [1]
+                rk = RungeKuttaMethod(A, b)
+                series = @inferred bseries(rk, 9)
+                @test @inferred is_symplectic(series)
+            end
+
+            @testset "floating point coefficients" begin
+                A = [0.5;;]
+                b = [1]
+                rk = RungeKuttaMethod(A, b)
+                series = @inferred bseries(rk, 9)
+                @test @inferred is_symplectic(series)
+            end
+        end
+
+        @testset "Symplectic Euler method" begin
+            @testset "rational coefficients" begin
+                ex_euler = @inferred RungeKuttaMethod(@SMatrix([0 // 1]), @SVector [1])
+                im_euler = @inferred RungeKuttaMethod(@SMatrix([1 // 1]), @SVector [1])
+                ark = @inferred AdditiveRungeKuttaMethod([ex_euler, im_euler])
+                series = @inferred bseries(rk, 9)
+                # needs to be implemented for colored rooted trees
+                @test_skip @inferred is_symplectic(series)
+            end
+
+            @testset "floating point coefficients" begin
+                ex_euler = @inferred RungeKuttaMethod(@SMatrix([0.0]), @SVector [1.0])
+                im_euler = @inferred RungeKuttaMethod(@SMatrix([1.0]), @SVector [1.0])
+                ark = @inferred AdditiveRungeKuttaMethod([ex_euler, im_euler])
+                series = @inferred bseries(rk, 9)
+                # needs to be implemented for colored rooted trees
+                @test_skip @inferred is_symplectic(series)
+            end
+        end
+
+        @testset "Störmer-Verlet" begin
+            @testset "rational coefficients" begin
+                # Hairer, Lubich, Wanner (2002)
+                # Geometric numerical integration
+                # Table II.2.1
+                As = [
+                    [0 0; 1//2 1//2],
+                    [1//2 0; 1//2 0],
+                ]
+                bs = [
+                    [1 // 2, 1 // 2],
+                    [1 // 2, 1 // 2],
+                ]
+                ark = AdditiveRungeKuttaMethod(As, bs)
+                series = @inferred bseries(rk, 9)
+                # needs to be implemented for colored rooted trees
+                @test_skip @inferred is_symplectic(series)
+            end
+
+            @testset "floating point coefficients" begin
+                # Hairer, Lubich, Wanner (2002)
+                # Geometric numerical integration
+                # Table II.2.1
+                As = [
+                    [0.0 0.0; 0.5 0.52],
+                    [0.5 0.0; 0.5 0.0],
+                ]
+                bs = [
+                    [0.5, 0.5],
+                    [0.5, 0.5],
+                ]
+                ark = AdditiveRungeKuttaMethod(As, bs)
+                series = @inferred bseries(rk, 9)
+                # needs to be implemented for colored rooted trees
+                @test_skip @inferred is_symplectic(series)
+            end
+        end
+
+        @testset "Lobatto IIIA-IIIB pair (s = 3)" begin
+            # Hairer, Lubich, Wanner (2002)
+            # Geometric numerical integration
+            # Table II.2.2
+            As = [
+                [0 0 0; 5//24 1//3 -1//24; 1//6 2//3 1//6],
+                [1//6 -1//6 0; 1//6 1//3 0; 1//6 5//6 0],
+            ]
+            bs = [
+                [1 // 6, 2 // 3, 1 // 6],
+                [1 // 6, 2 // 3, 1 // 6],
+            ]
+            ark = AdditiveRungeKuttaMethod(As, bs)
+            series = @inferred bseries(rk, 9)
+            # needs to be implemented for colored rooted trees
+            @test_skip @inferred is_symplectic(series)
+        end
+
         # TODO
         # @testset "Pseudo-energy-preserving order 4" begin
         #     # References
