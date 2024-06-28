@@ -1,7 +1,7 @@
 name = "BSeries"
 uuid = "ebb8d67c-85b4-416c-b05f-5f409e808f32"
 authors = ["Hendrik Ranocha <mail@ranocha.de> and contributors"]
-version = "0.1.62"
+version = "0.1.63"
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
@@ -36,7 +36,7 @@ Reexport = "1"
 Requires = "1"
 RootedTrees = "2.23"
 SparseArrays = "1"
-SymEngine = "0.8, 0.9.1, 0.10, 0.11"
+SymEngine = "0.8, 0.9.1, 0.10, 0.11, 0.12"
 SymPy = "2"
 SymPyPythonCall = "0.3"
 Symbolics = "4, 5"
