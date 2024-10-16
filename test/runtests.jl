@@ -2667,6 +2667,7 @@ using Aqua: Aqua
             Aqua.test_all(BSeries;
                           ambiguities = (; exclude = [
                                              getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
+                                             write, # https://github.com/JuliaStrings/LaTeXStrings.jl/issues/74
                                          ]),
                           # Requires.jl is not loaded on new versions of Julia
                           stale_deps = (; ignore = [:Requires]))
