@@ -149,7 +149,7 @@ in autonomous form.  We set $u=[y,t]^T$ and
 ```math
 \begin{align}
 u_1'(t) & = \lambda(u_1 - \sin(u_2)) + \cos(u_2) \\
-u_2'(t) & = t.
+u_2'(t) & = 1.
 \end{align}
 ```
 
