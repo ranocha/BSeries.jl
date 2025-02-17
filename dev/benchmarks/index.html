@@ -48,46 +48,46 @@ subs = Symbolics.substitute
 benchmark(u, dt, subs, 8)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SymEngine
 
  Computing the series coefficients:
-  0.004984 seconds (466 allocations: 94.578 KiB)
-  0.004954 seconds (466 allocations: 94.578 KiB)
+  0.004974 seconds (466 allocations: 94.578 KiB)
+  0.004928 seconds (466 allocations: 94.578 KiB)
 
  Computing the series including elementary differentials:
-  1.195675 seconds (1.73 M allocations: 82.929 MiB, 98.54% compilation time)
-  0.016640 seconds (51.58 k allocations: 1.081 MiB)
+  1.217656 seconds (1.73 M allocations: 82.987 MiB, 2.69% gc time, 98.59% compilation time)
+  0.013971 seconds (51.58 k allocations: 1.081 MiB)
 
  Substituting the initial condition:
-  0.090759 seconds (174.49 k allocations: 8.281 MiB, 94.36% compilation time)
-  0.004257 seconds (12.74 k allocations: 138.969 KiB)
+  0.085852 seconds (174.48 k allocations: 8.276 MiB, 94.25% compilation time)
+  0.004197 seconds (12.74 k allocations: 138.969 KiB)
 
 
 SymPy
 
  Computing the series coefficients:
-  0.004964 seconds (466 allocations: 94.578 KiB)
-  0.005117 seconds (466 allocations: 94.578 KiB)
+  0.004932 seconds (466 allocations: 94.578 KiB)
+  0.004923 seconds (466 allocations: 94.578 KiB)
 
  Computing the series including elementary differentials:
-  2.500818 seconds (2.12 M allocations: 104.559 MiB, 1.46% gc time, 50.12% compilation time)
-  0.806464 seconds (30.26 k allocations: 874.445 KiB)
+  2.442375 seconds (2.12 M allocations: 104.504 MiB, 1.13% gc time, 48.66% compilation time)
+  0.802241 seconds (30.26 k allocations: 874.445 KiB)
 
  Substituting the initial condition:
-  0.449086 seconds (229.65 k allocations: 11.324 MiB, 40.08% compilation time)
-  0.202169 seconds (166 allocations: 3.641 KiB)
+  0.895296 seconds (229.62 k allocations: 11.324 MiB, 19.13% compilation time)
+  0.728818 seconds (166 allocations: 3.641 KiB)
 
 
 Symbolics
 
  Computing the series coefficients:
-  0.005002 seconds (466 allocations: 94.578 KiB)
-  0.004988 seconds (466 allocations: 94.578 KiB)
+  0.004925 seconds (466 allocations: 94.578 KiB)
+  0.004871 seconds (466 allocations: 94.578 KiB)
 
  Computing the series including elementary differentials:
-  5.051315 seconds (7.23 M allocations: 385.746 MiB, 1.29% gc time, 90.39% compilation time: &lt;1% of which was recompilation)
-  0.481909 seconds (3.67 M allocations: 204.090 MiB, 12.29% gc time)
+  5.192241 seconds (7.23 M allocations: 385.865 MiB, 4.73% gc time, 90.83% compilation time: &lt;1% of which was recompilation)
+  0.444341 seconds (3.67 M allocations: 204.090 MiB, 7.38% gc time)
 
  Substituting the initial condition:
-  6.825059 seconds (23.35 M allocations: 826.119 MiB, 1.65% gc time, 47.12% compilation time)
-  3.582486 seconds (20.32 M allocations: 672.479 MiB, 1.96% gc time)</code></pre><p>These results were obtained using the following versions.</p><pre><code class="language-julia hljs">using InteractiveUtils
+  6.699896 seconds (23.35 M allocations: 826.168 MiB, 1.54% gc time, 47.29% compilation time)
+  3.502250 seconds (20.32 M allocations: 672.479 MiB, 2.07% gc time)</code></pre><p>These results were obtained using the following versions.</p><pre><code class="language-julia hljs">using InteractiveUtils
 versioninfo()
 
 using Pkg
@@ -107,7 +107,7 @@ Environment:
   LD_LIBRARY_PATH = /opt/hostedtoolcache/Python/3.9.21/x64/lib
   JULIA_PYTHONCALL_EXE = /home/runner/work/BSeries.jl/BSeries.jl/docs/.CondaPkg/env/bin/python
 <span class="sgr32"><span class="sgr1">Status</span></span> `~/work/BSeries.jl/BSeries.jl/docs/Manifest.toml`
-  <span class="sgr90">[ebb8d67c] </span>BSeries v0.1.65 `~/work/BSeries.jl/BSeries.jl`
+  <span class="sgr90">[ebb8d67c] </span>BSeries v0.1.66 `~/work/BSeries.jl/BSeries.jl`
   <span class="sgr90">[47965b36] </span>RootedTrees v2.23.1
 <span class="sgr32">⌃</span> <span class="sgr90">[123dc426] </span>SymEngine v0.10.0
 <span class="sgr33">⌅</span> <span class="sgr90">[bc8888f7] </span>SymPyPythonCall v0.4.2
@@ -171,15 +171,15 @@ Package version 0.3
 
 Modified equation
 19063/26880
- 15.045733451843262 seconds
+ 14.709362745285034 seconds
 19063/26880
- 16.058704614639282 seconds
+ 15.084100246429443 seconds
 
 Modifying integrator
 5460293/241920
- 14.135443687438965 seconds
+ 13.253465175628662 seconds
 5460293/241920
- 13.77157735824585 seconds</code></pre>
+ 13.336016654968262 seconds</code></pre>
 </div><h3 id="Python-package-pybs"><a class="docs-heading-anchor" href="#Python-package-pybs">Python package <code>pybs</code></a><a id="Python-package-pybs-1"></a><a class="docs-heading-anchor-permalink" href="#Python-package-pybs" title="Permalink"></a></h3><p>Next, we look at the Python package <a href="https://github.com/henriksu/pybs"><code>pybs</code></a> and the following benchmark script. Note that this package does not provide functionality for modifying integrators.</p><div class="markdown"><pre><code class="language-python">import sys
 from importlib.metadata import version
 print&#40;&quot;Python version&quot;, sys.version&#41;
@@ -257,21 +257,21 @@ Package version 0.3
 
 Modified equation
 19063/26880
- 5.802887439727783 seconds
+ 5.820706605911255 seconds
 19063/26880
- 5.75252890586853 seconds
+ 5.679813623428345 seconds
 
 Energy preservation
 9
- 5.877129316329956 seconds
+ 5.853577136993408 seconds
 9
- 5.660666227340698 seconds
+ 5.742365837097168 seconds
 
 Symplecticity &#40;conservation of quadratic invariants&#41;
 9
- 0.03621101379394531 seconds
+ 0.035350799560546875 seconds
 9
- 0.020097732543945312 seconds</code></pre>
+ 0.019966602325439453 seconds</code></pre>
 </div><h3 id="Python-package-orderconditions"><a class="docs-heading-anchor" href="#Python-package-orderconditions">Python package <code>orderconditions</code></a><a id="Python-package-orderconditions-1"></a><a class="docs-heading-anchor-permalink" href="#Python-package-orderconditions" title="Permalink"></a></h3><p>Next, we look at the Python package <a href="https://gitlab.com/v_dallerit/orderconditions"><code>orderconditions</code></a> of Valentin Dallerit and the following benchmark script.</p><div class="markdown"><pre><code class="language-python">import sys
 print&#40;&quot;Python version&quot;, sys.version&#41;
 
@@ -332,15 +332,15 @@ print&#40;&quot;&quot;, end_time - start_time, &quot;seconds&quot;&#41;</code></
 
 Modified equation
 19063/26880
- 0.9639942646026611 seconds
+ 0.9851584434509277 seconds
 19063/26880
- 0.9539039134979248 seconds
+ 0.9727916717529297 seconds
 
 Modifying integrator
 5460293/241920
- 0.8294007778167725 seconds
+ 0.8499405384063721 seconds
 5460293/241920
- 0.8371677398681641 seconds</code></pre>
+ 0.8396289348602295 seconds</code></pre>
 </div><h3 id="This-Julia-package-BSeries.jl"><a class="docs-heading-anchor" href="#This-Julia-package-BSeries.jl">This Julia package BSeries.jl</a><a id="This-Julia-package-BSeries.jl-1"></a><a class="docs-heading-anchor-permalink" href="#This-Julia-package-BSeries.jl" title="Permalink"></a></h3><p>Finally, we perform the same task using <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> in Julia.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays
 
 A = @SArray [0 0; 1//2 0]
@@ -404,24 +404,24 @@ end
   println(is_symplectic(series))
 end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Modified equation
 19063//26880
-  0.145404 seconds (71.38 k allocations: 4.070 MiB, 63.56% compilation time)
+  0.136031 seconds (71.38 k allocations: 4.070 MiB, 61.10% compilation time)
 19063//26880
-  0.052881 seconds (1.11 k allocations: 423.094 KiB)
+  0.052942 seconds (1.11 k allocations: 423.094 KiB)
 
 Modifying integrator
 5460293//241920
-  0.030264 seconds (1.15 k allocations: 389.984 KiB, 16.79% compilation time)
+  0.029647 seconds (1.15 k allocations: 390.266 KiB, 15.31% compilation time)
 5460293//241920
-  0.025215 seconds (1.09 k allocations: 387.875 KiB)
+  0.025113 seconds (1.09 k allocations: 387.875 KiB)
 
 Energy preservation
 true
-  2.321038 seconds (4.74 M allocations: 245.124 MiB, 1.16% gc time, 97.49% compilation time)
+  2.249745 seconds (4.74 M allocations: 245.136 MiB, 2.16% gc time, 97.43% compilation time)
 true
-  0.057122 seconds (64.80 k allocations: 4.909 MiB)
+  0.056811 seconds (64.79 k allocations: 4.908 MiB)
 
 Symplecticity (conservation of quadratic invariants)
 true
-  0.476237 seconds (395.88 k allocations: 20.152 MiB, 5.50% gc time, 99.83% compilation time)
+  0.390676 seconds (391.57 k allocations: 19.958 MiB, 99.80% compilation time)
 true
-  0.000702 seconds (1.83 k allocations: 253.125 KiB)</code></pre><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>Hendrik Ranocha and David Ketcheson (2020)   Energy Stability of Explicit Runge-Kutta Methods for Nonautonomous or   Nonlinear Problems.   SIAM Journal on Numerical Analysis   <a href="https://doi.org/10.1137/19M1290346">DOI: 10.1137/19M1290346</a></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-RanochaKetcheson2020"><a class="tag is-link" href="#citeref-RanochaKetcheson2020">RanochaKetcheson2020</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tutorials/code_generation/">« Code generation</a><a class="docs-footer-nextpage" href="../api_reference/">API reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Monday 3 February 2025 10:53">Monday 3 February 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  0.000696 seconds (1.83 k allocations: 253.125 KiB)</code></pre><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>Hendrik Ranocha and David Ketcheson (2020)   Energy Stability of Explicit Runge-Kutta Methods for Nonautonomous or   Nonlinear Problems.   SIAM Journal on Numerical Analysis   <a href="https://doi.org/10.1137/19M1290346">DOI: 10.1137/19M1290346</a></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-RanochaKetcheson2020"><a class="tag is-link" href="#citeref-RanochaKetcheson2020">RanochaKetcheson2020</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tutorials/code_generation/">« Code generation</a><a class="docs-footer-nextpage" href="../api_reference/">API reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.1 on <span class="colophon-date" title="Monday 17 February 2025 08:45">Monday 17 February 2025</span>. Using Julia version 1.11.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
