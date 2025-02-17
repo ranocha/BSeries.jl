@@ -750,7 +750,7 @@ function RootedTrees.elementary_weight(t::RootedTree,
     #   Φ(t) = ∫₀¹ B_τ ϕ_τ(t₁) ... ϕ_τ(tₘ) dτ
     # where
     #   B_ζ = A_1ζ
-    # Since the polynomial matrix `A_τζ` is stored as a polyomial in ζ
+    # Since the polynomial matrix `A_τζ` is stored as a polynomial in ζ
     # with coefficients as polynomials in τ, setting `τ = 1` means that
     # we need to evaluate all coefficients at 1 and interpret the result
     # as a polynomial in τ.
@@ -778,7 +778,7 @@ function RootedTrees.derivative_weight(t::RootedTree,
 
     # The derivative weight ϕ_τ is given as
     #   ϕ_τ(t) = ∫₀¹ A_τζ ϕ_ζ(t₁) ... ϕ_ζ(tₘ) dζ
-    # Since the polynomial matrix `A_τζ` is stored as a polyomial in ζ
+    # Since the polynomial matrix `A_τζ` is stored as a polynomial in ζ
     # with coefficients as polynomials in τ, we need to interpret the
     # return value of the inner `derivative_weight` as the constant
     # polynomial in ζ with coefficients given as polynomials in τ.
