@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Modified equations · BSeries.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link rel="canonical" href="https://ranocha.github.io/BSeries.jl/stable/tutorials/modified_equations/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">BSeries.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../bseries_basics/">B-series basics</a></li><li><a class="tocitem" href="../rk_order_conditions/">Runge-Kutta order conditions</a></li><li><a class="tocitem" href="../bseries_creation/">Creating B-series</a></li><li class="is-active"><a class="tocitem" href>Modified equations</a><ul class="internal"><li><a class="tocitem" href="#Lotka-Volterra-model,-explicit-Euler-method"><span>Lotka-Volterra model, explicit Euler method</span></a></li><li><a class="tocitem" href="#Lotka-Volterra-model,-symplectic-Euler-method"><span>Lotka-Volterra model, symplectic Euler method</span></a></li><li><a class="tocitem" href="#Nonlinear-pendulum,-Störmer-Verlet-method"><span>Nonlinear pendulum, Störmer-Verlet method</span></a></li><li><a class="tocitem" href="#Modified-equation-of-the-average-vector-field-method"><span>Modified equation of the average vector field method</span></a></li><li><a class="tocitem" href="#References"><span>References</span></a></li></ul></li><li><a class="tocitem" href="../modifying_integrators/">Modifying integrators</a></li><li><a class="tocitem" href="../symbolic_computations/">Symbolic computations</a></li><li><a class="tocitem" href="../code_generation/">Code generation</a></li></ul></li><li><a class="tocitem" href="../../benchmarks/">Benchmarks</a></li><li><a class="tocitem" href="../../api_reference/">API reference</a></li><li><a class="tocitem" href="../../contributing/">Contributing</a></li><li><a class="tocitem" href="../../license/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Modified equations</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Modified equations</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ranocha/BSeries.jl/blob/main/docs/src/tutorials/modified_equations.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="tutorial-modified-equation"><a class="docs-heading-anchor" href="#tutorial-modified-equation">Modified equations</a><a id="tutorial-modified-equation-1"></a><a class="docs-heading-anchor-permalink" href="#tutorial-modified-equation" title="Permalink"></a></h1><p>This tutorial describes the API of <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> related to the notion of <em>modified equations</em>. The main API entry point is the function <a href="../../api_reference/#BSeries.modified_equation-NTuple{4, Any}"><code>modified_equation</code></a>.</p><p>Given a first-order autonomous ordinary differential equation (ODE)</p><p class="math-container">\[u&#39;(t) = f(u(t))\]</p><p>and a B-series time integration method, the idea is to interpret the numerical solution with given time step size <span>$h$</span> of the original ODE as the exact solution of the modified ODE</p><p class="math-container">\[u&#39;(t) = f_h(u(t)),\]</p><p>see for example <sup class="footnote-reference"><a id="citeref-ChartierHairerVilmart2010" href="#footnote-ChartierHairerVilmart2010">[ChartierHairerVilmart2010]</a></sup>.</p><h2 id="Lotka-Volterra-model,-explicit-Euler-method"><a class="docs-heading-anchor" href="#Lotka-Volterra-model,-explicit-Euler-method">Lotka-Volterra model, explicit Euler method</a><a id="Lotka-Volterra-model,-explicit-Euler-method-1"></a><a class="docs-heading-anchor-permalink" href="#Lotka-Volterra-model,-explicit-Euler-method" title="Permalink"></a></h2><p>Here, we reproduce the example on p. 340 of <sup class="footnote-reference"><a id="citeref-HairerLubichWanner2006" href="#footnote-HairerLubichWanner2006">[HairerLubichWanner2006]</a></sup>. Thus, we consider the explicit Euler method to solve the classical Lotka-Volterra model</p><p class="math-container">\[p&#39;(t) = (2 - q) p,
+\quad
+q&#39;(t) = (p - 1) q.\]</p><p>First, we set up the ODE and compute some numerical solutions using <a href="https://github.com/SciML/OrdinaryDiffEq.jl">OrdinaryDiffEq.jl</a>.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq
+
+function f!(du, u, params, t)
+  p, q = u
+  dp = (2 - q) * p
+  dq = (p - 1) * q
+  du[1] = dp; du[2] = dq
+  return nothing
+end
+
+u0 = [1.5, 2.25]
+tspan = (0.0, 15.0)
+ode = ODEProblem(f!, u0, tspan)
+
+dt = 0.1
+sol_euler = solve(ode, Euler(), dt=dt)
+sol_ref = solve(ode, Tsit5())</code></pre><p>We use the in-place form of the right-hand side (RHS) and follow the Julia convention to indicate that <code>f!</code> modifies its first argument <code>du</code> by appending <code>!</code> to its name. Thus, calling <code>f!(du, u, params, t)</code> will compute the RHS at the state <code>u</code> and time <code>t</code> (unused) and store the result in <code>du</code>. The argument <code>params</code> could be used to pass additional parameters explicitly, which we do not need in this case.</p><p>Next, we look at some phase space plots of the numerical solution.</p><pre><code class="language-julia hljs">using LaTeXStrings, Plots
+
+fig = plot(xguide=L&quot;$q$&quot;, yguide=L&quot;$p$&quot;)
+default(linewidth=2)
+plot!(fig, sol_ref, idxs=(2, 1), label=&quot;Reference solution&quot;)
+scatter!(fig, last.(sol_euler.u), first.(sol_euler.u),
+         label=&quot;Explicit Euler, dt = $dt&quot;)
+plot!(fig, xlims=(0.0, 9.0), ylims=(0.0, 5.0))</code></pre><p><img src="../lotka_volterra_explicit_euler.svg" alt/></p><p>The exact solution of this problem is periodic, but the explicit Euler method produces an unstable trajectory. Here, we used an especially large time step to more clearly illustrate what will follow, but the qualitative behavior is the same for any time step size.</p><p>Next, we will derive the &quot;modified equation&quot; (see <a href="../../api_reference/#BSeries.modified_equation-NTuple{4, Any}"><code>modified_equation</code></a>) of the explicit Euler method and solve this new ODE to high accuracy. The perturbed system takes the form of a power series in the time step size <code>dt</code>, and in order to compute with it we will truncate it at a certain order.</p><p>Here, we use <a href="https://github.com/JuliaSymbolics/Symbolics.jl">Symbolics.jl</a> for the symbolic computations.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays, Symbolics
+
+function solve_modified_equation(ode, truncation_orders, dt)
+  # Explicit Euler method
+  A = @SMatrix [0//1;;]
+  b = @SArray [1//1]
+  c = @SArray [0//1]
+
+  # Setup of symbolic variables
+  @variables dt_sym
+  u_sym = @variables p q
+  # Create `f_sym` as a vector `similar` to `u_sym` to store symbolic expressions.
+  # Then, call the in-place function `f!` to write the RHS to `f_sym`.
+  f_sym = similar(u_sym); f!(f_sym, u_sym, nothing, nothing)
+
+  sol_euler = solve(ode, Euler(), dt=dt)
+
+  fig = plot(xguide=L&quot;$q$&quot;, yguide=L&quot;$p$&quot;)
+  default(linewidth=2)
+  scatter!(fig, last.(sol_euler.u), first.(sol_euler.u),
+          label=&quot;Explicit Euler, dt = $dt&quot;)
+
+  for truncation_order in truncation_orders
+    series = modified_equation(f_sym, u_sym, dt_sym, A, b, c, truncation_order)
+    series = Symbolics.substitute.(series, dt_sym =&gt; dt)
+    modified_f, _ = build_function(series, u_sym, expression=Val(false))
+    modified_ode = ODEProblem((u, params, t) -&gt; modified_f(u), ode.u0, ode.tspan)
+    modified_sol = solve(modified_ode, Tsit5())
+    plot!(fig, modified_sol, idxs=(2, 1),
+          label=&quot;Modified ODE, order $(truncation_order-1)&quot;)
+  end
+  fig
+end
+
+fig = solve_modified_equation(ode, 2, dt)</code></pre><p><img src="../lotka_volterra_explicit_euler_modified1.svg" alt/></p><p>The exact solution of the Lotka-Volterra model is periodic, but Euler&#39;s method generates a solution with growing amplitude. The modified equations accurately predict this.</p><p>Now we go to the next order and increase the time step size <code>dt</code> slightly.</p><pre><code class="language-julia hljs">fig = solve_modified_equation(ode, 2:3, 0.11)</code></pre><p><img src="../lotka_volterra_explicit_euler_modified2.svg" alt/></p><p>Using a larger step size, we see that the first-order modified equations are not fully accurate, but by including the <span>$O(h^2)$</span> terms we get much better accuracy at late times. Let&#39;s keep going.</p><pre><code class="language-julia hljs">fig = solve_modified_equation(ode, 2:4, 0.12)</code></pre><p><img src="../lotka_volterra_explicit_euler_modified3.svg" alt/></p><h2 id="Lotka-Volterra-model,-symplectic-Euler-method"><a class="docs-heading-anchor" href="#Lotka-Volterra-model,-symplectic-Euler-method">Lotka-Volterra model, symplectic Euler method</a><a id="Lotka-Volterra-model,-symplectic-Euler-method-1"></a><a class="docs-heading-anchor-permalink" href="#Lotka-Volterra-model,-symplectic-Euler-method" title="Permalink"></a></h2><p>Next, we reproduce the second part of the example on p. 340 of <sup class="footnote-reference"><a id="citeref-HairerLubichWanner2006" href="#footnote-HairerLubichWanner2006">[HairerLubichWanner2006]</a></sup>. Thus, we consider the symplectic (IMEX) Euler method to solve the classical Lotka-Volterra model</p><p class="math-container">\[p&#39;(t) = (2 - q) p,
+\quad
+q&#39;(t) = (p - 1) q.\]</p><p>Here, the implicit part will be applied to <span>$p&#39;$</span> and the explicit part to <span>$q&#39;$</span>.</p><p>First, we set up the ODE and compute a reference solution using <a href="https://github.com/SciML/OrdinaryDiffEq.jl">OrdinaryDiffEq.jl</a>.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, Plots, LaTeXStrings
+
+function f!(du, u, params, t)
+  q, p = u
+  du[1] = (p - 1) * q # dq/dt
+  du[2] = (2 - q) * p # dp/dt
+  return nothing
+end
+
+u0 = [6.5, 1.0]
+tspan = (0.0, 15.0)
+ode = ODEProblem(f!, u0, tspan)
+sol_ref = solve(ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
+
+fig = plot(xguide=L&quot;$q$&quot;, yguide=L&quot;$p$&quot;)
+default(linewidth=2)
+plot!(fig, sol_ref, idxs=(1, 2), label=&quot;Reference solution&quot;)</code></pre><p><img src="../lotka_volterra_reference.svg" alt/></p><p>Next, we apply a symplectic (implicit-explicit, IMEX) Euler method to this problem. Given an additively partitioned ODE</p><p class="math-container">\[u&#39;(t) = f^1(u) + f^2(u)\]</p><p>the symplectic/IMEX Euler method we are interested in is</p><p class="math-container">\[\begin{aligned}
+  y^1 &amp;= u^n + \Delta t f^1(y^1), \\
+  u^{n+1} &amp;= u^n + \Delta t f^1(y^1) + \Delta t f^2(y^1).
+\end{aligned}\]</p><p>There is an <code>IMEXEuler</code> method in <a href="https://github.com/SciML/OrdinaryDiffEq.jl">OrdinaryDiffEq.jl</a>. However, this is a multistep variant using the update</p><p class="math-container">\[u^{n+1} = u^n + \Delta t f^1(u^{n+1}) + \Delta t f^2(u^n)\]</p><p>and not an additive Runge-Kutta method, see also <a href="https://github.com/SciML/OrdinaryDiffEq.jl/issues/1590">OrdinaryDiffEq.jl#1590</a>. Thus, we implement our own symplectic Euler method for this specific problem.</p><pre><code class="language-julia hljs">function imex_euler_lotka_volterra(u0, tspan, dt)
+  @assert tspan[1] &lt; tspan[2]
+  @assert dt &gt; 0
+
+  # setup solution arrays
+  qs = [u0[1]]
+  sizehint!(qs, round(Int, (tspan[2] - tspan[1]) / dt))
+  ps = [u0[2]]
+  sizehint!(ps, length(qs))
+
+  t = tspan[1]
+  while t &lt; tspan[2]
+    qold = qs[end]
+    pold = ps[end]
+
+    # ARK, p implicit
+    pnew = pold / (1 + dt * (qold - 2))
+    qnew = qold + dt * (pnew - 1) * qold
+
+    # ARK, q implicit
+    #qnew = qold / (1 + dt * (1 - pold))
+    #pnew = pold + dt * (2 - qnew) * pold
+
+    # Multistep version of Ascher, Ruuth, Wetton (1995), p implicit
+    #qnew = qold + dt * (pold - 1) * qold
+    #pnew = pold / (1 + dt * (qnew - 2))
+
+    # Multistep version of Ascher, Ruuth, Wetton (1995), q implicit
+    #pnew = pold + dt * (2 - qold) * pold
+    #qnew = qold / (1 + dt * (1 - pnew))
+
+    push!(qs, qnew)
+    push!(ps, pnew)
+    t += dt
+  end
+
+  return qs, ps
+end
+
+dt = 0.12
+qs, ps = imex_euler_lotka_volterra(ode.u0, ode.tspan, dt)
+scatter!(fig, qs, ps, label=&quot;Symplectic Euler, dt = $dt&quot;)</code></pre><p><img src="../lotka_volterra_symplectic_euler.svg" alt/></p><p>The exact solution of this problem is periodic. Due to its structure-preserving properties, the symplectic Euler method also produces a stable trajectory.</p><p>Next, we will derive the modified equation of the symplectic Euler method and solve this new ODE to high accuracy. The perturbed system takes the form of a power series in the time step size <code>dt</code>, and in order to compute with it we will truncate it at a certain order.</p><p>Again, we use <a href="https://github.com/JuliaSymbolics/Symbolics.jl">Symbolics.jl</a> for the symbolic computations.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays, Symbolics
+
+ex_euler = RungeKuttaMethod(
+  @SMatrix([0]), @SVector [1]
+)
+im_euler = RungeKuttaMethod(
+  @SMatrix([1]), @SVector [1]
+)
+ark = AdditiveRungeKuttaMethod([im_euler, ex_euler])
+
+@variables dt_sym
+u_sym = @variables q, p
+f1_sym = [0, (2 - q) * p] # p implicit
+f2_sym = [(p - 1) * q, 0] # q explicit
+f_sym = (f1_sym, f2_sym)
+
+for truncation_order in 2:3
+  series_integrator = bseries(ark, truncation_order)
+  series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
+  series = Symbolics.substitute.(series, dt_sym =&gt; dt)
+  modified_f, _ = build_function(series, u_sym, expression=Val(false))
+  modified_ode = ODEProblem((u, params, t) -&gt; modified_f(u), ode.u0, ode.tspan)
+  modified_sol = solve(modified_ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
+  plot!(fig, modified_sol, idxs=(1, 2),
+        label=&quot;Modified equation, order $(truncation_order-1)&quot;)
+end
+
+fig</code></pre><p><img src="../lotka_volterra_symplectic_euler_modified.svg" alt/></p><h2 id="Nonlinear-pendulum,-Störmer-Verlet-method"><a class="docs-heading-anchor" href="#Nonlinear-pendulum,-Störmer-Verlet-method">Nonlinear pendulum, Störmer-Verlet method</a><a id="Nonlinear-pendulum,-Störmer-Verlet-method-1"></a><a class="docs-heading-anchor-permalink" href="#Nonlinear-pendulum,-Störmer-Verlet-method" title="Permalink"></a></h2><p>Let&#39;s reproduce the example shown in Figure 4.1 of <sup class="footnote-reference"><a id="citeref-HairerLubichWanner2003" href="#footnote-HairerLubichWanner2003">[HairerLubichWanner2003]</a></sup>. Thus, we consider the dynamical ODE system describing a nonlinear pendulum as</p><p class="math-container">\[q&#39;(t) = v,
+\quad
+v&#39;(t) = -\sin(q).\]</p><p>Note that <sup class="footnote-reference"><a id="citeref-HairerLubichWanner2003" href="#footnote-HairerLubichWanner2003">[HairerLubichWanner2003]</a></sup> use the order <code>q, v</code> of the variables (position and velocity) but <a href="https://github.com/SciML/OrdinaryDiffEq.jl">OrdinaryDiffEq.jl</a> requires the order <code>v, q</code> for dynamical ODE systems. Thus, we need to <code>reverse</code> the order of variables from time to time.</p><p>First, we set up the ODE system and compute a reference solution as well as the numerical solution obtained by the classical Störmer-Verlet method.</p><pre><code class="language-julia hljs">using OrdinaryDiffEq, LaTeXStrings, Plots
+
+f1(v, q, params, t) = -sin(q)
+f2(v, q, params, t) = v
+v0 = 1.0
+q0 = -1.2
+tspan = (0.0, 55.0)
+ode = DynamicalODEProblem(f1, f2, v0, q0, tspan)
+
+dt = 1.1
+alg = VerletLeapfrog()
+sol_baseline = solve(ode, alg, dt=dt)
+sol_ref = solve(ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
+
+fig = plot(xguide=L&quot;$q$&quot;, yguide=L&quot;$v$&quot;)
+default(linewidth=2)
+plot!(fig, sol_ref, idxs=(2, 1), label=&quot;Reference solution&quot;)
+scatter!(fig, last.(sol_baseline.u), first.(sol_baseline.u),
+         label=&quot;Störmer-Verlet, dt = $dt&quot;)</code></pre><p><img src="../pendulum_original.svg" alt/></p><p>The exact solution of this problem is periodic. Since the Störmer-Verlet method is symplectic, it captures this qualitative property of the exact solution very well. However, we can see that the numerical solution trajectory does not really match the reference solution. Indeed, numerical errors pollute the solution and the numerical approximation is closer to a solution of a modified equation. We can compute the first terms of this modified equations as follows. First, we need to set up the time integration method in a form usable by BSeries.jl. For this, we interpret it as an additive Runge-Kutta method as follows.</p><pre><code class="language-julia hljs">using BSeries
+
+# Störmer-Verlet method as additive RK method, see
+# Hairer, Lubich, Wanner (2002)
+# Geometric numerical integration
+# Table II.2.1
+As = [
+    [0 0; 1//2 1//2],
+    [1//2 0; 1//2 0]
+]
+bs = [
+    [1//2, 1//2],
+    [1//2, 1//2]
+]
+ark = AdditiveRungeKuttaMethod(As, bs)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">AdditiveRungeKuttaMethod{Rational{Int64}} with methods
+1. RungeKuttaMethod{Rational{Int64}} with
+A: 2×2 Matrix{Rational{Int64}}:
+ 0//1  0//1
+ 1//2  1//2
+b: 2-element Vector{Rational{Int64}}:
+ 1//2
+ 1//2
+c: 2-element Vector{Rational{Int64}}:
+ 0//1
+ 1//1
+2. RungeKuttaMethod{Rational{Int64}} with
+A: 2×2 Matrix{Rational{Int64}}:
+ 1//2  0//1
+ 1//2  0//1
+b: 2-element Vector{Rational{Int64}}:
+ 1//2
+ 1//2
+c: 2-element Vector{Rational{Int64}}:
+ 1//2
+ 1//2
+</code></pre><p>Next, we can set up the symbolic part. Note that we use the order <code>q, v</code> here instead of <code>v, q</code> used above.</p><pre><code class="language-julia hljs">using Symbolics
+
+# Set up symbolic equation
+@variables dt_sym
+u_sym = @variables q, v
+fq_sym = [f2(reverse(u_sym)..., nothing, nothing), 0]
+fv_sym = [0, f1(reverse(u_sym)..., nothing, nothing)]
+f_sym = (fq_sym, fv_sym)
+
+# Compute B-series of the numerical integrator and the modified equation
+series_integrator = bseries(ark, 3)
+series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
+
+@show series[1]
+@show series[2]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">series[1] = v + (1//6)*(dt_sym^2)*v*cos(q)
+series[2] = -sin(q) + (1//12)*(dt_sym^2)*sin(q)*cos(q) + (1//12)*(dt_sym^2)*(v^2)*sin(q)</code></pre><p>You can compare this result to eq. (4.8) of <sup class="footnote-reference"><a id="citeref-HairerLubichWanner2003" href="#footnote-HairerLubichWanner2003">[HairerLubichWanner2003]</a></sup>. Next, we can solve the modified differential equations with high precision as follows.</p><pre><code class="language-julia hljs">for truncation_order in 3:2:5
+  local series_integrator = bseries(ark, truncation_order)
+  local series = modified_equation(f_sym, u_sym, dt_sym, series_integrator)
+  series = Symbolics.substitute.(series, dt_sym =&gt; dt)
+  modified_f, _ = build_function(series, u_sym, expression=Val(false))
+  modified_ode = ODEProblem((u, params, t) -&gt; modified_f(u), [q0, v0], ode.tspan)
+  modified_sol = solve(modified_ode, Tsit5(), abstol=1.0e-9, reltol=1.0e-9)
+  plot!(fig, modified_sol, idxs=(1, 2),
+        label=&quot;Modified equation, order $(truncation_order-1)&quot;)
+end
+fig</code></pre><p><img src="../pendulum_modified.svg" alt/></p><p>You can see that the high-precision solutions of the modified equations match the numerical solution obtained by the Störmer-Verlet method very well. In fact, the fourth-order modified equation is even a bit more accurate than the second-order one.</p><h2 id="Modified-equation-of-the-average-vector-field-method"><a class="docs-heading-anchor" href="#Modified-equation-of-the-average-vector-field-method">Modified equation of the average vector field method</a><a id="Modified-equation-of-the-average-vector-field-method-1"></a><a class="docs-heading-anchor-permalink" href="#Modified-equation-of-the-average-vector-field-method" title="Permalink"></a></h2><p>Here, we reproduce Example 1 of <sup class="footnote-reference"><a id="citeref-CelledoniMcLachlanOwrenQuispel2010" href="#footnote-CelledoniMcLachlanOwrenQuispel2010">[CelledoniMcLachlanOwrenQuispel2010]</a></sup>. First, we create the B-series of the average vector field method as described in the <a href="../bseries_creation/#tutorial-bseries-creation-AVF">tutorial on creating B-series</a>.</p><pre><code class="language-julia hljs">using BSeries
+
+series = bseries(5) do t, series
+    if order(t) in (0, 1)
+        return 1 // 1
+    else
+        v = 1 // 1
+        n = 0
+        for subtree in SubtreeIterator(t)
+            v *= series[subtree]
+            n += 1
+        end
+        return v / (n + 1)
+    end
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         =&gt; 1//1
+  RootedTree{Int64}: [1]             =&gt; 1//1
+  RootedTree{Int64}: [1, 2]          =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]       =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 2]       =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]    =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 3, 3]    =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 3, 2]    =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2, 2]    =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5] =&gt; 1//16
+  RootedTree{Int64}: [1, 2, 3, 4, 4] =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 4, 3] =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 4, 2] =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 3, 3] =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 3, 3, 2] =&gt; 1//9
+  RootedTree{Int64}: [1, 2, 3, 2, 3] =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 2, 2] =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 2, 2, 2] =&gt; 1//5</code></pre><p>Next, we compute the coefficients of its modified equation.</p><pre><code class="language-julia hljs">coefficients = modified_equation(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         =&gt; 0//1
+  RootedTree{Int64}: [1]             =&gt; 1//1
+  RootedTree{Int64}: [1, 2]          =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3]       =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 2]       =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 3]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 2]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 2, 2]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4, 5] =&gt; 1//80
+  RootedTree{Int64}: [1, 2, 3, 4, 4] =&gt; 1//90
+  RootedTree{Int64}: [1, 2, 3, 4, 3] =&gt; 1//360
+  RootedTree{Int64}: [1, 2, 3, 4, 2] =&gt; -1//180
+  RootedTree{Int64}: [1, 2, 3, 3, 3] =&gt; -1//120
+  RootedTree{Int64}: [1, 2, 3, 3, 2] =&gt; -1//90
+  RootedTree{Int64}: [1, 2, 3, 2, 3] =&gt; 1//180
+  RootedTree{Int64}: [1, 2, 3, 2, 2] =&gt; -1//360
+  RootedTree{Int64}: [1, 2, 2, 2, 2] =&gt; 0//1</code></pre><p>Remember that the coefficients of the B-series need to be divided by the symmetry of the rooted trees to get the final expressions.</p><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>Ernst Hairer, Christian Lubich, Gerhard Wanner (2003)   Geometric numerical integration illustrated by the Störmer-Verlet method.   <a href="https://doi.org/10.1017/S0962492902000144">DOI: 10.1017/S0962492902000144</a></p><p>Ernst Hairer, Christian Lubich, Gerhard Wanner (2006)   Geometric Numerical Integration.   <a href="https://doi.org/10.1007/3-540-30666-8">DOI: 10.1007/3-540-30666-8</a></p><p>Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)   Algebraic Structures of B-series.   Foundations of Computational Mathematics   <a href="https://doi.org/10.1007/s10208-010-9065-1">DOI: 10.1007/s10208-010-9065-1</a></p><p>Elena Celledoni, Robert I. McLachlan, Brynjulf Owren, and G. R. W. Quispel (2010)   Energy-preserving integrators and the structure of B-series.   Foundations of Computational Mathematics   <a href="https://doi.org/10.1007/s10208-010-9073-1">DOI: 10.1007/s10208-010-9073-1</a></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-HairerLubichWanner2003"><a class="tag is-link" href="#citeref-HairerLubichWanner2003">HairerLubichWanner2003</a></li><li class="footnote" id="footnote-HairerLubichWanner2006"><a class="tag is-link" href="#citeref-HairerLubichWanner2006">HairerLubichWanner2006</a></li><li class="footnote" id="footnote-ChartierHairerVilmart2010"><a class="tag is-link" href="#citeref-ChartierHairerVilmart2010">ChartierHairerVilmart2010</a></li><li class="footnote" id="footnote-CelledoniMcLachlanOwrenQuispel2010"><a class="tag is-link" href="#citeref-CelledoniMcLachlanOwrenQuispel2010">CelledoniMcLachlanOwrenQuispel2010</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../bseries_creation/">« Creating B-series</a><a class="docs-footer-nextpage" href="../modifying_integrators/">Modifying integrators »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Friday 22 September 2023 06:24">Friday 22 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
