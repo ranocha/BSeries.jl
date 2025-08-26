@@ -109,7 +109,7 @@ latexify(coeffs4-coeffs_ex, cdot=false)
 This confirms that the method is of 4th order, since all terms involving
 smaller powers of $h$ vanish exactly.  We don't see the $h^6$ and higher
 order terms since we only generated the truncated B-series up to 5th order.
-We can also obtain the order of accuracy awithout comparing the coefficients
+We can also obtain the order of accuracy without comparing the coefficients
 to the exact solution manually:
 
 ```@example bseries-basics
@@ -149,7 +149,7 @@ in autonomous form.  We set $u=[y,t]^T$ and
 ```math
 \begin{align}
 u_1'(t) & = \lambda(u_1 - \sin(u_2)) + \cos(u_2) \\
-u_2'(t) & = t.
+u_2'(t) & = 1.
 \end{align}
 ```
 

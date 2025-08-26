@@ -387,7 +387,7 @@ For this, we interpret it as an additive Runge-Kutta method as follows.
 ```@example ex:pendulum
 using BSeries
 
-# Störmer-Verlet method as additive RK method, see
+# Störmer-Verlet method written as an additive RK method, see
 # Hairer, Lubich, Wanner (2002)
 # Geometric numerical integration
 # Table II.2.1
