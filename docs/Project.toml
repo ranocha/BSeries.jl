@@ -7,20 +7,20 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
-SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
+SymPyPythonCall = "bc8888f7-b21e-4b7c-a06a-5d9c9496438c"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [compat]
-Documenter = "0.27"
+Documenter = "1"
 LaTeXStrings = "1"
-Latexify = "0.15, 0.16"
-OrdinaryDiffEq = "5, 6"
+Latexify = "0.16"
+OrdinaryDiffEq = "6"
 Plots = "1"
 PyCall = "1"
 StaticArrays = "1"
-SymEngine = "0.8, 0.9.1"
-SymPy = "1.0.53"
-Symbolics = "3, 4, 5"
+SymEngine = "0.13"
+SymPyPythonCall = "0.5"
+Symbolics = "6"
 
 [preferences.OrdinaryDiffEq]
 PrecompileAutoSpecialize = false

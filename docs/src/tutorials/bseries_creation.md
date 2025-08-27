@@ -51,7 +51,7 @@ order_of_accuracy(series)
 [RootedTrees.jl](https://github.com/SciML/RootedTrees.jl) also support additive
 Runge-Kutta methods via the wrapper
 [`AdditiveRungeKuttaMethod`](@ref BSeries.RootedTrees.AdditiveRungeKuttaMethod).
-For example, we can write the Störmer-Verlet method as additive Runge-Kutta
+For example, we can write the Störmer-Verlet method as an additive Runge-Kutta
 method following Table II.2.1 of Hairer, Lubich, and Wanner (2002).
 
 ```@example ex:SV

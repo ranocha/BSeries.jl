@@ -64,9 +64,7 @@ makedocs(modules = [BSeries],
              "API reference" => "api_reference.md",
              "Contributing" => "contributing.md",
              "License" => "license.md",
-         ],
-         # to make the GitHub action fail when doctests fail
-         strict = true)
+         ])
 
 deploydocs(repo = "github.com/ranocha/BSeries.jl",
            devbranch = "main",

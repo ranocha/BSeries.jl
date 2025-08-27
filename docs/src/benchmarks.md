@@ -15,7 +15,8 @@ Symbolic computations of [`modified_equation`](@ref)s and
 support
 
 - [SymEngine.jl](https://github.com/symengine/SymEngine.jl),
-- [SymPy.jl](https://github.com/JuliaPy/SymPy.jl), and
+- [SymPy.jl](https://github.com/JuliaPy/SymPy.jl),
+- [SymPyPythonCall.jl](https://github.com/jverzani/SymPyPythonCall.jl), and
 - [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl)
 
 as symbolic backends. Here, we compare them in the context of the explicit
@@ -70,12 +71,12 @@ end
 Next, we load the symbolic packages and run the benchmarks.
 
 ```@setup benchmark-nonlinear-oscillator
-using SymPy # generates annoying output online when conda installs sympy
+using SymPyPythonCall # generates annoying output online when conda installs sympy
 ```
 
 ```@example benchmark-nonlinear-oscillator
 using SymEngine: SymEngine
-using SymPy: SymPy
+using SymPyPythonCall: SymPyPythonCall
 using Symbolics: Symbolics
 
 println("SymEngine")
@@ -85,9 +86,9 @@ subs = SymEngine.subs
 benchmark(u, dt, subs, 8)
 
 println("SymPy")
-dt   = SymPy.symbols("dt")
-u    = SymPy.symbols("u1, u2")
-subs = SymPy.subs
+dt   = SymPyPythonCall.symbols("dt")
+u    = SymPyPythonCall.symbols("u1, u2")
+subs = SymPyPythonCall.subs
 benchmark(u, dt, subs, 8)
 
 println("Symbolics")
@@ -104,7 +105,7 @@ using InteractiveUtils
 versioninfo()
 
 using Pkg
-Pkg.status(["BSeries", "RootedTrees", "SymEngine", "SymPy", "Symbolics"],
+Pkg.status(["BSeries", "RootedTrees", "SymEngine", "SymPyPythonCall", "Symbolics"],
            mode=PKGMODE_MANIFEST)
 nothing # hide
 ```
@@ -117,6 +118,7 @@ of the Python packages
 
 - [`BSeries`](https://github.com/ketch/BSeries)
 - [`pybs`](https://github.com/henriksu/pybs)
+- [`orderconditions`](https://gitlab.com/v_dallerit/orderconditions)
 
 If you know about similar open source packages out there, please inform us, e.g.,
 by [creating an issue](https://github.com/ranocha/BSeries.jl/issues/new/choose)
@@ -302,6 +304,26 @@ end
 @time begin
   series = bseries(AverageVectorFieldMethod(), up_to_order)
   println(is_energy_preserving(series))
+end
+
+
+println("\nSymplecticity (conservation of quadratic invariants)")
+@time begin
+  # implicit midpoint method = first Gauss method
+  A = @SArray [1//2;;]
+  b = @SArray [1//1]
+  rk = RungeKuttaMethod(A, b)
+  series = bseries(rk, up_to_order)
+  println(is_symplectic(series))
+end
+
+@time begin
+  # implicit midpoint method = first Gauss method
+  A = @SArray [1//2;;]
+  b = @SArray [1//1]
+  rk = RungeKuttaMethod(A, b)
+  series = bseries(rk, up_to_order)
+  println(is_symplectic(series))
 end
 ```
 

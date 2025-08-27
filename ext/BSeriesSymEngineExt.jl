@@ -1,4 +1,4 @@
-module SymEngineExt
+module BSeriesSymEngineExt
 
 if isdefined(Base, :get_extension)
     using SymEngine: SymEngine
