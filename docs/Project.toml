@@ -20,7 +20,7 @@ PyCall = "1"
 StaticArrays = "1"
 SymEngine = "0.13"
 SymPyPythonCall = "0.4"
-Symbolics = "5"
+Symbolics = "6"
 
 [preferences.OrdinaryDiffEq]
 PrecompileAutoSpecialize = false
