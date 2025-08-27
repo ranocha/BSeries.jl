@@ -6,19 +6,38 @@ using BSeries.Latexify: latexify
 using LinearAlgebra: I
 using StaticArrays: @SArray, @SMatrix, @SVector
 
-using SymEngine: SymEngine
-using SymPy: SymPy
 using Symbolics: Symbolics
+using SymEngine: SymEngine
+# see
+# https://juliapy.github.io/PythonCall.jl/stable/pycall/#Tips
+# https://github.com/JuliaPy/PyCall.jl/issues/1056
+using SymPyPythonCall: SymPyPythonCall
+ENV["PYTHON"] = SymPyPythonCall.PythonCall.python_executable_path()
+import Pkg
+Pkg.build("SymPy")
+using SymPy: SymPy
 
 using Aqua: Aqua
 using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_imports
 
 @testset "BSeries" begin
     @testset "lazy representation of exact ODE solution" begin
-        exact = ExactSolution{Rational{Int}}()
+        exact = @inferred ExactSolution{Rational{Int}}()
         terms = collect(Iterators.take(exact, 5))
         @test terms == [1 // 1, 1 // 1, 1 // 2, 1 // 6, 1 // 3]
-        @test exact == ExactSolution(exact)
+        @test exact == @inferred ExactSolution(exact)
+    end
+
+    @testset "non-conflicting exports" begin
+        # classical RK4
+        A = [0 0 0 0
+             1//2 0 0 0
+             0 1//2 0 0
+             0 0 1 0]
+        b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+        rk = @inferred RungeKuttaMethod(A, b)
+        t = @inferred rootedtree([1, 2])
+        @test_nowarn @inferred derivative_weight(t, rk)
     end
 
     @testset "latexify" begin
@@ -27,7 +46,7 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
         b = @SArray [0, 1 // 1]
         c = @SArray [0, 1 // 2]
 
-        series_integrator = bseries(A, b, c, 2)
+        series_integrator = @inferred bseries(A, b, c, 2)
         @test_nowarn latexify(series_integrator)
         @test_nowarn latexify(series_integrator, cdot = false)
         @test_nowarn latexify(series_integrator, dt = SymEngine.symbols("h"))
@@ -39,7 +58,7 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
                 A = [0 0; 1/(2 * α) 0]
                 b = [1 - α, α]
                 c = [0, 1 / (2 * α)]
-                series_integrator = bseries(A, b, c, 3)
+                series_integrator = @inferred bseries(A, b, c, 3)
                 @test_nowarn latexify(series_integrator)
             end
 
@@ -47,11 +66,11 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
                 A = [0 0; 1//2 0]
                 b = [0, 1]
                 c = [0, 1 // 2]
-                series_integrator = bseries(A, b, c, 1)
+                series_integrator = @inferred bseries(A, b, c, 1)
                 @test_nowarn latexify(series_integrator)
 
                 h = SymEngine.symbols("h")
-                coefficients = modified_equation(series_integrator)
+                coefficients = @inferred modified_equation(series_integrator)
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
                 val2 = @test_nowarn latexify(coefficients / h, cdot = false)
@@ -65,7 +84,7 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
                 A = [0 0; 1/(2 * α) 0]
                 b = [1 - α, α]
                 c = [0, 1 / (2 * α)]
-                series_integrator = bseries(A, b, c, 3)
+                series_integrator = @inferred bseries(A, b, c, 3)
 
                 # Call this once to avoid failing tests with `@test_nowarn`
                 # caused by deprecation warnings from PyCall.jl. See also
@@ -79,13 +98,51 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
                 A = [0 0; 1//2 0]
                 b = [0, 1]
                 c = [0, 1 // 2]
-                series_integrator = bseries(A, b, c, 1)
+                series_integrator = @inferred bseries(A, b, c, 1)
                 @test_nowarn latexify(series_integrator)
 
                 h = SymPy.symbols("h", real = true)
-                coefficients = modified_equation(series_integrator)
+                coefficients = @inferred modified_equation(series_integrator)
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
+                @show typeof(h)
+                @test typeof(BSeries.latexify_default_dt(valtype(coefficients / h))) ==
+                      typeof(h)
+                val2 = @test_nowarn latexify(coefficients / h, cdot = false)
+                @test val1 == val2
+            end
+        end
+
+        @testset "SymPyPythonCall.jl" begin
+            @testset "Symbolic coefficients" begin
+                α = SymPyPythonCall.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred bseries(A, b, c, 3)
+
+                # Call this once to avoid failing tests with `@test_nowarn`
+                # caused by deprecation warnings from PyCall.jl. See also
+                # https://github.com/JuliaPy/PyCall.jl/pull/1042
+                deepcopy(α)
+
+                @test_nowarn latexify(series_integrator)
+            end
+
+            @testset "Divide by h" begin
+                A = [0 0; 1//2 0]
+                b = [0, 1]
+                c = [0, 1 // 2]
+                series_integrator = @inferred bseries(A, b, c, 1)
+                @test_nowarn latexify(series_integrator)
+
+                h = SymPyPythonCall.symbols("h", real = true)
+                coefficients = @inferred modified_equation(series_integrator)
+                val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
+                                             cdot = false)
+                @show typeof(h)
+                @test typeof(BSeries.latexify_default_dt(valtype(coefficients / h))) ==
+                      typeof(h)
                 val2 = @test_nowarn latexify(coefficients / h, cdot = false)
                 @test val1 == val2
             end
@@ -97,19 +154,22 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
                 A = [0 0; 1/(2 * α) 0]
                 b = [1 - α, α]
                 c = [0, 1 / (2 * α)]
-                series_integrator = bseries(A, b, c, 3)
-                @test_nowarn latexify(series_integrator)
+                series_integrator = @inferred bseries(A, b, c, 3)
+                # Do not test warnings due to deprecation warnings from Symbolics
+                # see https://github.com/ranocha/BSeries.jl/pull/210
+                # @test_nowarn latexify(series_integrator)
+                latexify(series_integrator)
             end
 
             @testset "Divide by h" begin
                 A = [0 0; 1//2 0]
                 b = [0, 1]
                 c = [0, 1 // 2]
-                series_integrator = bseries(A, b, c, 1)
+                series_integrator = @inferred bseries(A, b, c, 1)
                 @test_nowarn latexify(series_integrator)
 
                 Symbolics.@variables h
-                coefficients = modified_equation(series_integrator)
+                coefficients = @inferred modified_equation(series_integrator)
                 val1 = @test_nowarn latexify(coefficients, reduce_order_by = 1,
                                              cdot = false)
                 val2 = @test_nowarn latexify(coefficients / h, cdot = false)
@@ -581,7 +641,19 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
         end
     end # @testset "modified_equation"
 
-    @testset "elementary differentials" begin
+    @testset "elementary differentials and evaluate" begin
+        @testset "Rooted trees" begin
+            @testset "Issue #213" begin
+                y, h = SymPyPythonCall.symbols("y, h")
+                u = [y]
+                f = [-y]
+                series = @inferred bseries(AverageVectorFieldMethod(), 3)
+                expansion = first(evaluate(f, u, h, series))
+                reference = y - h * y + h^2 * y / 2 - h^3 * y / 4
+                @test expansion == reference
+            end
+        end
+
         @testset "Bicolored trees" begin
             @testset "Lotka-Volterra" begin
                 # Verified with Mathematica
@@ -760,6 +832,75 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
             # Lotka-Volterra model
             dt = SymPy.symbols("dt")
             p, q = u = SymPy.symbols("p, q")
+            f = [p * (2 - q), q * (p - 1)]
+
+            # Explicit Euler method
+            A = @SMatrix [0 // 1;;]
+            b = @SArray [1 // 1]
+            c = @SArray [0 // 1]
+
+            # tested with the Python package BSeries
+            series2 = modified_equation(f, u, dt, A, b, c, 2)
+            series2_reference = [
+                -dt * (-p * q * (p - 1) + p * (2 - q)^2) / 2 + p * (2 - q),
+                -dt * (p * q * (2 - q) + q * (p - 1)^2) / 2 + q * (p - 1),
+            ]
+            @test mapreduce(isequal, &, series2, series2_reference)
+
+            # tested with the Python package BSeries
+            series3 = modified_equation(f, u, dt, A, b, c, 3)
+            series3_reference = [
+                -dt^2 * p * q * (2 - q) * (p - 1) / 6 +
+                dt^2 *
+                (-p^2 * q * (2 - q) - p * q * (2 - q) * (p - 1) - p * q * (p - 1)^2 +
+                 p * (2 - q)^3) / 3 - dt * (-p * q * (p - 1) + p * (2 - q)^2) / 2 +
+                p * (2 - q),
+                dt^2 * p * q * (2 - q) * (p - 1) / 6 +
+                dt^2 *
+                (-p * q^2 * (p - 1) + p * q * (2 - q)^2 + p * q * (2 - q) * (p - 1) +
+                 q * (p - 1)^3) / 3 - dt * (p * q * (2 - q) + q * (p - 1)^2) / 2 +
+                q * (p - 1),
+            ]
+            @test mapreduce(iszero ∘ SymPy.expand, &, series3 - series3_reference)
+
+            # tested with the Python package BSeries
+            series4 = modified_equation(f, u, dt, A, b, c, 4)
+            series4_reference = [
+                -dt^3 *
+                (-2 * p^2 * q * (2 - q) * (p - 1) + 2 * p * q * (2 - q) * (p - 1) * (q - 2)) /
+                12 -
+                dt^3 * (-p^2 * q * (2 - q)^2 + p * q^2 * (p - 1)^2 +
+                 p * q * (1 - p) * (2 - q) * (p - 1) + p * q * (2 - q) * (p - 1) * (q - 2)) /
+                12 -
+                dt^3 * (p^2 * q^2 * (p - 1) - 2 * p^2 * q * (2 - q)^2 -
+                 p^2 * q * (2 - q) * (p - 1) - p * q * (2 - q)^2 * (p - 1) -
+                 p * q * (2 - q) * (p - 1)^2 - p * q * (p - 1)^3 + p * (2 - q)^4) / 4 -
+                dt^2 * p * q * (2 - q) * (p - 1) / 6 +
+                dt^2 *
+                (-p^2 * q * (2 - q) - p * q * (2 - q) * (p - 1) - p * q * (p - 1)^2 +
+                 p * (2 - q)^3) / 3 - dt * (-p * q * (p - 1) + p * (2 - q)^2) / 2 +
+                p * (2 - q),
+                -dt^3 *
+                (-2 * p * q^2 * (2 - q) * (p - 1) + 2 * p * q * (2 - q) * (p - 1)^2) / 12 -
+                dt^3 *
+                (p^2 * q * (2 - q)^2 - p * q^2 * (p - 1)^2 + p * q * (2 - q)^2 * (p - 1) +
+                 p * q * (2 - q) * (p - 1)^2) / 12 -
+                dt^3 * (-p^2 * q^2 * (2 - q) - p * q^2 * (2 - q) * (p - 1) -
+                 2 * p * q^2 * (p - 1)^2 + p * q * (2 - q)^3 + p * q * (2 - q)^2 * (p - 1) +
+                 p * q * (2 - q) * (p - 1)^2 + q * (p - 1)^4) / 4 +
+                dt^2 * p * q * (2 - q) * (p - 1) / 6 +
+                dt^2 *
+                (-p * q^2 * (p - 1) + p * q * (2 - q)^2 + p * q * (2 - q) * (p - 1) +
+                 q * (p - 1)^3) / 3 - dt * (p * q * (2 - q) + q * (p - 1)^2) / 2 +
+                q * (p - 1),
+            ]
+            @test mapreduce(iszero ∘ SymPy.expand, &, series4 - series4_reference)
+        end
+
+        @testset "SymPyPythonCall.jl" begin
+            # Lotka-Volterra model
+            dt = SymPyPythonCall.symbols("dt")
+            p, q = u = SymPyPythonCall.symbols("p, q")
             f = [p * (2 - q), q * (p - 1)]
 
             # Explicit Euler method
@@ -1086,6 +1227,56 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
                                            dt),
                                 dt => 0)
                 @test iszero(SymPy.expand(s5 - s5_reference))
+            end
+        end
+
+        @testset "SymPyPythonCall.jl" begin
+            dt = SymPyPythonCall.symbols("dt")
+            α, β, γ = SymPyPythonCall.symbols("alpha, beta, gamma")
+            u1, u2, u3 = u = SymPyPythonCall.symbols("u1 u2 u3")
+            f = [α * u[2] * u[3], β * u[3] * u[1], γ * u[1] * u[2]]
+
+            # Implicit midpoint method
+            A = @SMatrix [1 // 2;;]
+            b = @SArray [1 // 1]
+            c = @SArray [1 // 2]
+
+            # See eq. (12) of
+            # - Philippe Chartier, Ernst Hairer and Gilles Vilmart (2007)
+            #   Numerical integrators based on modified differential equations
+            #   [DOI: 10.1090/S0025-5718-07-01967-9](https://doi.org/10.1090/S0025-5718-07-01967-9)
+
+            series = modifying_integrator(f, u, dt, A, b, c, 5)
+            # Dirty workaround used also for the other symbolic setups - just make
+            # it consistent here, although we could use another approach with SymPyPythonCall.jl.
+            # We differentiate the expression and set `dt` to zero to get the corresponding
+            # coefficient divided by factorial(how often we needed to differentiate).
+            s3_reference = -(α * β * u3^2 + α * γ * u2^2 + β * γ * u1^2) / 12
+            for i in eachindex(f)
+                s3 = SymPyPythonCall.subs(1 // 2 *
+                                          SymPyPythonCall.diff(SymPyPythonCall.diff((series[i] -
+                                                                                     f[i]) /
+                                                                                    f[i],
+                                                                                    dt),
+                                                               dt),
+                                          dt => 0)
+                @test iszero(SymPyPythonCall.expand(s3 - s3_reference))
+            end
+
+            s5_reference = 6 // 5 * s3_reference^2 +
+                           1 // 60 * α * β * γ *
+                           (β * u1^2 * u3^2 + γ * u2^2 * u1^2 + α * u3^2 * u2^2)
+            for i in eachindex(f)
+                s5 = SymPyPythonCall.subs(1 // 24 *
+                                          SymPyPythonCall.diff(SymPyPythonCall.diff(SymPyPythonCall.diff(SymPyPythonCall.diff((series[i] -
+                                                                                                                               f[i]) /
+                                                                                                                              f[i],
+                                                                                                                              dt),
+                                                                                                         dt),
+                                                                                    dt),
+                                                               dt),
+                                          dt => 0)
+                @test iszero(SymPyPythonCall.expand(s5 - s5_reference))
             end
         end
 
@@ -1632,7 +1823,7 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
             end
 
             # TODO: This is currently not implemented
-            @test_broken is_energy_preserving(series)
+            @test_skip is_energy_preserving(series)
         end
 
         @testset "SymPy.jl" begin
@@ -1651,7 +1842,26 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
             @test @inferred(order_of_accuracy(series)) == 4
 
             # TODO: This is currently not implemented
-            @test_broken is_energy_preserving(series)
+            @test_skip is_energy_preserving(series)
+        end
+
+        @testset "SymPyPythonCall.jl" begin
+            # Examples in Section 5.3.1
+            α = SymPyPythonCall.symbols("α", real = true)
+            α1 = 1 / (36 * α - 7)
+            M = [α1+4 -6 * α1-6 6*α1
+                 -6 * α1-6 36 * α1+12 -36*α1
+                 6*α1 -36*α1 36*α1]
+            csrk = @inferred ContinuousStageRungeKuttaMethod(M)
+
+            # TODO: This is no type stable at the moment
+            # series = @inferred bseries(csrk, 5)
+            series = bseries(csrk, 5)
+
+            @test @inferred(order_of_accuracy(series)) == 4
+
+            # TODO: This is currently not implemented
+            @test_skip is_energy_preserving(series)
         end
 
         @testset "Symbolics.jl" begin
@@ -1672,7 +1882,7 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
             # @test @inferred(order_of_accuracy(series)) == 4
 
             # # TODO: This is currently not implemented
-            @test_broken is_energy_preserving(series)
+            @test_skip is_energy_preserving(series)
         end
     end
 
@@ -2142,7 +2352,20 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
                 series_integrator = @inferred(bseries(A, b, c, 2))
                 @test @inferred(order_of_accuracy(series_integrator)) == 2
                 # TODO: This test is currently broken and throws an error
-                @test_broken is_energy_preserving(series_integrator)
+                @test_skip is_energy_preserving(series_integrator)
+            end
+
+            @testset "SymPyPythonCall.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymPyPythonCall.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 2))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                # TODO: This test is currently broken and throws an error
+                @test_skip is_energy_preserving(series_integrator)
             end
 
             @testset "Symbolics.jl" begin
@@ -2160,6 +2383,279 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
         end
     end
 
+    @testset "Symplecticity (preserving quadratic invariants)" begin
+        @testset "Classical RK4 method" begin
+            @testset "rational coefficients" begin
+                A = [0//1 0//1 0//1 0//1
+                     1//2 0//1 0//1 0//1
+                     0//1 1//2 0//1 0//1
+                     0//1 0//1 1//1 0//1]
+                b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+                rk = RungeKuttaMethod(A, b)
+                series = bseries(rk, 6)
+                @test @inferred(order_of_symplecticity(series)) == 4
+                @test @inferred(is_symplectic(series)) == false
+            end
+
+            @testset "floating point coefficients" begin
+                A = [0 0 0 0
+                     0.5 0 0 0
+                     0 0.5 0 0
+                     0 0 1 0]
+                b = [1 / 6, 1 / 3, 1 / 3, 1 / 6]
+                rk = RungeKuttaMethod(A, b)
+                series = bseries(rk, 6)
+                @test @inferred(order_of_symplecticity(series)) == 4
+                @test @inferred(is_symplectic(series)) == false
+            end
+
+            @testset "rational coefficients, kwargs" begin
+                A = [0//1 0//1 0//1 0//1
+                     1//2 0//1 0//1 0//1
+                     0//1 1//2 0//1 0//1
+                     0//1 0//1 1//1 0//1]
+                b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+                rk = RungeKuttaMethod(A, b)
+                series = bseries(rk, 6)
+                # With big tolerances, the series is "symplectic"
+                @test @inferred(order_of_symplecticity(series; atol = 1)) == 6
+                @test @inferred(is_symplectic(series; atol = 1)) == true
+                @test @inferred(order_of_symplecticity(series; rtol = 0.2)) == 5
+                @test @inferred(is_symplectic(series; rtol = 0.2)) == false
+            end
+        end
+
+        @testset "Average Vector Field (AVF)" begin
+            series = @inferred bseries(AverageVectorFieldMethod(), 6)
+            @test @inferred(order_of_symplecticity(series)) ==
+                  @inferred(order_of_accuracy(series)) == 2
+            @test @inferred(is_symplectic(series)) == false
+
+            @testset "$T" for T in [Float32, Float64, BigFloat]
+                series = @inferred bseries(AverageVectorFieldMethod(T), 6)
+                @test @inferred(order_of_symplecticity(series)) ==
+                      @inferred(order_of_accuracy(series)) == 2
+                @test @inferred(is_symplectic(series)) == false
+            end
+        end
+
+        @testset "Not a series of a consistent integrator" begin
+            series = @inferred bseries(AverageVectorFieldMethod(), 6)
+            series[rootedtree(Int[])] = 0
+            @test @inferred(order_of_symplecticity(series)) == 0
+            @test @inferred(is_symplectic(series)) == false
+        end
+
+        @testset "Implicit midpoint method (symplectic)" begin
+            @testset "rational coefficients" begin
+                A = @SMatrix [1 // 2;;]
+                b = @SVector [1]
+                rk = RungeKuttaMethod(A, b)
+                series = @inferred bseries(rk, 9)
+                @test @inferred(order_of_accuracy(series)) == 2
+                @test @inferred is_symplectic(series)
+            end
+
+            @testset "floating point coefficients" begin
+                A = @SMatrix [0.5;;]
+                b = @SVector [1]
+                rk = RungeKuttaMethod(A, b)
+                series = @inferred bseries(rk, 9)
+                @test @inferred(order_of_accuracy(series)) == 2
+                @test @inferred is_symplectic(series)
+            end
+        end
+
+        @testset "Gauss method (s = 2)" begin
+            # Butcher (2016)
+            # Numerical methods for ordinary differential equations
+            # Section 342
+            A = [1/4 (1 / 4-sqrt(3) / 6);
+                 (1 / 4+sqrt(3) / 6) 1/4]
+            b = [1 / 2, 1 / 2]
+            rk = @inferred RungeKuttaMethod(A, b)
+            series = @inferred bseries(rk, 9)
+            @test @inferred(order_of_accuracy(series)) == 4
+            atol = eps(valtype(series))
+            rtol = sqrt(eps(valtype(series)))
+            @test @inferred(is_symplectic(series; atol = atol, rtol = rtol))
+        end
+
+        @testset "Gauss method (s = 3)" begin
+            # Butcher (2016)
+            # Numerical methods for ordinary differential equations
+            # Section 342
+            A = [5/36 2 / 9-sqrt(15) / 15 5 / 36-sqrt(15) / 30;
+                 5 / 36+sqrt(15) / 24 2/9 5 / 36-sqrt(15) / 24;
+                 5 / 36+sqrt(15) / 30 2 / 9+sqrt(15) / 15 5/36]
+            b = [5 / 18, 4 / 9, 5 / 18]
+            rk = @inferred RungeKuttaMethod(A, b)
+            series = @inferred bseries(rk, 9)
+            @test @inferred(order_of_accuracy(series)) == 6
+            atol = eps(valtype(series))
+            rtol = sqrt(eps(valtype(series)))
+            @test @inferred(is_symplectic(series; atol = atol, rtol = rtol))
+        end
+
+        @testset "Pseudo-symplectic method PS(2, 4, 2)" begin
+            # Aubry, Chartier (1998)
+            # Pseudo-symplectic Runge-Kutta methods
+            k = 3
+            A = [0 0 0;
+                 (8 * k - 3)//(8k - 4) 0 0;
+                 (16k^2 - 8 * k + 1)//(2 * k * (8k - 3)) (2k - 1)//(2 * k * (8k - 3)) 0]
+            b = [(3k - 1) // (8k - 3), (-2 * (2k - 1)^2) // (8k - 3), k]
+            c = [0, (8k - 3) // (8k - 4), 1]
+            rk = @inferred RungeKuttaMethod(A, b)
+            series = @inferred bseries(rk, 6)
+            @test @inferred(order_of_accuracy(series)) == 2
+            @test @inferred(order_of_symplecticity(series)) == 4
+            @test @inferred(is_symplectic(series)) == false
+        end
+
+        @testset "Symplectic Euler method" begin
+            @testset "rational coefficients" begin
+                if VERSION >= v"1.10"
+                    ex_euler = @inferred RungeKuttaMethod(@SMatrix([0 // 1]), @SVector [1])
+                    im_euler = @inferred RungeKuttaMethod(@SMatrix([1 // 1]), @SVector [1])
+                else
+                    # On Julia v1.6, the `@inferred` check fails in CI
+                    ex_euler = RungeKuttaMethod(@SMatrix([0 // 1]), @SVector [1])
+                    im_euler = RungeKuttaMethod(@SMatrix([1 // 1]), @SVector [1])
+                end
+                ark = @inferred AdditiveRungeKuttaMethod([ex_euler, im_euler])
+                series = @inferred bseries(ark, 9)
+                # needs to be implemented for colored rooted trees
+                @test_throws ArgumentError @inferred is_symplectic(series)
+            end
+
+            @testset "floating point coefficients" begin
+                if VERSION >= v"1.10"
+                    ex_euler = @inferred RungeKuttaMethod(@SMatrix([0.0]), @SVector [1.0])
+                    im_euler = @inferred RungeKuttaMethod(@SMatrix([1.0]), @SVector [1.0])
+                else
+                    # On Julia v1.6, the `@inferred` check fails in CI
+                    ex_euler = RungeKuttaMethod(@SMatrix([0.0]), @SVector [1.0])
+                    im_euler = RungeKuttaMethod(@SMatrix([1.0]), @SVector [1.0])
+                end
+                ark = @inferred AdditiveRungeKuttaMethod([ex_euler, im_euler])
+                series = @inferred bseries(ark, 9)
+                # needs to be implemented for colored rooted trees
+                @test_skip @inferred is_symplectic(series)
+            end
+        end
+
+        @testset "Störmer-Verlet" begin
+            @testset "rational coefficients" begin
+                # Hairer, Lubich, Wanner (2002)
+                # Geometric numerical integration
+                # Table II.2.1
+                As = [
+                    [0 0; 1//2 1//2],
+                    [1//2 0; 1//2 0],
+                ]
+                bs = [
+                    [1 // 2, 1 // 2],
+                    [1 // 2, 1 // 2],
+                ]
+                ark = AdditiveRungeKuttaMethod(As, bs)
+                series = @inferred bseries(ark, 9)
+                # needs to be implemented for colored rooted trees
+                @test_skip @inferred is_symplectic(series)
+            end
+
+            @testset "floating point coefficients" begin
+                # Hairer, Lubich, Wanner (2002)
+                # Geometric numerical integration
+                # Table II.2.1
+                As = [
+                    [0.0 0.0; 0.5 0.52],
+                    [0.5 0.0; 0.5 0.0],
+                ]
+                bs = [
+                    [0.5, 0.5],
+                    [0.5, 0.5],
+                ]
+                ark = AdditiveRungeKuttaMethod(As, bs)
+                series = @inferred bseries(ark, 9)
+                # needs to be implemented for colored rooted trees
+                @test_skip @inferred is_symplectic(series)
+            end
+        end
+
+        @testset "Lobatto IIIA-IIIB pair (s = 3)" begin
+            # Hairer, Lubich, Wanner (2002)
+            # Geometric numerical integration
+            # Table II.2.2
+            As = [
+                [0 0 0; 5//24 1//3 -1//24; 1//6 2//3 1//6],
+                [1//6 -1//6 0; 1//6 1//3 0; 1//6 5//6 0],
+            ]
+            bs = [
+                [1 // 6, 2 // 3, 1 // 6],
+                [1 // 6, 2 // 3, 1 // 6],
+            ]
+            ark = AdditiveRungeKuttaMethod(As, bs)
+            series = @inferred bseries(ark, 9)
+            # needs to be implemented for colored rooted trees
+            @test_skip @inferred is_symplectic(series)
+        end
+
+        @testset "Symbolic coefficients" begin
+            @testset "SymEngine.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # symplectic up to order two.
+                α = SymEngine.symbols("α")
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
+            end
+
+            @testset "SymPy.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymPy.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
+            end
+
+            @testset "SymPyPythonCall.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                α = SymPyPythonCall.symbols("α", real = true)
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
+            end
+
+            @testset "Symbolics.jl" begin
+                # This method is second-order accurate. Thus, it is
+                # energy-preserving up to order two.
+                Symbolics.@variables α
+                A = [0 0; 1/(2 * α) 0]
+                b = [1 - α, α]
+                c = [0, 1 / (2 * α)]
+                series_integrator = @inferred(bseries(A, b, c, 3))
+                @test @inferred(order_of_accuracy(series_integrator)) == 2
+                @test @inferred(order_of_symplecticity(series_integrator)) == 2
+                @test @inferred(is_symplectic(series_integrator)) == false
+            end
+        end
+    end
+
     @testset "Aqua" begin
         if VERSION < v"1.7"
             Aqua.test_all(BSeries;
@@ -2172,6 +2668,7 @@ using ExplicitImports: check_no_implicit_imports, check_no_stale_explicit_import
             Aqua.test_all(BSeries;
                           ambiguities = (; exclude = [
                                              getindex, # https://github.com/stevengj/LaTeXStrings.jl/issues/61
+                                             write, # https://github.com/JuliaStrings/LaTeXStrings.jl/issues/74
                                          ]),
                           # Requires.jl is not loaded on new versions of Julia
                           stale_deps = (; ignore = [:Requires]))

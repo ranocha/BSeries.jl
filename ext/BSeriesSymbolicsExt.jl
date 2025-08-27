@@ -1,4 +1,4 @@
-module SymbolicsExt
+module BSeriesSymbolicsExt
 
 if isdefined(Base, :get_extension)
     using Symbolics: Symbolics

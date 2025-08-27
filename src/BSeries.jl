@@ -44,6 +44,8 @@ export renormalize!
 
 export is_energy_preserving, energy_preserving_order
 
+export order_of_symplecticity, is_symplectic
+
 # Types used for traits
 # These traits may decide between different algorithms based on the
 # corresponding complexity etc.
@@ -330,11 +332,13 @@ end
 
 Determine the order of accuracy of the B-series `series`. By default, the
 comparison with the coefficients of the exact solution is performed using
-`isequal`. If keyword arguments such as absolute/relative tolerances `atol`/`rtol`
-are given or floating point numbers are used, the comparison is performed using
-`isapprox` and the keyword arguments `kwargs...` are forwarded.
+`isequal`. If keyword arguments such as absolute/relative tolerances
+`atol`/`rtol` are given or floating point numbers are used, the comparison
+is performed using `isapprox` and the keyword arguments `kwargs...` are
+forwarded.
 
-See also [`order`](@ref), [`ExactSolution`](@ref).
+See also [`order`](@ref), [`ExactSolution`](@ref),
+[`order_of_symplecticity`](@ref).
 """
 function order_of_accuracy(series::TruncatedBSeries; kwargs...)
     if isempty(kwargs) && !(valtype(series) <: AbstractFloat)
@@ -746,7 +750,7 @@ function RootedTrees.elementary_weight(t::RootedTree,
     #   Φ(t) = ∫₀¹ B_τ ϕ_τ(t₁) ... ϕ_τ(tₘ) dτ
     # where
     #   B_ζ = A_1ζ
-    # Since the polynomial matrix `A_τζ` is stored as a polyomial in ζ
+    # Since the polynomial matrix `A_τζ` is stored as a polynomial in ζ
     # with coefficients as polynomials in τ, setting `τ = 1` means that
     # we need to evaluate all coefficients at 1 and interpret the result
     # as a polynomial in τ.
@@ -769,11 +773,12 @@ function RootedTrees.elementary_weight(t::RootedTree,
 end
 
 # See Miyatake & Butcher (2016), p. 1998, right before eq. (2.8)
-function derivative_weight(t::RootedTree, A_τζ, csrk::ContinuousStageRungeKuttaMethod)
+function RootedTrees.derivative_weight(t::RootedTree,
+                                       A_τζ, csrk::ContinuousStageRungeKuttaMethod)
 
     # The derivative weight ϕ_τ is given as
     #   ϕ_τ(t) = ∫₀¹ A_τζ ϕ_ζ(t₁) ... ϕ_ζ(tₘ) dζ
-    # Since the polynomial matrix `A_τζ` is stored as a polyomial in ζ
+    # Since the polynomial matrix `A_τζ` is stored as a polynomial in ζ
     # with coefficients as polynomials in τ, we need to interpret the
     # return value of the inner `derivative_weight` as the constant
     # polynomial in ζ with coefficients given as polynomials in τ.
@@ -1536,7 +1541,16 @@ function elementary_differentials(f::AbstractVector, u, order)
     differentials = OrderedDict{RootedTree{Int, Vector{Int}}, typeof(f)}()
 
     t = rootedtree(Int[])
-    differentials[t] = one.(f)
+    if typeof(u) == typeof(f)
+        differentials[t] = u
+    else
+        # `u` may be a tuple of symbolic variables
+        # Since we determine the type of the values of `differentials` based on
+        # the type of `f`, we need to create a vector of the same type as `f`.
+        val = zero(f)
+        val .= u
+        differentials[t] = val
+    end
 
     t = rootedtree([1])
     differentials[t] = f
@@ -1604,15 +1618,19 @@ function compute_derivative end
 @static if !isdefined(Base, :get_extension)
     function __init__()
         @require Symbolics="0c5d862f-8b57-4792-8d23-62f2024744c7" begin
-            include("../ext/SymbolicsExt.jl")
+            include("../ext/BSeriesSymbolicsExt.jl")
         end
 
         @require SymEngine="123dc426-2d89-5057-bbad-38513e3affd8" begin
-            include("../ext/SymEngineExt.jl")
+            include("../ext/BSeriesSymEngineExt.jl")
         end
 
         @require SymPy="24249f21-da20-56a4-8eb1-6a02cf4ae2e6" begin
-            include("../ext/SymPyExt.jl")
+            include("../ext/BSeriesSymPyExt.jl")
+        end
+
+        @require SymPyPythonCall="bc8888f7-b21e-4b7c-a06a-5d9c9496438c" begin
+            include("../ext/BSeriesSymPyPythonCallExt.jl")
         end
     end
 end
@@ -1756,7 +1774,7 @@ energy-preserving for Hamiltonian problems.
 It requires a `max_order` so that it does not run forever if the order up to
 which the method is energy-preserving is too big or infinite.
 
-See also [`is_energy_preserving`](@ref)
+See also [`is_energy_preserving`](@ref).
 """
 function energy_preserving_order(rk::RungeKuttaMethod, max_order)
     p = 0
@@ -2217,6 +2235,129 @@ function equivalent_trees(tree)
     unique!(equivalent_trees_set)
 
     return equivalent_trees_set
+end
+
+#####################################################################
+# Symplectic = preserving quadratic invariants
+
+"""
+    satisfied_for_trees_of_order(condition, series, order,
+                                 iterator = RootedTreeIterator)
+
+Checks whether a given `condition` is satisfied for all pairs of trees
+`t1` and `t2` with given `order == order(t1) + order(t2)` for a given
+`series`. Which trees are considered is determined by the `iterator`.
+
+The `condition` is called as `condition(series, t1, t2)` and should return
+`true` if the condition is satisfied and `false` otherwise.
+"""
+function satisfied_for_trees_up_to_order(condition, series, order,
+                                         iterator = RootedTreeIterator)
+    for o1 in 1:(order - 1)
+        o2 = order - o1
+        for t1 in iterator(o1)
+            for t2 in iterator(o2)
+                if !condition(series, t1, t2)
+                    return false
+                end
+            end
+        end
+    end
+    return true
+end
+
+"""
+    order_of_symplecticity(series_integrator; kwargs...)
+
+Determine the order of symplecticity of the B-series `series_integrator`,
+i.e., the order up to which quadratic invariants are conserved.
+By default, the comparison of the coefficients entering the conditions is
+performed using `isequal`. If keyword arguments such as absolute/relative
+tolerances `atol`/`rtol` are given or floating point numbers are used, the
+comparison is performed using `isapprox` and the keyword arguments
+`kwargs...` are forwarded.
+
+See also [`is_symplectic`](@ref),
+[`order`](@ref), [`order_of_accuracy`](@ref).
+"""
+function order_of_symplecticity(series::TruncatedBSeries; kwargs...)
+    # TODO: Implement this for colored trees
+    #       Theorem IV.7.2 of Hairer, Lubich, Wanner (2006) states the
+    #       following conditions.
+    #       1) If the coefficients a(t) satisfy
+    #            a(u ∘ v) + a(v ∘ u) = a(u) * a(v) for u ∈ TP_p, v ∈ TP_q,
+    #          and
+    #            a(τ) is independent of the colour of the root of τ,
+    #          the method exactly conserves quadratic invariants Q(p, q)
+    #          and it is symplectic for general Hamiltonian systems.
+    #        2) If the coefficients a(τ) satisfy only
+    #             a(u ∘ v) + a(v ∘ u) = a(u) * a(v) for u ∈ TP_p, v ∈ TP_q,
+    #           the method exactly conserves quadratic invariants Q(p,q)
+    #           for problems of the form p' = f1(q), q' = f2(p), and it
+    #           is symplectic for separable Hamiltonian systems where
+    #           H(p,q) = T(p) + U(q).
+    #        How do we want to handle the two cases? The general interface
+    #        should be that we check the first condition by default. Then,
+    #        we need to different `iterator`s for the two cases.
+    #        It should also be possible to specify that we want to check
+    #        only the second case, i.e., separable Hamiltonian systems.
+    if !(keytype(series) <: RootedTree)
+        throw(ArgumentError("This method is only implemented for single-colored rooted trees"))
+    end
+
+    if isempty(kwargs) && !(valtype(series) <: AbstractFloat)
+        compare = isequal
+    else
+        compare = (a, b) -> isapprox(a, b; kwargs...)
+    end
+
+    t12 = copy(first(keys(series)))
+    t21 = copy(first(keys(series)))
+
+    condition = let compare = compare, t12 = t12, t21 = t21
+        function (series, t1, t2)
+            butcher_product!(t12, t1, t2)
+            butcher_product!(t21, t2, t1)
+            compare(series[t12] + series[t21], series[t1] * series[t2])
+        end
+    end
+    iterator = _iterator_type(series)
+
+    if order(series) < 1
+        return 0
+    end
+
+    t = first(iterator(0))
+    if !compare(series[t], one(valtype(series)))
+        return 0
+    end
+
+    for o in 1:order(series)
+        if !satisfied_for_trees_up_to_order(condition, series, o, iterator)
+            return o - 1
+        end
+    end
+
+    return order(series)
+end
+
+"""
+    is_symplectic(series_integrator; kwargs...)::Bool
+
+This function checks whether the B-series `series_integrator` of a time
+integration method is symplectic (conserves quadratic invariants) - up to the
+[`order`](@ref) of `series_integrator`.
+
+By default, the comparison of the coefficients entering the conditions is
+performed using `isequal`. If keyword arguments such as absolute/relative
+tolerances `atol`/`rtol` are given or floating point numbers are used, the
+comparison is performed using `isapprox` and the keyword arguments
+`kwargs...` are forwarded.
+
+See also [`order_of_symplecticity`](@ref).
+"""
+function is_symplectic(series::TruncatedBSeries; kwargs...)
+    order_of_symplecticity(series; kwargs...) == order(series)
 end
 
 end # module
