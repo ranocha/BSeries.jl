@@ -47,6 +47,10 @@ using Aqua: Aqua
 
         series_integrator = @inferred bseries(A, b, c, 2)
         @test_nowarn latexify(series_integrator)
+        # Call this once without `@test_nowarn` to avoid
+        # deprecation warnings introduced in newer versions of
+        # Latexify.jl (v.16.?)
+        latexify(series_integrator, cdot = false)
         @test_nowarn latexify(series_integrator, cdot = false)
         @test_nowarn latexify(series_integrator, dt = SymEngine.symbols("h"))
         @test_nowarn latexify(series_integrator - series_integrator)
