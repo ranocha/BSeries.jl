@@ -40,7 +40,7 @@ export ContinuousStageRungeKuttaMethod
 
 export MultirateInfinitesimalSplitMethod
 
-export renormalize!
+export renormalize, renormalize!
 
 export is_energy_preserving, energy_preserving_order
 
@@ -441,6 +441,41 @@ function bseries(f::Function, order, iterator_type = RootedTreeIterator)
     end
 
     return series
+end
+
+"""
+    bseries(exact::ExactSolution, order)
+
+Compute the B-series of the exact solution of an ordinary differential
+equation up to a prescribed integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+
+# Examples
+
+```jldoctest
+julia> series = bseries(ExactSolution{Rational{Int}}(), 4)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
+  RootedTree{Int64}: Int64[]      => 1
+  RootedTree{Int64}: [1]          => 1
+  RootedTree{Int64}: [1, 2]       => 1//2
+  RootedTree{Int64}: [1, 2, 3]    => 1//6
+  RootedTree{Int64}: [1, 2, 2]    => 1//3
+  RootedTree{Int64}: [1, 2, 3, 4] => 1//24
+  RootedTree{Int64}: [1, 2, 3, 3] => 1//12
+  RootedTree{Int64}: [1, 2, 3, 2] => 1//8
+  RootedTree{Int64}: [1, 2, 2, 2] => 1//4
+```
+"""
+function bseries(exact::ExactSolution, order)
+    bseries(order) do t, series
+        return exact[t]
+    end
 end
 
 """
@@ -1758,6 +1793,54 @@ by the `symmetry` of the corresponding tree.
     This breaks assumptions made on the representation of a B-series.
     The modified B-series should not be passed to any other function assuming
     the default normalization.
+
+See also [`renormalize`](@ref).
+
+# Examples
+
+```jldoctest
+julia> series = bseries(ExactSolution{Rational{Int}}(), 4)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
+  RootedTree{Int64}: Int64[]      => 1
+  RootedTree{Int64}: [1]          => 1
+  RootedTree{Int64}: [1, 2]       => 1//2
+  RootedTree{Int64}: [1, 2, 3]    => 1//6
+  RootedTree{Int64}: [1, 2, 2]    => 1//3
+  RootedTree{Int64}: [1, 2, 3, 4] => 1//24
+  RootedTree{Int64}: [1, 2, 3, 3] => 1//12
+  RootedTree{Int64}: [1, 2, 3, 2] => 1//8
+  RootedTree{Int64}: [1, 2, 2, 2] => 1//4
+
+julia> renormalize!(series)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
+  RootedTree{Int64}: Int64[]      => 1
+  RootedTree{Int64}: [1]          => 1
+  RootedTree{Int64}: [1, 2]       => 1//2
+  RootedTree{Int64}: [1, 2, 3]    => 1//6
+  RootedTree{Int64}: [1, 2, 2]    => 1//6
+  RootedTree{Int64}: [1, 2, 3, 4] => 1//24
+  RootedTree{Int64}: [1, 2, 3, 3] => 1//24
+  RootedTree{Int64}: [1, 2, 3, 2] => 1//8
+  RootedTree{Int64}: [1, 2, 2, 2] => 1//24
+
+julia> series - ExactSolution(series)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
+  RootedTree{Int64}: Int64[]      => 0
+  RootedTree{Int64}: [1]          => 0
+  RootedTree{Int64}: [1, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3]    => 0
+  RootedTree{Int64}: [1, 2, 2]    => -1//6
+  RootedTree{Int64}: [1, 2, 3, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 3] => -1//24
+  RootedTree{Int64}: [1, 2, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2] => -5//24
+```
+
+Please note that `series` has been modified in-place by `renormalize!(series)`.
+Thus, the last line shows that `series` is no longer equal to the B-series of
+the exact solution. Please use [`renormalize`](@ref) to create a renormalized
+B-series without changing the input B-series.
+
 """
 function renormalize!(series)
     for t in keys(series)
@@ -1765,6 +1848,50 @@ function renormalize!(series)
     end
     return series
 end
+
+"""
+    renormalize(series)
+
+This function creates a modified B-series where each coefficient
+is divided by the `symmetry` of the corresponding tree.
+
+!!! warning
+    This breaks assumptions made on the representation of a B-series.
+    The newly created B-series should not be passed to any other function
+    assuming the default normalization.
+
+See also [`renormalize!`](@ref).
+
+# Examples
+
+```jldoctest
+julia> series = bseries(ExactSolution{Rational{Int}}(), 4)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
+  RootedTree{Int64}: Int64[]      => 1
+  RootedTree{Int64}: [1]          => 1
+  RootedTree{Int64}: [1, 2]       => 1//2
+  RootedTree{Int64}: [1, 2, 3]    => 1//6
+  RootedTree{Int64}: [1, 2, 2]    => 1//3
+  RootedTree{Int64}: [1, 2, 3, 4] => 1//24
+  RootedTree{Int64}: [1, 2, 3, 3] => 1//12
+  RootedTree{Int64}: [1, 2, 3, 2] => 1//8
+  RootedTree{Int64}: [1, 2, 2, 2] => 1//4
+
+julia> renormalize(series)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entries:
+  RootedTree{Int64}: Int64[]      => 1
+  RootedTree{Int64}: [1]          => 1
+  RootedTree{Int64}: [1, 2]       => 1//2
+  RootedTree{Int64}: [1, 2, 3]    => 1//6
+  RootedTree{Int64}: [1, 2, 2]    => 1//6
+  RootedTree{Int64}: [1, 2, 3, 4] => 1//24
+  RootedTree{Int64}: [1, 2, 3, 3] => 1//24
+  RootedTree{Int64}: [1, 2, 3, 2] => 1//8
+  RootedTree{Int64}: [1, 2, 2, 2] => 1//24
+```
+
+"""
+renormalize(series) = renormalize!(copy(series))
 
 """
     energy_preserving_order(rk::RungeKuttaMethod, max_order)
