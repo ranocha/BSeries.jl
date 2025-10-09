@@ -86,9 +86,16 @@ coeffs4
 
 We can also get the B-series of the exact solution:
 
-
 ```@example bseries-basics
 coeffs_ex = ExactSolution(coeffs4)
+```
+
+You can also generate the exact solution B-series directly without
+first generating a Runge-Kutta method B-series. The result is the same:
+
+```@example bseries-basics
+coeffs_ex_new = bseries(ExactSolution{Rational{Int}}(), 5)
+@assert coeffs_ex == coeffs_ex_new # hide
 ```
 
 
