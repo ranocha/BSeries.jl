@@ -98,6 +98,18 @@ coeffs_ex_new = bseries(ExactSolution{Rational{Int}}(), 5)
 @assert coeffs_ex == coeffs_ex_new # hide
 ```
 
+Please note that [BSeries.jl](https://github.com/ranocha/BSeries.jl)
+uses a normalization of the B-series coefficients. When writing out the
+Taylor expansion, the B-series coefficients must be divided by the
+`symmetry` of the corresponding rooted tree. This is done by
+[`renormalize`](@ref) (creating a copy) and
+[`renormalize!`](@ref) (modifying the original B-series).
+
+
+```@example bseries-basics
+renormalize(coeffs_ex)
+```
+
 
 ```@example bseries-basics
 latexify(coeffs_ex, cdot=false)
