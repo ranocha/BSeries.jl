@@ -2738,9 +2738,9 @@ using Aqua: Aqua
 
             @test result[empty_tree] == 1  # coefficient 1, symmetry 1
             @test result[t1] == 1          # coefficient 1, symmetry 1
-            @test result[t2] == 1//2       # coefficient 1//2, symmetry 1
-            @test result[t3] == 1//6       # coefficient 1//6, symmetry 1
-            @test result[t4] == 1//6       # coefficient 1//3, symmetry 2 -> 1//3 / 2 = 1//6
+            @test result[t2] == 1 // 2     # coefficient 1//2, symmetry 1
+            @test result[t3] == 1 // 6     # coefficient 1//6, symmetry 1
+            @test result[t4] == 1 // 6     # coefficient 1//3, symmetry 2 -> 1//3 / 2 = 1//6
         end
 
         @testset "different coefficient types" begin
@@ -2763,7 +2763,8 @@ using Aqua: Aqua
 
         @testset "empty series" begin
             # Test with empty series
-            empty_series = TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int}}()
+            empty_series = TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                            Rational{Int}}()
 
             result_mutating = @inferred renormalize!(copy(empty_series))
             @test length(result_mutating) == 0
@@ -2775,12 +2776,13 @@ using Aqua: Aqua
 
         @testset "single tree series" begin
             # Create a series with just the empty tree
-            series = @inferred TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int}}()
+            series = @inferred TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                                Rational{Int}}()
             empty_tree = rootedtree(Int[])
-            series[empty_tree] = 2//3
+            series[empty_tree] = 2 // 3
 
             result = @inferred renormalize(series)
-            @test result[empty_tree] == 2//3  # symmetry of empty tree is 1
+            @test result[empty_tree] == 2 // 3  # symmetry of empty tree is 1
             @test length(result) == 1
         end
 
@@ -2791,15 +2793,15 @@ using Aqua: Aqua
 
             # Check that we get the expected values from the docstring
             trees_and_values = [
-                (rootedtree(Int[]), 1//1),
-                (rootedtree([1]), 1//1),
-                (rootedtree([1, 2]), 1//2),
-                (rootedtree([1, 2, 3]), 1//6),
-                (rootedtree([1, 2, 2]), 1//6),  # was 1//3, now 1//6 after dividing by symmetry 2
-                (rootedtree([1, 2, 3, 4]), 1//24),
-                (rootedtree([1, 2, 3, 3]), 1//24), # was 1//12, now 1//24 after dividing by symmetry 2
-                (rootedtree([1, 2, 3, 2]), 1//8),
-                (rootedtree([1, 2, 2, 2]), 1//24)  # was 1//4, now 1//24 after dividing by symmetry 6
+                (rootedtree(Int[]), 1 // 1),
+                (rootedtree([1]), 1 // 1),
+                (rootedtree([1, 2]), 1 // 2),
+                (rootedtree([1, 2, 3]), 1 // 6),
+                (rootedtree([1, 2, 2]), 1 // 6),  # was 1//3, now 1//6 after dividing by symmetry 2
+                (rootedtree([1, 2, 3, 4]), 1 // 24),
+                (rootedtree([1, 2, 3, 3]), 1 // 24), # was 1//12, now 1//24 after dividing by symmetry 2
+                (rootedtree([1, 2, 3, 2]), 1 // 8),
+                (rootedtree([1, 2, 2, 2]), 1 // 24),  # was 1//4, now 1//24 after dividing by symmetry 6
             ]
 
             for (tree, expected_value) in trees_and_values
@@ -2814,11 +2816,12 @@ using Aqua: Aqua
             series = @inferred bseries(ExactSolution{Rational{Int}}(), 3)
 
             result_mutating = @inferred renormalize!(copy(series))
-            @test result_mutating isa TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int}}
+            @test result_mutating isa
+                  TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int}}
 
             result_copying = @inferred renormalize(series)
-            @test result_copying isa TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int}}
+            @test result_copying isa
+                  TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int}}
         end
     end
-
 end # @testset "BSeries"
