@@ -24,7 +24,7 @@ using SparseArrays: SparseArrays, sparse
 
 @reexport using Polynomials: Polynomials, Polynomial
 
-export TruncatedBSeries, ExactSolution
+export TruncatedBSeries, ExactSolution, IdentityMap, IdentityField
 
 export order_of_accuracy
 
@@ -224,6 +224,34 @@ end
 Lazy representation of the B-series of the exact solution of an ordinary
 differential equation using coefficients of type at least as representative as
 `V`.
+
+See also [`IdentityMap`](@ref), [`IdentityField`](@ref).
+
+# Examples
+
+```jldoctest
+julia> bseries(ExactSolution{Rational{Int}}(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 1
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 1//2
+  RootedTree{Int64}: [1, 2, 3]       => 1//6
+  RootedTree{Int64}: [1, 2, 2]       => 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]    => 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]    => 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]    => 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]    => 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 1//120
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 1//60
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 1//40
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 1//30
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 1//20
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 1//15
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 1//20
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 1//10
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 1//5
+```
+
 """
 struct ExactSolution{V} end
 
@@ -256,6 +284,141 @@ end
 
 # internal interface of B-series
 # @inline evaluation_type(::ExactSolution) = LazyEvaluation() # this is the default assumption
+
+"""
+    IdentityMap{V}()
+
+Lazy representation of the B-series of the identity mapping ``u^n \\mapsto u^n``
+interpreted as a numerical method for an ordinary differential equation
+``u'(t) = f(u(t))``, using coefficients of type at least as representative as
+`V`.
+
+See also [`ExactSolution`](@ref), [`IdentityMap`](@ref).
+
+# Examples
+
+```jldoctest
+julia> bseries(IdentityMap{Rational{Int}}(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 1
+  RootedTree{Int64}: [1]             => 0
+  RootedTree{Int64}: [1, 2]          => 0
+  RootedTree{Int64}: [1, 2, 3]       => 0
+  RootedTree{Int64}: [1, 2, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3, 4]    => 0
+  RootedTree{Int64}: [1, 2, 3, 3]    => 0
+  RootedTree{Int64}: [1, 2, 3, 2]    => 0
+  RootedTree{Int64}: [1, 2, 2, 2]    => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 0
+```
+
+"""
+struct IdentityMap{V} end
+
+function Base.getindex(::IdentityMap{V}, t::AbstractRootedTree) where {V}
+    order(t) == 0 ? one(V) : zero(V)
+end
+
+# general interface methods of iterators for `IdentityMap`
+Base.IteratorSize(::Type{<:IdentityMap}) = Base.SizeUnknown()
+Base.eltype(::Type{IdentityMap{V}}) where {V} = V
+Base.valtype(unit_map::IdentityMap) = valtype(typeof(unit_map))
+Base.valtype(::Type{IdentityMap{V}}) where {V} = V
+
+function Base.iterate(unit_map::IdentityMap)
+    iterator = RootedTreeIterator(0)
+    t, state = iterate(iterator)
+    (unit_map[t], (state, iterator))
+end
+
+function Base.iterate(unit_map::IdentityMap, state_iterator)
+    state, iterator = state_iterator
+    t_state = iterate(iterator, state)
+    if t_state === nothing
+        iterator = RootedTreeIterator(iterator.order + 1)
+        t_state = iterate(iterator)
+    end
+    t, state = t_state
+    (unit_map[t], (state, iterator))
+end
+
+# internal interface of B-series
+# @inline evaluation_type(::IdentityMap) = LazyEvaluation() # this is the default assumption
+
+"""
+    IdentityField()
+
+Lazy representation of the B-series of the scaled vector field ``h f``
+of an ordinary differential equation ``u'(t) = f(u(t))``, where ``h``
+is the time step size.
+
+See also [`ExactSolution`](@ref), [`IdentityMap`](@ref).
+
+# Examples
+
+```jldoctest
+julia> bseries(IdentityField(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 0
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 0
+  RootedTree{Int64}: [1, 2, 3]       => 0
+  RootedTree{Int64}: [1, 2, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3, 4]    => 0
+  RootedTree{Int64}: [1, 2, 3, 3]    => 0
+  RootedTree{Int64}: [1, 2, 3, 2]    => 0
+  RootedTree{Int64}: [1, 2, 2, 2]    => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 0
+```
+
+"""
+struct IdentityField end
+
+function Base.getindex(::IdentityField, t::AbstractRootedTree)
+    return order(t) == 1
+end
+
+# general interface methods of iterators for `IdentityField`
+Base.IteratorSize(::Type{<:IdentityField}) = Base.SizeUnknown()
+Base.eltype(::Type{IdentityField}) = Bool
+Base.valtype(unit_field::IdentityField) = valtype(typeof(unit_field))
+Base.valtype(::Type{IdentityField}) = Bool
+
+function Base.iterate(unit_field::IdentityField)
+    iterator = RootedTreeIterator(0)
+    t, state = iterate(iterator)
+    (unit_field[t], (state, iterator))
+end
+
+function Base.iterate(unit_field::IdentityField, state_iterator)
+    state, iterator = state_iterator
+    t_state = iterate(iterator, state)
+    if t_state === nothing
+        iterator = RootedTreeIterator(iterator.order + 1)
+        t_state = iterate(iterator)
+    end
+    t, state = t_state
+    (unit_field[t], (state, iterator))
+end
+
+# internal interface of B-series
+# @inline evaluation_type(::IdentityField) = LazyEvaluation() # this is the default assumption
 
 """
     ExactSolution(series_integrator)
@@ -421,7 +584,7 @@ function bseries(f::Function, order, iterator_type = RootedTreeIterator)
     v = f(t, nothing)
 
     V_tmp = typeof(v)
-    if V_tmp <: Integer
+    if (V_tmp <: Integer) && (V_tmp != Bool)
         # If people use integer coefficients, they will likely want to have results
         # as exact as possible. However, general terms are not integers. Thus, we
         # use rationals instead.
@@ -446,8 +609,9 @@ end
 """
     bseries(exact::ExactSolution, order)
 
-Compute the B-series of the exact solution of an ordinary differential
-equation up to a prescribed integer `order`.
+Compute the B-series of the exact solution of the ordinary
+differential equation ``u'(t) = f(u(t))``, up to a prescribed
+integer `order`.
 
 !!! note "Normalization by elementary differentials"
     The coefficients of the B-series returned by this method need to be
@@ -455,6 +619,8 @@ equation up to a prescribed integer `order`.
     rooted tree and multiplied by the corresponding elementary differential
     of the input vector field ``f``.
     See also [`evaluate`](@ref).
+
+See also [`IdentityField`](@ref), [`IdentityMap`](@ref).
 
 # Examples
 
@@ -475,6 +641,102 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 9 entri
 function bseries(exact::ExactSolution, order)
     bseries(order) do t, series
         return exact[t]
+    end
+end
+
+"""
+    bseries(unit_map::IdentityMap, order)
+
+Compute the B-series of the identity mapping ``u^n \\mapsto u^n``
+interpreted as a numerical method for an ordinary differential equation
+``u'(t) = f(u(t))``, up to a prescribed integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+
+See also [`ExactSolution`](@ref), [`IdentityField`](@ref).
+
+# Examples
+
+```jldoctest
+julia> bseries(IdentityMap{Rational{Int}}(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 1
+  RootedTree{Int64}: [1]             => 0
+  RootedTree{Int64}: [1, 2]          => 0
+  RootedTree{Int64}: [1, 2, 3]       => 0
+  RootedTree{Int64}: [1, 2, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3, 4]    => 0
+  RootedTree{Int64}: [1, 2, 3, 3]    => 0
+  RootedTree{Int64}: [1, 2, 3, 2]    => 0
+  RootedTree{Int64}: [1, 2, 2, 2]    => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 0
+```
+
+"""
+function bseries(unit_map::IdentityMap, order)
+    bseries(order) do t, series
+        return unit_map[t]
+    end
+end
+
+"""
+    bseries(unit_field::IdentityField, order)
+
+Compute the B-series of the scaled vector field ``h f`` of the
+ordinary differential equation ``u'(t) = f(u(t))`` up to a
+prescribed integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+
+See also [`ExactSolution`](@ref), [`IdentityMap`](@ref).
+
+# Examples
+
+```jldoctest
+julia> series = bseries(IdentityField(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 0
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 0
+  RootedTree{Int64}: [1, 2, 3]       => 0
+  RootedTree{Int64}: [1, 2, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3, 4]    => 0
+  RootedTree{Int64}: [1, 2, 3, 3]    => 0
+  RootedTree{Int64}: [1, 2, 3, 2]    => 0
+  RootedTree{Int64}: [1, 2, 2, 2]    => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 0
+```
+
+"""
+function bseries(unit_field::IdentityField, order)
+    bseries(order) do t, series
+        return unit_field[t]
     end
 end
 
@@ -1040,7 +1302,9 @@ Section 3.2 of
 """
 function substitute(b, a)
     series_keys = keys(b)
-    series = empty(b)
+    @assert keytype(b) == keytype(a)
+    V = promote_type(valtype(b), valtype(a))
+    series = empty(b, keytype(b), V)
 
     t = first(series_keys)
     @assert isempty(t)
@@ -1074,7 +1338,7 @@ function compose(b, a, t::RootedTree)
 
     for (forest, subtree) in SplittingIterator(t)
         update = a[subtree]
-        update isa Rational && iszero(update) && continue
+        update isa Union{Rational, Bool} && iszero(update) && continue
         for tree in forest
             update *= b[tree]
         end
@@ -1085,7 +1349,7 @@ function compose(b, a, t::RootedTree)
 end
 
 """
-    compose(b, a; normalize_stepsize=false)
+    compose(b, a; normalize_stepsize = false)
 
 Compose the B-series `a` with the B-series `b`. It is assumed that the B-series
 `b` has the coefficient unity of the empty tree.
@@ -1109,7 +1373,9 @@ Section 3.1 of
 """
 function compose(b, a; normalize_stepsize = false)
     series_keys = keys(b)
-    series = empty(b)
+    @assert keytype(b) == keytype(a)
+    V = promote_type(valtype(b), valtype(a))
+    series = empty(b, keytype(b), V)
 
     for t in series_keys
         coefficient = compose(b, a, t)
@@ -1123,7 +1389,7 @@ function compose(b, a; normalize_stepsize = false)
 end
 
 """
-    compose(b1, b2, bs...; normalize_stepsize=false)
+    compose(b1, b2, bs...; normalize_stepsize = false)
 
 Compose the B-series `b1`, `b2`, `bs...`. It is assumed that all B-series
 have the coefficient unity of the empty tree.
@@ -1158,6 +1424,111 @@ function compose(b1, b2, bs::Vararg{Any, N}; normalize_stepsize = false) where {
         for (t, v) in series
             series[t] = v / (N + 2)^order(t)
         end
+    end
+
+    return series
+end
+
+"""
+    compose(b, unit_field::IdentityField)
+
+Compose the B-series `b` with the B-series of the vector field
+[`IdentityField`](@ref), i.e., insert the B-series `b` into the vector field
+``h f`` of the ordinary differential equation ``u'(t) = h f(u(t))``.
+It is assumed that the B-series `b` has the coefficient unity of the empty tree.
+
+# Examples
+
+```jldoctest
+julia> series = bseries(ExactSolution{Rational{Int}}(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 1
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 1//2
+  RootedTree{Int64}: [1, 2, 3]       => 1//6
+  RootedTree{Int64}: [1, 2, 2]       => 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]    => 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]    => 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]    => 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]    => 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 1//120
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 1//60
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 1//40
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 1//30
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 1//20
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 1//15
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 1//20
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 1//10
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 1//5
+
+julia> compose(series, IdentityField())
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 0
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 1
+  RootedTree{Int64}: [1, 2, 3]       => 1//2
+  RootedTree{Int64}: [1, 2, 2]       => 1
+  RootedTree{Int64}: [1, 2, 3, 4]    => 1//6
+  RootedTree{Int64}: [1, 2, 3, 3]    => 1//3
+  RootedTree{Int64}: [1, 2, 3, 2]    => 1//2
+  RootedTree{Int64}: [1, 2, 2, 2]    => 1
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 1//24
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 1//12
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 1//8
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 1//6
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 1//4
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 1//3
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 1//4
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 1//2
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 1
+
+julia> hf = bseries(IdentityField(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 0
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 0
+  RootedTree{Int64}: [1, 2, 3]       => 0
+  RootedTree{Int64}: [1, 2, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3, 4]    => 0
+  RootedTree{Int64}: [1, 2, 3, 3]    => 0
+  RootedTree{Int64}: [1, 2, 3, 2]    => 0
+  RootedTree{Int64}: [1, 2, 2, 2]    => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 0
+
+julia> compose(series, hf) == compose(series, IdentityField())
+true
+```
+
+This method is specialized to the [`IdentityField`](@ref).
+While the same result can be obtained by creating a
+[`TruncatedBSeries`](@ref) of the vector field
+via [`bseries`](@ref) as above and using the general
+[`compose`](@ref) interface, this specialized method
+is more efficient.
+
+"""
+function compose(b, ::IdentityField)
+    series_keys = keys(b)
+    series = empty(b)
+
+    t = first(series_keys)
+    @assert isempty(t)
+    series[t] = zero(valtype(series))
+
+    for t in Iterators.drop(series_keys, 1)
+        coefficient = one(valtype(series))
+        for subtree in SubtreeIterator(t)
+            coefficient *= b[subtree]
+        end
+        series[t] = coefficient
     end
 
     return series
