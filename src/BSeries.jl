@@ -1110,7 +1110,7 @@ function compose(b, a, t::RootedTree)
 
     for (forest, subtree) in SplittingIterator(t)
         update = a[subtree]
-        update isa Rational && iszero(update) && continue
+        update isa Union{Rational, Bool} && iszero(update) && continue
         for tree in forest
             update *= b[tree]
         end
@@ -1194,6 +1194,92 @@ function compose(b1, b2, bs::Vararg{Any, N}; normalize_stepsize = false) where {
         for (t, v) in series
             series[t] = v / (N + 2)^order(t)
         end
+    end
+
+    return series
+end
+
+"""
+    compose(b, unit_field::UnitField)
+
+Compose the B-series `b` with the B-series of the unit vector field
+[`UnitField`](@ref), i.e., insert the B-series `b` into the vector field
+``h f`` of the ordinary differential equation ``u'(t) = h f(u(t))``.
+It is assumed that the B-series `b` has the coefficient unity of the empty tree.
+
+# Examples
+
+```jldoctest
+julia> series = bseries(ExactSolution{Rational{Int}}(), 5)
+
+julia> compose(series, UnitField())
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 0
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 1
+  RootedTree{Int64}: [1, 2, 3]       => 1//2
+  RootedTree{Int64}: [1, 2, 2]       => 1
+  RootedTree{Int64}: [1, 2, 3, 4]    => 1//6
+  RootedTree{Int64}: [1, 2, 3, 3]    => 1//3
+  RootedTree{Int64}: [1, 2, 3, 2]    => 1//2
+  RootedTree{Int64}: [1, 2, 2, 2]    => 1
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 1//24
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 1//12
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 1//8
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 1//6
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 1//4
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 1//3
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 1//4
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 1//2
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 1
+
+julia> hf = bseries(UnitField(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 0
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 0
+  RootedTree{Int64}: [1, 2, 3]       => 0
+  RootedTree{Int64}: [1, 2, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3, 4]    => 0
+  RootedTree{Int64}: [1, 2, 3, 3]    => 0
+  RootedTree{Int64}: [1, 2, 3, 2]    => 0
+  RootedTree{Int64}: [1, 2, 2, 2]    => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 0
+
+julia> compose(series, hf) == compose(series, UnitField())
+true
+```
+
+This method is specialized to the [`UnitField`](@ref).
+While the same result can be obtained by creating a
+[`TruncatedBSeries`](@ref) of the unit vector field
+via [`bseries`](@ref) and using the general
+[`compose`](@ref) interface, this specialized method
+is more efficient.
+
+"""
+function compose(b, ::UnitField)
+    series_keys = keys(b)
+    series = empty(b)
+
+    t = first(series_keys)
+    @assert isempty(t)
+    series[t] = false
+
+    for t in Iterators.drop(series_keys, 1)
+        coefficient = one(valtype(series))
+        for subtree in SubtreeIterator(t)
+            coefficient *= b[subtree]
+        end
+        series[t] = coefficient
     end
 
     return series
