@@ -1441,6 +1441,25 @@ It is assumed that the B-series `b` has the coefficient unity of the empty tree.
 
 ```jldoctest
 julia> series = bseries(ExactSolution{Rational{Int}}(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 1
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 1//2
+  RootedTree{Int64}: [1, 2, 3]       => 1//6
+  RootedTree{Int64}: [1, 2, 2]       => 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]    => 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]    => 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]    => 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]    => 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 1//120
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 1//60
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 1//40
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 1//30
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 1//20
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 1//15
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 1//20
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 1//10
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 1//5
 
 julia> compose(series, IdentityField())
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
