@@ -24,7 +24,7 @@ using SparseArrays: SparseArrays, sparse
 
 @reexport using Polynomials: Polynomials, Polynomial
 
-export TruncatedBSeries, ExactSolution, UnitField
+export TruncatedBSeries, ExactSolution, UnitMap, UnitField
 
 export order_of_accuracy
 
@@ -224,6 +224,34 @@ end
 Lazy representation of the B-series of the exact solution of an ordinary
 differential equation using coefficients of type at least as representative as
 `V`.
+
+See also [`UnitMap`](@ref), [`UnitField`](@ref).
+
+# Examples
+
+```jldoctest
+julia> bseries(ExactSolution{Rational{Int}}(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 1
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 1//2
+  RootedTree{Int64}: [1, 2, 3]       => 1//6
+  RootedTree{Int64}: [1, 2, 2]       => 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]    => 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]    => 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]    => 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]    => 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 1//120
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 1//60
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 1//40
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 1//30
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 1//20
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 1//15
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 1//20
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 1//10
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 1//5
+```
+
 """
 struct ExactSolution{V} end
 
@@ -258,11 +286,81 @@ end
 # @inline evaluation_type(::ExactSolution) = LazyEvaluation() # this is the default assumption
 
 """
+    UnitMap{V}()
+
+Lazy representation of the B-series of the identity mapping ``u^n \\mapsto u^n``
+interpreted as a numerical method for an ordinary differential equation
+``u'(t) = f(u(t))``, using coefficients of type at least as representative as
+`V`.
+
+See also [`ExactSolution`](@ref), [`UnitMap`](@ref).
+
+# Examples
+
+```jldoctest
+julia> bseries(UnitMap{Rational{Int}}(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 1
+  RootedTree{Int64}: [1]             => 0
+  RootedTree{Int64}: [1, 2]          => 0
+  RootedTree{Int64}: [1, 2, 3]       => 0
+  RootedTree{Int64}: [1, 2, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3, 4]    => 0
+  RootedTree{Int64}: [1, 2, 3, 3]    => 0
+  RootedTree{Int64}: [1, 2, 3, 2]    => 0
+  RootedTree{Int64}: [1, 2, 2, 2]    => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 0
+```
+
+"""
+struct UnitMap{V} end
+
+function Base.getindex(::UnitMap{V}, t::AbstractRootedTree) where {V}
+    order(t) == 0 ? one(V) : zero(V)
+end
+
+# general interface methods of iterators for `UnitMap`
+Base.IteratorSize(::Type{<:UnitMap}) = Base.SizeUnknown()
+Base.eltype(::Type{UnitMap{V}}) where {V} = V
+Base.valtype(unit_map::UnitMap) = valtype(typeof(unit_map))
+Base.valtype(::Type{UnitMap{V}}) where {V} = V
+
+function Base.iterate(unit_map::UnitMap)
+    iterator = RootedTreeIterator(0)
+    t, state = iterate(iterator)
+    (unit_map[t], (state, iterator))
+end
+
+function Base.iterate(unit_map::UnitMap, state_iterator)
+    state, iterator = state_iterator
+    t_state = iterate(iterator, state)
+    if t_state === nothing
+        iterator = RootedTreeIterator(iterator.order + 1)
+        t_state = iterate(iterator)
+    end
+    t, state = t_state
+    (unit_map[t], (state, iterator))
+end
+
+# internal interface of B-series
+# @inline evaluation_type(::UnitMap) = LazyEvaluation() # this is the default assumption
+
+"""
     UnitField()
 
 Lazy representation of the B-series of the scaled vector field ``h f``
 of an ordinary differential equation ``u'(t) = f(u(t))``, where ``h``
 is the time step size.
+
+See also [`ExactSolution`](@ref), [`UnitMap`](@ref).
 
 # Examples
 
@@ -509,6 +607,54 @@ function bseries(f::Function, order, iterator_type = RootedTreeIterator)
 end
 
 """
+    bseries(unit_map::UnitMap, order)
+
+Compute the B-series of the identity mapping ``u^n \\mapsto u^n``
+interpreted as a numerical method for an ordinary differential equation
+``u'(t) = f(u(t))``, up to a prescribed integer `order`
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+
+See also [`UnitMap`](@ref), [`UnitField`](@ref).
+
+# Examples
+
+```jldoctest
+julia> bseries(UnitMap{Rational{Int}}(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 1
+  RootedTree{Int64}: [1]             => 0
+  RootedTree{Int64}: [1, 2]          => 0
+  RootedTree{Int64}: [1, 2, 3]       => 0
+  RootedTree{Int64}: [1, 2, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3, 4]    => 0
+  RootedTree{Int64}: [1, 2, 3, 3]    => 0
+  RootedTree{Int64}: [1, 2, 3, 2]    => 0
+  RootedTree{Int64}: [1, 2, 2, 2]    => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 0
+```
+
+"""
+function bseries(unit_map::UnitMap, order)
+    bseries(order) do t, series
+        return unit_map[t]
+    end
+end
+
+"""
     bseries(unit_field::UnitField, order)
 
 Compute the B-series of the scaled vector field ``h f`` of the
@@ -521,6 +667,8 @@ prescribed integer `order`.
     rooted tree and multiplied by the corresponding elementary differential
     of the input vector field ``f``.
     See also [`evaluate`](@ref).
+
+See also [`UnitField`](@ref), [`UnitMap`](@ref).
 
 # Examples
 
