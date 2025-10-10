@@ -1264,7 +1264,9 @@ Section 3.2 of
 """
 function substitute(b, a)
     series_keys = keys(b)
-    series = empty(b)
+    @assert keytype(b) == keytype(a)
+    V = promote_type(valtype(b), valtype(a))
+    series = empty(b, keytype(b), V)
 
     t = first(series_keys)
     @assert isempty(t)

@@ -3038,4 +3038,69 @@ using Aqua: Aqua
             @test @inferred(compose(unit, s)) == s
         end
     end
+
+    @testset "UnitField B-series is unit for substitute" begin
+        # Construct the unit B-series from UnitField
+        o = 7
+        unit = @inferred bseries(UnitField(), o)
+
+        # Representative B-series
+        let
+            A = [0 0; 1//2 0]
+            b = [0, 1 // 1]
+            c = [0, 1 // 2]
+            s = @inferred bseries(A, b, c, o)
+
+            @test @inferred(substitute(unit, s)) == s
+
+            # substitute requires that the coefficient of the empty tree
+            # of the second argument is zero
+            s[rootedtree(Int[])] = 0
+            @test @inferred(substitute(s, unit)) == s
+        end
+
+        let
+            s = bseries(ExactSolution{Rational{Int}}(), o)
+
+            @test @inferred(substitute(unit, s)) == s
+
+            # substitute requires that the coefficient of the empty tree
+            # of the second argument is zero
+            s[rootedtree(Int[])] = 0
+            @test @inferred(substitute(s, unit)) == s
+        end
+
+        let
+            s = bseries(AverageVectorFieldMethod(), o)
+
+            @test @inferred(substitute(unit, s)) == s
+
+            # substitute requires that the coefficient of the empty tree
+            # of the second argument is zero
+            s[rootedtree(Int[])] = 0
+            @test @inferred(substitute(s, unit)) == s
+        end
+
+        let
+            α = SymPyPythonCall.symbols("α", real = true)
+            A = [0 0; 1/(2 * α) 0]
+            b = [1 - α, α]
+            c = [0, 1 / (2 * α)]
+            s = @inferred bseries(A, b, c, o)
+
+            @test @inferred(substitute(unit, s)) == s
+
+            # substitute requires that the coefficient of the empty tree
+            # of the second argument is zero
+            s[rootedtree(Int[])] = 0
+            # We need to skip this test because the coefficient of the
+            # empty tree is set to False in SymPy, which cannot be used
+            # for comparisons with other values. Thus, we have to exclude
+            # the empty tree from the comparison..
+            @test_skip @inferred(substitute(s, unit)) == s
+            substituted = @inferred substitute(s, unit)
+            substituted[rootedtree(Int[])] = 0
+            @test substituted == s
+        end
+    end
 end # @testset "BSeries"
