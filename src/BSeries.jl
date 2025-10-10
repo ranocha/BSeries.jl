@@ -24,7 +24,7 @@ using SparseArrays: SparseArrays, sparse
 
 @reexport using Polynomials: Polynomials, Polynomial
 
-export TruncatedBSeries, ExactSolution
+export TruncatedBSeries, ExactSolution, UnitField
 
 export order_of_accuracy
 
@@ -258,6 +258,71 @@ end
 # @inline evaluation_type(::ExactSolution) = LazyEvaluation() # this is the default assumption
 
 """
+    UnitField()
+
+Lazy representation of the B-series of the scaled vector field ``h f``
+of an ordinary differential equation ``u'(t) = f(u(t))``, where ``h``
+is the time step size.
+
+# Examples
+
+```jldoctest
+julia> bseries(UnitField(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 0
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 0
+  RootedTree{Int64}: [1, 2, 3]       => 0
+  RootedTree{Int64}: [1, 2, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3, 4]    => 0
+  RootedTree{Int64}: [1, 2, 3, 3]    => 0
+  RootedTree{Int64}: [1, 2, 3, 2]    => 0
+  RootedTree{Int64}: [1, 2, 2, 2]    => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 0
+```
+
+"""
+struct UnitField end
+
+function Base.getindex(::UnitField, t::AbstractRootedTree)
+    return order(t) == 1
+end
+
+# general interface methods of iterators for `UnitField`
+Base.IteratorSize(::Type{<:UnitField}) = Base.SizeUnknown()
+Base.eltype(::Type{UnitField}) = Bool
+Base.valtype(unit_field::UnitField) = valtype(typeof(unit_field))
+Base.valtype(::Type{UnitField}) = Bool
+
+function Base.iterate(unit_field::UnitField)
+    iterator = RootedTreeIterator(0)
+    t, state = iterate(iterator)
+    (unit_field[t], (state, iterator))
+end
+
+function Base.iterate(unit_field::UnitField, state_iterator)
+    state, iterator = state_iterator
+    t_state = iterate(iterator, state)
+    if t_state === nothing
+        iterator = RootedTreeIterator(iterator.order + 1)
+        t_state = iterate(iterator)
+    end
+    t, state = t_state
+    (unit_field[t], (state, iterator))
+end
+
+# internal interface of B-series
+# @inline evaluation_type(::UnitField) = LazyEvaluation() # this is the default assumption
+
+"""
     ExactSolution(series_integrator)
 
 A representation of the B-series of the exact solution of an ODE using the same
@@ -421,7 +486,7 @@ function bseries(f::Function, order, iterator_type = RootedTreeIterator)
     v = f(t, nothing)
 
     V_tmp = typeof(v)
-    if V_tmp <: Integer
+    if (V_tmp <: Integer) && (V_tmp != Bool)
         # If people use integer coefficients, they will likely want to have results
         # as exact as possible. However, general terms are not integers. Thus, we
         # use rationals instead.
@@ -441,6 +506,12 @@ function bseries(f::Function, order, iterator_type = RootedTreeIterator)
     end
 
     return series
+end
+
+function bseries(unit_field::UnitField, order)
+    bseries(order) do t, series
+        return unit_field[t]
+    end
 end
 
 """
@@ -1050,7 +1121,7 @@ function compose(b, a, t::RootedTree)
 end
 
 """
-    compose(b, a; normalize_stepsize=false)
+    compose(b, a; normalize_stepsize = false)
 
 Compose the B-series `a` with the B-series `b`. It is assumed that the B-series
 `b` has the coefficient unity of the empty tree.
@@ -1088,7 +1159,7 @@ function compose(b, a; normalize_stepsize = false)
 end
 
 """
-    compose(b1, b2, bs...; normalize_stepsize=false)
+    compose(b1, b2, bs...; normalize_stepsize = false)
 
 Compose the B-series `b1`, `b2`, `bs...`. It is assumed that all B-series
 have the coefficient unity of the empty tree.
