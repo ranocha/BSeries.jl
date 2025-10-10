@@ -2766,6 +2766,14 @@ using Aqua: Aqua
             @test @inferred(Base.IteratorSize(UnitField)) == Base.SizeUnknown()
         end
 
+        @testset "modified equation" begin
+            o = 8
+            exact = @inferred bseries(ExactSolution{Rational{Int}}(), o)
+            hf = @inferred bseries(UnitField(), o)
+            series = @inferred modified_equation(exact)
+            @test series == hf
+        end
+
         @testset "Indexing behavior" begin
             unit_field = @inferred UnitField()
 
@@ -2992,7 +3000,7 @@ using Aqua: Aqua
     @testset "UnitMap B-series is unit for compose" begin
         # Construct the unit B-series from UnitMap
         o = 7
-        unit = bseries(UnitMap{Rational{Int}}(), o)
+        unit = @inferred bseries(UnitMap{Rational{Int}}(), o)
 
         # Representative B-series
         let
