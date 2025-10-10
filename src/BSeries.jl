@@ -1333,7 +1333,9 @@ Section 3.1 of
 """
 function compose(b, a; normalize_stepsize = false)
     series_keys = keys(b)
-    series = empty(b)
+    @assert keytype(b) == keytype(a)
+    V = promote_type(valtype(b), valtype(a))
+    series = empty(b, keytype(b), V)
 
     for t in series_keys
         coefficient = compose(b, a, t)

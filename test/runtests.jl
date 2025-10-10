@@ -2988,4 +2988,46 @@ using Aqua: Aqua
             @inferred compose(exact_series, UnitField())
         end
     end
+
+    @testset "UnitMap B-series is unit for compose" begin
+        # Construct the unit B-series from UnitMap
+        o = 7
+        unit = bseries(UnitMap{Rational{Int}}(), o)
+
+        # Representative B-series
+        let
+            A = [0 0; 1//2 0]
+            b = [0, 1 // 1]
+            c = [0, 1 // 2]
+            s = @inferred bseries(A, b, c, o)
+
+            @test @inferred(compose(s, unit)) == s
+            @test @inferred(compose(unit, s)) == s
+        end
+
+        let
+            s = bseries(ExactSolution{Rational{Int}}(), o)
+
+            @test @inferred(compose(s, unit)) == s
+            @test @inferred(compose(unit, s)) == s
+        end
+
+        let
+            s = bseries(AverageVectorFieldMethod(), o)
+
+            @test @inferred(compose(s, unit)) == s
+            @test @inferred(compose(unit, s)) == s
+        end
+
+        let
+            α = SymPyPythonCall.symbols("α", real = true)
+            A = [0 0; 1/(2 * α) 0]
+            b = [1 - α, α]
+            c = [0, 1 / (2 * α)]
+            s = @inferred bseries(A, b, c, o)
+
+            @test @inferred(compose(s, unit)) == s
+            @test @inferred(compose(unit, s)) == s
+        end
+    end
 end # @testset "BSeries"
