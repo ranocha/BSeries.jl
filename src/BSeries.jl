@@ -508,6 +508,46 @@ function bseries(f::Function, order, iterator_type = RootedTreeIterator)
     return series
 end
 
+"""
+    bseries(unit_field::UnitField, order)
+
+Compute the B-series of the scaled vector field ``h f`` of the
+ordinary differential equation ``u'(t) = f(u(t))`` up to a
+prescribed integer `order`.
+
+!!! note "Normalization by elementary differentials"
+    The coefficients of the B-series returned by this method need to be
+    multiplied by a power of the time step divided by the `symmetry` of the
+    rooted tree and multiplied by the corresponding elementary differential
+    of the input vector field ``f``.
+    See also [`evaluate`](@ref).
+
+# Examples
+
+```jldoctest
+julia> series = bseries(UnitField(), 5)
+TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
+  RootedTree{Int64}: Int64[]         => 0
+  RootedTree{Int64}: [1]             => 1
+  RootedTree{Int64}: [1, 2]          => 0
+  RootedTree{Int64}: [1, 2, 3]       => 0
+  RootedTree{Int64}: [1, 2, 2]       => 0
+  RootedTree{Int64}: [1, 2, 3, 4]    => 0
+  RootedTree{Int64}: [1, 2, 3, 3]    => 0
+  RootedTree{Int64}: [1, 2, 3, 2]    => 0
+  RootedTree{Int64}: [1, 2, 2, 2]    => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 4, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 3, 2] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 3] => 0
+  RootedTree{Int64}: [1, 2, 3, 2, 2] => 0
+  RootedTree{Int64}: [1, 2, 2, 2, 2] => 0
+```
+
+"""
 function bseries(unit_field::UnitField, order)
     bseries(order) do t, series
         return unit_field[t]
@@ -1261,7 +1301,7 @@ true
 This method is specialized to the [`UnitField`](@ref).
 While the same result can be obtained by creating a
 [`TruncatedBSeries`](@ref) of the unit vector field
-via [`bseries`](@ref) and using the general
+via [`bseries`](@ref) as above and using the general
 [`compose`](@ref) interface, this specialized method
 is more efficient.
 
