@@ -24,7 +24,7 @@ using SparseArrays: SparseArrays, sparse
 
 @reexport using Polynomials: Polynomials, Polynomial
 
-export TruncatedBSeries, ExactSolution, UnitMap, UnitField
+export TruncatedBSeries, ExactSolution, IdentityMap, IdentityField
 
 export order_of_accuracy
 
@@ -225,7 +225,7 @@ Lazy representation of the B-series of the exact solution of an ordinary
 differential equation using coefficients of type at least as representative as
 `V`.
 
-See also [`UnitMap`](@ref), [`UnitField`](@ref).
+See also [`IdentityMap`](@ref), [`IdentityField`](@ref).
 
 # Examples
 
@@ -286,19 +286,19 @@ end
 # @inline evaluation_type(::ExactSolution) = LazyEvaluation() # this is the default assumption
 
 """
-    UnitMap{V}()
+    IdentityMap{V}()
 
 Lazy representation of the B-series of the identity mapping ``u^n \\mapsto u^n``
 interpreted as a numerical method for an ordinary differential equation
 ``u'(t) = f(u(t))``, using coefficients of type at least as representative as
 `V`.
 
-See also [`ExactSolution`](@ref), [`UnitMap`](@ref).
+See also [`ExactSolution`](@ref), [`IdentityMap`](@ref).
 
 # Examples
 
 ```jldoctest
-julia> bseries(UnitMap{Rational{Int}}(), 5)
+julia> bseries(IdentityMap{Rational{Int}}(), 5)
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
   RootedTree{Int64}: Int64[]         => 1
   RootedTree{Int64}: [1]             => 0
@@ -321,25 +321,25 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entr
 ```
 
 """
-struct UnitMap{V} end
+struct IdentityMap{V} end
 
-function Base.getindex(::UnitMap{V}, t::AbstractRootedTree) where {V}
+function Base.getindex(::IdentityMap{V}, t::AbstractRootedTree) where {V}
     order(t) == 0 ? one(V) : zero(V)
 end
 
-# general interface methods of iterators for `UnitMap`
-Base.IteratorSize(::Type{<:UnitMap}) = Base.SizeUnknown()
-Base.eltype(::Type{UnitMap{V}}) where {V} = V
-Base.valtype(unit_map::UnitMap) = valtype(typeof(unit_map))
-Base.valtype(::Type{UnitMap{V}}) where {V} = V
+# general interface methods of iterators for `IdentityMap`
+Base.IteratorSize(::Type{<:IdentityMap}) = Base.SizeUnknown()
+Base.eltype(::Type{IdentityMap{V}}) where {V} = V
+Base.valtype(unit_map::IdentityMap) = valtype(typeof(unit_map))
+Base.valtype(::Type{IdentityMap{V}}) where {V} = V
 
-function Base.iterate(unit_map::UnitMap)
+function Base.iterate(unit_map::IdentityMap)
     iterator = RootedTreeIterator(0)
     t, state = iterate(iterator)
     (unit_map[t], (state, iterator))
 end
 
-function Base.iterate(unit_map::UnitMap, state_iterator)
+function Base.iterate(unit_map::IdentityMap, state_iterator)
     state, iterator = state_iterator
     t_state = iterate(iterator, state)
     if t_state === nothing
@@ -351,21 +351,21 @@ function Base.iterate(unit_map::UnitMap, state_iterator)
 end
 
 # internal interface of B-series
-# @inline evaluation_type(::UnitMap) = LazyEvaluation() # this is the default assumption
+# @inline evaluation_type(::IdentityMap) = LazyEvaluation() # this is the default assumption
 
 """
-    UnitField()
+    IdentityField()
 
 Lazy representation of the B-series of the scaled vector field ``h f``
 of an ordinary differential equation ``u'(t) = f(u(t))``, where ``h``
 is the time step size.
 
-See also [`ExactSolution`](@ref), [`UnitMap`](@ref).
+See also [`ExactSolution`](@ref), [`IdentityMap`](@ref).
 
 # Examples
 
 ```jldoctest
-julia> bseries(UnitField(), 5)
+julia> bseries(IdentityField(), 5)
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
   RootedTree{Int64}: Int64[]         => 0
   RootedTree{Int64}: [1]             => 1
@@ -388,25 +388,25 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
 ```
 
 """
-struct UnitField end
+struct IdentityField end
 
-function Base.getindex(::UnitField, t::AbstractRootedTree)
+function Base.getindex(::IdentityField, t::AbstractRootedTree)
     return order(t) == 1
 end
 
-# general interface methods of iterators for `UnitField`
-Base.IteratorSize(::Type{<:UnitField}) = Base.SizeUnknown()
-Base.eltype(::Type{UnitField}) = Bool
-Base.valtype(unit_field::UnitField) = valtype(typeof(unit_field))
-Base.valtype(::Type{UnitField}) = Bool
+# general interface methods of iterators for `IdentityField`
+Base.IteratorSize(::Type{<:IdentityField}) = Base.SizeUnknown()
+Base.eltype(::Type{IdentityField}) = Bool
+Base.valtype(unit_field::IdentityField) = valtype(typeof(unit_field))
+Base.valtype(::Type{IdentityField}) = Bool
 
-function Base.iterate(unit_field::UnitField)
+function Base.iterate(unit_field::IdentityField)
     iterator = RootedTreeIterator(0)
     t, state = iterate(iterator)
     (unit_field[t], (state, iterator))
 end
 
-function Base.iterate(unit_field::UnitField, state_iterator)
+function Base.iterate(unit_field::IdentityField, state_iterator)
     state, iterator = state_iterator
     t_state = iterate(iterator, state)
     if t_state === nothing
@@ -418,7 +418,7 @@ function Base.iterate(unit_field::UnitField, state_iterator)
 end
 
 # internal interface of B-series
-# @inline evaluation_type(::UnitField) = LazyEvaluation() # this is the default assumption
+# @inline evaluation_type(::IdentityField) = LazyEvaluation() # this is the default assumption
 
 """
     ExactSolution(series_integrator)
@@ -607,7 +607,7 @@ function bseries(f::Function, order, iterator_type = RootedTreeIterator)
 end
 
 """
-    bseries(unit_map::UnitMap, order)
+    bseries(unit_map::IdentityMap, order)
 
 Compute the B-series of the identity mapping ``u^n \\mapsto u^n``
 interpreted as a numerical method for an ordinary differential equation
@@ -620,12 +620,12 @@ interpreted as a numerical method for an ordinary differential equation
     of the input vector field ``f``.
     See also [`evaluate`](@ref).
 
-See also [`UnitMap`](@ref), [`UnitField`](@ref).
+See also [`IdentityMap`](@ref), [`IdentityField`](@ref).
 
 # Examples
 
 ```jldoctest
-julia> bseries(UnitMap{Rational{Int}}(), 5)
+julia> bseries(IdentityMap{Rational{Int}}(), 5)
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
   RootedTree{Int64}: Int64[]         => 1
   RootedTree{Int64}: [1]             => 0
@@ -648,14 +648,14 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entr
 ```
 
 """
-function bseries(unit_map::UnitMap, order)
+function bseries(unit_map::IdentityMap, order)
     bseries(order) do t, series
         return unit_map[t]
     end
 end
 
 """
-    bseries(unit_field::UnitField, order)
+    bseries(unit_field::IdentityField, order)
 
 Compute the B-series of the scaled vector field ``h f`` of the
 ordinary differential equation ``u'(t) = f(u(t))`` up to a
@@ -668,12 +668,12 @@ prescribed integer `order`.
     of the input vector field ``f``.
     See also [`evaluate`](@ref).
 
-See also [`UnitField`](@ref), [`UnitMap`](@ref).
+See also [`IdentityField`](@ref), [`IdentityMap`](@ref).
 
 # Examples
 
 ```jldoctest
-julia> series = bseries(UnitField(), 5)
+julia> series = bseries(IdentityField(), 5)
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
   RootedTree{Int64}: Int64[]         => 0
   RootedTree{Int64}: [1]             => 1
@@ -696,7 +696,7 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
 ```
 
 """
-function bseries(unit_field::UnitField, order)
+function bseries(unit_field::IdentityField, order)
     bseries(order) do t, series
         return unit_field[t]
     end
@@ -1392,10 +1392,10 @@ function compose(b1, b2, bs::Vararg{Any, N}; normalize_stepsize = false) where {
 end
 
 """
-    compose(b, unit_field::UnitField)
+    compose(b, unit_field::IdentityField)
 
-Compose the B-series `b` with the B-series of the unit vector field
-[`UnitField`](@ref), i.e., insert the B-series `b` into the vector field
+Compose the B-series `b` with the B-series of the vector field
+[`IdentityField`](@ref), i.e., insert the B-series `b` into the vector field
 ``h f`` of the ordinary differential equation ``u'(t) = h f(u(t))``.
 It is assumed that the B-series `b` has the coefficient unity of the empty tree.
 
@@ -1404,7 +1404,7 @@ It is assumed that the B-series `b` has the coefficient unity of the empty tree.
 ```jldoctest
 julia> series = bseries(ExactSolution{Rational{Int}}(), 5)
 
-julia> compose(series, UnitField())
+julia> compose(series, IdentityField())
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
   RootedTree{Int64}: Int64[]         => 0
   RootedTree{Int64}: [1]             => 1
@@ -1425,7 +1425,7 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entr
   RootedTree{Int64}: [1, 2, 3, 2, 2] => 1//2
   RootedTree{Int64}: [1, 2, 2, 2, 2] => 1
 
-julia> hf = bseries(UnitField(), 5)
+julia> hf = bseries(IdentityField(), 5)
 TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
   RootedTree{Int64}: Int64[]         => 0
   RootedTree{Int64}: [1]             => 1
@@ -1446,19 +1446,19 @@ TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Bool} with 18 entries:
   RootedTree{Int64}: [1, 2, 3, 2, 2] => 0
   RootedTree{Int64}: [1, 2, 2, 2, 2] => 0
 
-julia> compose(series, hf) == compose(series, UnitField())
+julia> compose(series, hf) == compose(series, IdentityField())
 true
 ```
 
-This method is specialized to the [`UnitField`](@ref).
+This method is specialized to the [`IdentityField`](@ref).
 While the same result can be obtained by creating a
-[`TruncatedBSeries`](@ref) of the unit vector field
+[`TruncatedBSeries`](@ref) of the vector field
 via [`bseries`](@ref) as above and using the general
 [`compose`](@ref) interface, this specialized method
 is more efficient.
 
 """
-function compose(b, ::UnitField)
+function compose(b, ::IdentityField)
     series_keys = keys(b)
     series = empty(b)
 

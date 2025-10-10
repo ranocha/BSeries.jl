@@ -51,12 +51,12 @@ The method described in the previous section is the preferred way of constructin
 B-series for Runge-Kutta methods. However, it is also possible to construct
 the B-series of a Runge-Kutta method manually via composition of simpler B-series.
 First, we start with the B-series of the identity interpreted as a time integrator
-``u^{n+1} = u^n``. This B-series is called the [`UnitMap`](@ref) in
+``u^{n+1} = u^n``. This B-series is called the [`IdentityMap`](@ref) in
 [BSeries.jl](https://github.com/ranocha/BSeries.jl).
 
 ```@example ex:RK2-compose
 using BSeries
-y1 = bseries(UnitMap{Int}(), 4)
+y1 = bseries(IdentityMap{Int}(), 4)
 ```
 
 This will be the first stage of a two-stage explicit Runge-Kutta method with
@@ -64,11 +64,11 @@ symbolic coefficients. The next stage is given by
 ``y^2 = y^1 + a_{21} \Delta t f(y^1)``.
 
 First, we create the B-series of ``\Delta t f(y^1)`` by composing
-the B-series of the first stage with the B-series of the unit vector field,
-see [`compose`](@ref) and [`UnitField`](@ref).
+the B-series of the first stage with the B-series of the vector field ``h f``,
+see [`compose`](@ref) and [`IdentityField`](@ref).
 
 ```@example ex:RK2-compose
-compose(y1, UnitField())
+compose(y1, IdentityField())
 ```
 
 Then, we can compute the second stage.
@@ -76,7 +76,7 @@ Then, we can compute the second stage.
 ```@example ex:RK2-compose
 using SymPyPythonCall
 a21 = symbols("a21", real = true)
-y2 = y1 + a21 * compose(y1, UnitField())
+y2 = y1 + a21 * compose(y1, IdentityField())
 ```
 
 Similarly, we can compute the new update
@@ -84,7 +84,7 @@ Similarly, we can compute the new update
 
 ```@example ex:RK2-compose
 b1, b2 = symbols("b1 b2", real = true)
-series = y1 + b1 * compose(y1, UnitField()) + b2 * compose(y2, UnitField())
+series = y1 + b1 * compose(y1, IdentityField()) + b2 * compose(y2, IdentityField())
 ```
 
 Alternatively, we can obtain the same result by using the

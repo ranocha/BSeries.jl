@@ -2683,24 +2683,24 @@ using Aqua: Aqua
         end
     end
 
-    @testset "UnitMap" begin
+    @testset "IdentityMap" begin
         @testset "Basic construction and properties" begin
-            unit_map_int = @inferred UnitMap{Int}()
-            unit_map_rational = @inferred UnitMap{Rational{Int}}()
-            unit_map_float = @inferred UnitMap{Float64}()
+            unit_map_int = @inferred IdentityMap{Int}()
+            unit_map_rational = @inferred IdentityMap{Rational{Int}}()
+            unit_map_float = @inferred IdentityMap{Float64}()
 
             # Test type properties
-            @test @inferred(Base.eltype(UnitMap{Int})) == Int
-            @test @inferred(Base.eltype(UnitMap{Rational{Int}})) == Rational{Int}
-            @test @inferred(Base.eltype(UnitMap{Float64})) == Float64
+            @test @inferred(Base.eltype(IdentityMap{Int})) == Int
+            @test @inferred(Base.eltype(IdentityMap{Rational{Int}})) == Rational{Int}
+            @test @inferred(Base.eltype(IdentityMap{Float64})) == Float64
             @test @inferred(Base.valtype(unit_map_int)) == Int
             @test @inferred(Base.valtype(unit_map_rational)) == Rational{Int}
             @test @inferred(Base.valtype(unit_map_float)) == Float64
-            @test @inferred(Base.IteratorSize(UnitMap{Int})) == Base.SizeUnknown()
+            @test @inferred(Base.IteratorSize(IdentityMap{Int})) == Base.SizeUnknown()
         end
 
         @testset "Indexing behavior" begin
-            unit_map = @inferred UnitMap{Rational{Int}}()
+            unit_map = @inferred IdentityMap{Rational{Int}}()
 
             # Test empty tree (order 0) returns 1
             empty_tree = rootedtree(Int[])
@@ -2717,7 +2717,7 @@ using Aqua: Aqua
         end
 
         @testset "Iterator interface" begin
-            unit_map = @inferred UnitMap{Int}()
+            unit_map = @inferred IdentityMap{Int}()
 
             # Test iteration through first few terms
             terms = collect(Iterators.take(unit_map, 5))
@@ -2730,9 +2730,9 @@ using Aqua: Aqua
 
         @testset "bseries method" begin
             # Test with different coefficient types
-            series_int = @inferred bseries(UnitMap{Int}(), 3)
-            series_rational = @inferred bseries(UnitMap{Rational{Int}}(), 3)
-            series_float = @inferred bseries(UnitMap{Float64}(), 3)
+            series_int = @inferred bseries(IdentityMap{Int}(), 3)
+            series_rational = @inferred bseries(IdentityMap{Rational{Int}}(), 3)
+            series_float = @inferred bseries(IdentityMap{Float64}(), 3)
 
             # Verify return types
             @test @inferred(valtype(series_int)) == Rational{Int}
@@ -2755,27 +2755,27 @@ using Aqua: Aqua
         end
     end
 
-    @testset "UnitField" begin
+    @testset "IdentityField" begin
         @testset "Basic construction and properties" begin
-            unit_field = @inferred UnitField()
+            unit_field = @inferred IdentityField()
 
             # Test type properties
-            @test @inferred(Base.eltype(UnitField)) == Bool
+            @test @inferred(Base.eltype(IdentityField)) == Bool
             @test @inferred(Base.valtype(unit_field)) == Bool
-            @test @inferred(Base.valtype(UnitField)) == Bool
-            @test @inferred(Base.IteratorSize(UnitField)) == Base.SizeUnknown()
+            @test @inferred(Base.valtype(IdentityField)) == Bool
+            @test @inferred(Base.IteratorSize(IdentityField)) == Base.SizeUnknown()
         end
 
         @testset "modified equation" begin
             o = 8
             exact = @inferred bseries(ExactSolution{Rational{Int}}(), o)
-            hf = @inferred bseries(UnitField(), o)
+            hf = @inferred bseries(IdentityField(), o)
             series = @inferred modified_equation(exact)
             @test series == hf
         end
 
         @testset "Indexing behavior" begin
-            unit_field = @inferred UnitField()
+            unit_field = @inferred IdentityField()
 
             # Test empty tree (order 0) returns false
             empty_tree = rootedtree(Int[])
@@ -2795,7 +2795,7 @@ using Aqua: Aqua
         end
 
         @testset "Iterator interface" begin
-            unit_field = @inferred UnitField()
+            unit_field = @inferred IdentityField()
 
             # Test iteration through first few terms
             terms = collect(Iterators.take(unit_field, 5))
@@ -2807,7 +2807,7 @@ using Aqua: Aqua
         end
 
         @testset "bseries method" begin
-            series = @inferred bseries(UnitField(), 4)
+            series = @inferred bseries(IdentityField(), 4)
 
             # Verify return type
             @test valtype(series) == Bool
@@ -2831,11 +2831,11 @@ using Aqua: Aqua
         end
     end
 
-    @testset "compose with UnitField" begin
-        @testset "Compose ExactSolution with UnitField" begin
-            # Test the specialized compose method for UnitField
+    @testset "compose with IdentityField" begin
+        @testset "Compose ExactSolution with IdentityField" begin
+            # Test the specialized compose method for IdentityField
             exact_series = @inferred bseries(ExactSolution{Rational{Int}}(), 4)
-            composed = @inferred compose(exact_series, UnitField())
+            composed = @inferred compose(exact_series, IdentityField())
 
             # Verify return type
             @test valtype(composed) == Rational{Int}
@@ -2858,17 +2858,17 @@ using Aqua: Aqua
         end
 
         @testset "Equivalence with general compose" begin
-            # Test that compose(series, UnitField()) == compose(series, bseries(UnitField(), order))
+            # Test that compose(series, IdentityField()) == compose(series, bseries(IdentityField(), order))
             exact_series = @inferred bseries(ExactSolution{Rational{Int}}(), 9)
-            unit_field_series = @inferred bseries(UnitField(), 9)
+            unit_field_series = @inferred bseries(IdentityField(), 9)
 
-            composed_specialized = @inferred compose(exact_series, UnitField())
+            composed_specialized = @inferred compose(exact_series, IdentityField())
             composed_general = @inferred compose(exact_series, unit_field_series)
 
             @test composed_specialized == composed_general
         end
 
-        @testset "Compose Runge-Kutta method with UnitField" begin
+        @testset "Compose Runge-Kutta method with IdentityField" begin
             # Test with classical RK4
             A = @SArray [0 0 0 0;
                          1//2 0 0 0;
@@ -2878,7 +2878,7 @@ using Aqua: Aqua
             c = @SArray [0, 1 // 2, 1 // 2, 1]
 
             rk4_series = @inferred bseries(A, b, c, 3)
-            composed_rk4 = @inferred compose(rk4_series, UnitField())
+            composed_rk4 = @inferred compose(rk4_series, IdentityField())
 
             # Verify basic properties
             @test valtype(composed_rk4) == Rational{Int}
@@ -2924,15 +2924,15 @@ using Aqua: Aqua
             coeffsL = @inferred bseries(rkL, 8)
             coeffsL[rootedtree(Int[])] = 0 # hack by Rob Corless
 
-            @test coeffsL == compose(coeffs7, UnitField())
+            @test coeffsL == compose(coeffs7, IdentityField())
         end
     end
 
-    @testset "UnitMap and UnitField integration" begin
+    @testset "IdentityMap and IdentityField integration" begin
         @testset "Different coefficient types" begin
-            # Test UnitMap with various coefficient types
+            # Test IdentityMap with various coefficient types
             for T in [Int, Rational{Int}, Float64]
-                unit_map = UnitMap{T}()
+                unit_map = IdentityMap{T}()
                 series = bseries(unit_map, 2)
 
                 if T == Int
@@ -2948,12 +2948,12 @@ using Aqua: Aqua
         end
 
         @testset "Consistency between structures" begin
-            # UnitMap and UnitField should be complementary in some sense
-            unit_map = UnitMap{Int}()
-            unit_field = UnitField()
+            # IdentityMap and IdentityField should be complementary in some sense
+            unit_map = IdentityMap{Int}()
+            unit_field = IdentityField()
 
-            # For any tree, exactly one of UnitMap[t] and UnitField[t] should be "active"
-            # (UnitMap is 1 for empty tree, UnitField is true for order-1 trees)
+            # For any tree, exactly one of IdentityMap[t] and IdentityField[t] should be "active"
+            # (IdentityMap is 1 for empty tree, IdentityField is true for order-1 trees)
             test_trees = [
                 rootedtree(Int[]),      # order 0
                 rootedtree([1]),        # order 1
@@ -2977,8 +2977,8 @@ using Aqua: Aqua
 
         @testset "Performance and type stability" begin
             # Test type inference for all key operations
-            unit_map = UnitMap{Rational{Int}}()
-            unit_field = UnitField()
+            unit_map = IdentityMap{Rational{Int}}()
+            unit_field = IdentityField()
 
             empty_tree = rootedtree(Int[])
             order_1_tree = rootedtree([1])
@@ -2993,14 +2993,14 @@ using Aqua: Aqua
 
             # Test compose type inference
             exact_series = bseries(ExactSolution{Rational{Int}}(), 3)
-            @inferred compose(exact_series, UnitField())
+            @inferred compose(exact_series, IdentityField())
         end
     end
 
-    @testset "UnitMap B-series is unit for compose" begin
-        # Construct the unit B-series from UnitMap
+    @testset "IdentityMap B-series is identity for compose" begin
+        # Construct the B-series from IdentityMap
         o = 7
-        unit = @inferred bseries(UnitMap{Rational{Int}}(), o)
+        unit = @inferred bseries(IdentityMap{Rational{Int}}(), o)
 
         # Representative B-series
         let
@@ -3039,10 +3039,10 @@ using Aqua: Aqua
         end
     end
 
-    @testset "UnitField B-series is unit for substitute" begin
-        # Construct the unit B-series from UnitField
+    @testset "IdentityField B-series is identity for substitute" begin
+        # Construct the B-series from IdentityField
         o = 7
-        unit = @inferred bseries(UnitField(), o)
+        unit = @inferred bseries(IdentityField(), o)
 
         # Representative B-series
         let
