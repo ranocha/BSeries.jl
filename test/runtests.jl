@@ -2682,4 +2682,310 @@ using Aqua: Aqua
             Aqua.test_ambiguities([BSeries])
         end
     end
+
+    @testset "UnitMap" begin
+        @testset "Basic construction and properties" begin
+            unit_map_int = @inferred UnitMap{Int}()
+            unit_map_rational = @inferred UnitMap{Rational{Int}}()
+            unit_map_float = @inferred UnitMap{Float64}()
+
+            # Test type properties
+            @test @inferred(Base.eltype(UnitMap{Int})) == Int
+            @test @inferred(Base.eltype(UnitMap{Rational{Int}})) == Rational{Int}
+            @test @inferred(Base.eltype(UnitMap{Float64})) == Float64
+            @test @inferred(Base.valtype(unit_map_int)) == Int
+            @test @inferred(Base.valtype(unit_map_rational)) == Rational{Int}
+            @test @inferred(Base.valtype(unit_map_float)) == Float64
+            @test @inferred(Base.IteratorSize(UnitMap{Int})) == Base.SizeUnknown()
+        end
+
+        @testset "Indexing behavior" begin
+            unit_map = @inferred UnitMap{Rational{Int}}()
+
+            # Test empty tree (order 0) returns 1
+            empty_tree = rootedtree(Int[])
+            @test @inferred(unit_map[empty_tree]) == 1 // 1
+
+            # Test trees of order 1 and higher return 0
+            trees_order_1 = [rootedtree([1])]
+            trees_order_2 = [rootedtree([1, 2])]
+            trees_order_3 = [rootedtree([1, 2, 3]), rootedtree([1, 2, 2])]
+
+            for t in [trees_order_1; trees_order_2; trees_order_3]
+                @test @inferred(unit_map[t]) == 0 // 1
+            end
+        end
+
+        @testset "Iterator interface" begin
+            unit_map = @inferred UnitMap{Int}()
+
+            # Test iteration through first few terms
+            terms = collect(Iterators.take(unit_map, 5))
+            @test terms == [1, 0, 0, 0, 0]  # first term is 1 (empty tree), rest are 0
+
+            # Test that we can iterate multiple times
+            terms2 = collect(Iterators.take(unit_map, 3))
+            @test terms2 == [1, 0, 0]
+        end
+
+        @testset "bseries method" begin
+            # Test with different coefficient types
+            series_int = @inferred bseries(UnitMap{Int}(), 3)
+            series_rational = @inferred bseries(UnitMap{Rational{Int}}(), 3)
+            series_float = @inferred bseries(UnitMap{Float64}(), 3)
+
+            # Verify return types
+            @test @inferred(valtype(series_int)) == Rational{Int}
+            @test @inferred(valtype(series_rational)) == Rational{Int}
+            @test @inferred(valtype(series_float)) == Float64
+
+            # Test structure: only empty tree should have coefficient 1
+            empty_tree = rootedtree(Int[])
+            @test series_rational[empty_tree] == 1 // 1
+
+            # All other trees should have coefficient 0
+            for t in keys(series_rational)
+                if !isempty(t)
+                    @test series_rational[t] == 0 // 1
+                end
+            end
+
+            # Test expected number of terms up to order 3
+            @test length(series_rational) == 5  # 1 + 1 + 1 + 2 = 5 trees up to order 3
+        end
+    end
+
+    @testset "UnitField" begin
+        @testset "Basic construction and properties" begin
+            unit_field = @inferred UnitField()
+
+            # Test type properties
+            @test @inferred(Base.eltype(UnitField)) == Bool
+            @test @inferred(Base.valtype(unit_field)) == Bool
+            @test @inferred(Base.valtype(UnitField)) == Bool
+            @test @inferred(Base.IteratorSize(UnitField)) == Base.SizeUnknown()
+        end
+
+        @testset "Indexing behavior" begin
+            unit_field = @inferred UnitField()
+
+            # Test empty tree (order 0) returns false
+            empty_tree = rootedtree(Int[])
+            @test @inferred(unit_field[empty_tree]) == false
+
+            # Test trees of order 1 return true
+            tree_order_1 = rootedtree([1])
+            @test @inferred(unit_field[tree_order_1]) == true
+
+            # Test trees of order 2 and higher return false
+            trees_order_2 = [rootedtree([1, 2])]
+            trees_order_3 = [rootedtree([1, 2, 3]), rootedtree([1, 2, 2])]
+
+            for t in [trees_order_2; trees_order_3]
+                @test @inferred(unit_field[t]) == false
+            end
+        end
+
+        @testset "Iterator interface" begin
+            unit_field = @inferred UnitField()
+
+            # Test iteration through first few terms
+            terms = collect(Iterators.take(unit_field, 5))
+            @test terms == [false, true, false, false, false]  # only order-1 tree is true
+
+            # Test that we can iterate multiple times
+            terms2 = collect(Iterators.take(unit_field, 3))
+            @test terms2 == [false, true, false]
+        end
+
+        @testset "bseries method" begin
+            series = @inferred bseries(UnitField(), 4)
+
+            # Verify return type
+            @test valtype(series) == Bool
+
+            # Test structure: only order-1 tree should have coefficient true
+            empty_tree = rootedtree(Int[])
+            order_1_tree = rootedtree([1])
+
+            @test series[empty_tree] == false
+            @test series[order_1_tree] == true
+
+            # All other trees should have coefficient false
+            for t in keys(series)
+                if order(t) != 1
+                    @test series[t] == false
+                end
+            end
+
+            # Test expected number of terms up to order 4
+            @test length(series) == 9  # 1 + 1 + 1 + 2 + 4 = 9 trees up to order 4
+        end
+    end
+
+    @testset "compose with UnitField" begin
+        @testset "Compose ExactSolution with UnitField" begin
+            # Test the specialized compose method for UnitField
+            exact_series = @inferred bseries(ExactSolution{Rational{Int}}(), 4)
+            composed = @inferred compose(exact_series, UnitField())
+
+            # Verify return type
+            @test valtype(composed) == Rational{Int}
+
+            # Test that empty tree has coefficient false (converted to 0)
+            empty_tree = rootedtree(Int[])
+            @test composed[empty_tree] == false
+
+            # Test some known values for the vector field B-series
+            # These should match the derivative of the exact solution
+            order_1_tree = rootedtree([1])
+            @test composed[order_1_tree] == 1 // 1
+
+            order_2_tree = rootedtree([1, 2])
+            @test composed[order_2_tree] == 1 // 1
+
+            order_3_trees = [rootedtree([1, 2, 3]), rootedtree([1, 2, 2])]
+            @test composed[order_3_trees[1]] == 1 // 2  # [τ₃]
+            @test composed[order_3_trees[2]] == 1 // 1  # [τ₃']
+        end
+
+        @testset "Equivalence with general compose" begin
+            # Test that compose(series, UnitField()) == compose(series, bseries(UnitField(), order))
+            exact_series = @inferred bseries(ExactSolution{Rational{Int}}(), 9)
+            unit_field_series = @inferred bseries(UnitField(), 9)
+
+            composed_specialized = @inferred compose(exact_series, UnitField())
+            composed_general = @inferred compose(exact_series, unit_field_series)
+
+            @test composed_specialized == composed_general
+        end
+
+        @testset "Compose Runge-Kutta method with UnitField" begin
+            # Test with classical RK4
+            A = @SArray [0 0 0 0;
+                         1//2 0 0 0;
+                         0 1//2 0 0;
+                         0 0 1 0]
+            b = @SArray [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+            c = @SArray [0, 1 // 2, 1 // 2, 1]
+
+            rk4_series = @inferred bseries(A, b, c, 3)
+            composed_rk4 = @inferred compose(rk4_series, UnitField())
+
+            # Verify basic properties
+            @test valtype(composed_rk4) == Rational{Int}
+
+            # Empty tree should be false/0
+            empty_tree = rootedtree(Int[])
+            @test composed_rk4[empty_tree] == false
+
+            # Order 1 tree should match the RK4 coefficient
+            order_1_tree = rootedtree([1])
+            @test composed_rk4[order_1_tree] == rk4_series[order_1_tree]
+        end
+
+        @testset "Compose vs. hack of Rob Corless" begin
+            # See https://github.com/ranocha/BSeries.jl/issues/285
+            A7 = [0 0 0 0 0 0 0;
+                  1//5 0 0 0 0 0 0;
+                  3//40 9//40 0 0 0 0 0;
+                  44//45 -56//15 32//9 0 0 0 0;
+                  19372//6561 -25360//2187 64448//6561 -212//729 0 0 0;
+                  9017//3168 -355//33 46732//5247 49//176 -5103//18656 0 0;
+                  35//384 0 500//1113 125//192 -2187//6784 11//84 0]
+            s = SymPyPythonCall.symbols("s", real = true)
+            bcext = [s - 183//64 * s^2 + 37//12 * s^3 - 145//128 * s^4,0,
+                     1500//371 * s^2 - 1000//159 * s^3 + 1000//371 * s^4,
+                     -125//32 * s^2 + 125//12 * s^3 - 375//64 * s^4,
+                     9477//3392 * s^2 - 729//106 * s^3 + 25515//6784 *s^4,
+                     -11//7 * s^2 + 11//3 * s^3 - 55//28 * s^4,
+                     3//2 * s^2 - 4 * s^3 + 5//2 * s^4]
+            rk7 = @inferred RungeKuttaMethod(A7, bcext)
+            coeffs7 = @inferred bseries(rk7, 8)
+
+            AL = [0 0 0 0 0 0 0 0;
+                  1//5 0 0 0 0 0 0 0;
+                  3//40 9//40 0 0 0 0 0 0;
+                  44//45 -56//15 32//9 0 0 0 0 0;
+                  19372//6561 -25360//2187 64448//6561 -212//729 0 0 0 0;
+                  9017//3168 -355//33 46732//5247 49//176 -5103//18656 0 0 0;
+                  35//384 0 500//1113 125//192 -2187//6784 11//84 0 0;
+                  bcext[1] bcext[2] bcext[3] bcext[4] bcext[5] bcext[6] bcext[7] 0]
+            bL = [0, 0, 0, 0, 0, 0, 0, 1]
+            rkL = @inferred RungeKuttaMethod(AL, bL)
+            coeffsL = @inferred bseries(rkL, 8)
+            coeffsL[rootedtree(Int[])] = 0 # hack by Rob Corless
+
+            @test coeffsL == compose(coeffs7, UnitField())
+        end
+    end
+
+    @testset "UnitMap and UnitField integration" begin
+        @testset "Different coefficient types" begin
+            # Test UnitMap with various coefficient types
+            for T in [Int, Rational{Int}, Float64]
+                unit_map = UnitMap{T}()
+                series = bseries(unit_map, 2)
+
+                if T == Int
+                    # bseries promotes integers to rationals
+                    @test valtype(series) == Rational{Int}
+                else
+                    @test valtype(series) == T
+                end
+                @test series[rootedtree(Int[])] == one(T)
+                @test series[rootedtree([1])] == zero(T)
+                @test series[rootedtree([1, 2])] == zero(T)
+            end
+        end
+
+        @testset "Consistency between structures" begin
+            # UnitMap and UnitField should be complementary in some sense
+            unit_map = UnitMap{Int}()
+            unit_field = UnitField()
+
+            # For any tree, exactly one of UnitMap[t] and UnitField[t] should be "active"
+            # (UnitMap is 1 for empty tree, UnitField is true for order-1 trees)
+            test_trees = [
+                rootedtree(Int[]),      # order 0
+                rootedtree([1]),        # order 1
+                rootedtree([1, 2]),     # order 2
+                rootedtree([1, 2, 3]),   # order 3
+            ]
+
+            for t in test_trees
+                map_val = unit_map[t]
+                field_val = unit_field[t]
+
+                if order(t) == 0
+                    @test map_val == 1 && field_val == false
+                elseif order(t) == 1
+                    @test map_val == 0 && field_val == true
+                else
+                    @test map_val == 0 && field_val == false
+                end
+            end
+        end
+
+        @testset "Performance and type stability" begin
+            # Test type inference for all key operations
+            unit_map = UnitMap{Rational{Int}}()
+            unit_field = UnitField()
+
+            empty_tree = rootedtree(Int[])
+            order_1_tree = rootedtree([1])
+
+            @inferred unit_map[empty_tree]
+            @inferred unit_map[order_1_tree]
+            @inferred unit_field[empty_tree]
+            @inferred unit_field[order_1_tree]
+
+            @inferred bseries(unit_map, 3)
+            @inferred bseries(unit_field, 3)
+
+            # Test compose type inference
+            exact_series = bseries(ExactSolution{Rational{Int}}(), 3)
+            @inferred compose(exact_series, UnitField())
+        end
+    end
 end # @testset "BSeries"

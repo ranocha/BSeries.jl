@@ -1460,7 +1460,7 @@ function compose(b, ::UnitField)
 
     t = first(series_keys)
     @assert isempty(t)
-    series[t] = false
+    series[t] = zero(valtype(series))
 
     for t in Iterators.drop(series_keys, 1)
         coefficient = one(valtype(series))
