@@ -2683,6 +2683,148 @@ using Aqua: Aqua
         end
     end
 
+    @testset "renormalize functions" begin
+        @testset "renormalize! mutates input" begin
+            # Test with ExactSolution B-series
+            series = @inferred bseries(ExactSolution{Rational{Int}}(), 4)
+            original_series = @inferred copy(series)
+
+            # Renormalize in place
+            result = @inferred renormalize!(series)
+
+            # Check that the result is the same object
+            @test result === series
+
+            # Check that the original series was modified
+            @test series != original_series
+
+            # Check that coefficients are divided by symmetry
+            for t in keys(original_series)
+                @test series[t] ≈ original_series[t] / symmetry(t)
+            end
+        end
+
+        @testset "renormalize creates copy" begin
+            # Test with ExactSolution B-series
+            series = @inferred bseries(ExactSolution{Rational{Int}}(), 4)
+            original_series = @inferred copy(series)
+
+            # Renormalize without mutation
+            result = @inferred renormalize(series)
+
+            # Check that the result is a different object
+            @test result !== series
+
+            # Check that the original series was not modified
+            @test series == original_series
+
+            # Check that coefficients in result are divided by symmetry
+            for t in keys(original_series)
+                @test result[t] ≈ original_series[t] / symmetry(t)
+            end
+        end
+
+        @testset "specific coefficient values" begin
+            # Test specific trees and their expected renormalized values
+            series = @inferred bseries(ExactSolution{Rational{Int}}(), 4)
+            result = @inferred renormalize(series)
+
+            # Test some specific known values based on the docstring examples
+            empty_tree = rootedtree(Int[])
+            t1 = rootedtree([1])
+            t2 = rootedtree([1, 2])
+            t3 = rootedtree([1, 2, 3])
+            t4 = rootedtree([1, 2, 2])  # This tree has symmetry 2
+
+            @test result[empty_tree] == 1  # coefficient 1, symmetry 1
+            @test result[t1] == 1          # coefficient 1, symmetry 1
+            @test result[t2] == 1 // 2     # coefficient 1//2, symmetry 1
+            @test result[t3] == 1 // 6     # coefficient 1//6, symmetry 1
+            @test result[t4] == 1 // 6     # coefficient 1//3, symmetry 2 -> 1//3 / 2 = 1//6
+        end
+
+        @testset "different coefficient types" begin
+            # Test with Float64 coefficients
+            series_float = @inferred bseries(ExactSolution{Float64}(), 3)
+            result_float = @inferred renormalize(series_float)
+
+            for t in keys(series_float)
+                @test result_float[t] ≈ series_float[t] / symmetry(t)
+            end
+
+            # Test with rational coefficients
+            series_rational = @inferred bseries(ExactSolution{Rational{BigInt}}(), 3)
+            result_rational = @inferred renormalize(series_rational)
+
+            for t in keys(series_rational)
+                @test result_rational[t] == series_rational[t] // symmetry(t)
+            end
+        end
+
+        @testset "empty series" begin
+            # Test with empty series
+            empty_series = TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                            Rational{Int}}()
+
+            result_mutating = @inferred renormalize!(copy(empty_series))
+            @test length(result_mutating) == 0
+
+            result_copying = @inferred renormalize(empty_series)
+            @test length(result_copying) == 0
+            @test result_copying !== empty_series
+        end
+
+        @testset "single tree series" begin
+            # Create a series with just the empty tree
+            series = @inferred TruncatedBSeries{RootedTree{Int64, Vector{Int64}},
+                                                Rational{Int}}()
+            empty_tree = rootedtree(Int[])
+            series[empty_tree] = 2 // 3
+
+            result = @inferred renormalize(series)
+            @test result[empty_tree] == 2 // 3  # symmetry of empty tree is 1
+            @test length(result) == 1
+        end
+
+        @testset "consistency with documented examples" begin
+            # Test the exact example from the docstring
+            series = @inferred bseries(ExactSolution{Rational{Int}}(), 4)
+            result = @inferred renormalize(series)
+
+            # Check that we get the expected values from the docstring
+            trees_and_values = [
+                (rootedtree(Int[]), 1 // 1),
+                (rootedtree([1]), 1 // 1),
+                (rootedtree([1, 2]), 1 // 2),
+                (rootedtree([1, 2, 3]), 1 // 6),
+                (rootedtree([1, 2, 2]), 1 // 6),  # was 1//3, now 1//6 after dividing by symmetry 2
+                (rootedtree([1, 2, 3, 4]), 1 // 24),
+                (rootedtree([1, 2, 3, 3]), 1 // 24), # was 1//12, now 1//24 after dividing by symmetry 2
+                (rootedtree([1, 2, 3, 2]), 1 // 8),
+                (rootedtree([1, 2, 2, 2]), 1 // 24),  # was 1//4, now 1//24 after dividing by symmetry 6
+            ]
+
+            for (tree, expected_value) in trees_and_values
+                if haskey(result, tree)
+                    @test result[tree] == expected_value
+                end
+            end
+        end
+
+        @testset "type stability" begin
+            # Test type stability
+            series = @inferred bseries(ExactSolution{Rational{Int}}(), 3)
+
+            result_mutating = @inferred renormalize!(copy(series))
+            @test result_mutating isa
+                  TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int}}
+
+            result_copying = @inferred renormalize(series)
+            @test result_copying isa
+                  TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int}}
+        end
+    end
+
     @testset "IdentityMap" begin
         @testset "Basic construction and properties" begin
             unit_map_int = @inferred IdentityMap{Int}()
