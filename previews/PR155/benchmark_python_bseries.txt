@@ -1,0 +1,15 @@
+Python version 3.9.23 (main, Jun  4 2025, 04:11:23) 
+[GCC 13.3.0]
+Package version 0.3
+
+Modified equation
+19063/26880
+ 15.503551721572876 seconds
+19063/26880
+ 16.393033504486084 seconds
+
+Modifying integrator
+5460293/241920
+ 13.828963994979858 seconds
+5460293/241920
+ 13.75262451171875 seconds
