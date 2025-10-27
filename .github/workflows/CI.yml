@@ -87,7 +87,7 @@ jobs:
       - shell: bash
         run: |
           cp ./lcov.info ./lcov-${{ matrix.os }}-${{ matrix.version }}-${{ github.run_id }}.info
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: lcov-${{ matrix.os }}-${{ matrix.version }}-${{ github.run_id }}
           path: ./lcov-${{ matrix.os }}-${{ matrix.version }}-${{ github.run_id }}.info
@@ -134,7 +134,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ./lcov.info
       # Upload merged coverage data as artifact for debugging
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: lcov
           path: ./lcov.info
