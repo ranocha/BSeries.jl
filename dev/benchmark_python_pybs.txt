@@ -4,18 +4,18 @@ Package version 0.3
 
 Modified equation
 19063/26880
- 5.699317693710327 seconds
+ 5.709273338317871 seconds
 19063/26880
- 5.637162208557129 seconds
+ 5.6389782428741455 seconds
 
 Energy preservation
 9
- 5.738391399383545 seconds
+ 5.739392042160034 seconds
 9
- 5.558019638061523 seconds
+ 5.5903167724609375 seconds
 
 Symplecticity (conservation of quadratic invariants)
 9
- 0.03459334373474121 seconds
+ 0.03485989570617676 seconds
 9
- 0.01965808868408203 seconds
+ 0.019628047943115234 seconds
