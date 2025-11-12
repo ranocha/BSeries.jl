@@ -1093,7 +1093,6 @@ function RootedTrees.derivative_weight(t::RootedTree,
     return result
 end
 
-
 #####################################################################
 # defining the new methods, not sure where best place for this code is.
 
@@ -3455,6 +3454,5 @@ function should_skip_tree(t::ColoredRootedTree, Flinear::Bool, Glinear::Bool)
 
     return false
 end
-
 
 end # module
