@@ -1196,7 +1196,7 @@ multiplicities. Each tree’s contribution is obtained from [`tree_weight`](@ref
 
 This follows from the Butcher type order conditions exhibited in, 
 Chan, R.P.K., Tsai, A.Y.J. On explicit two-derivative Runge-Kutta methods.
-- Numer Algor 53, 171–194 (2010). https://doi.org/10.1007/s11075-009-9349-1
+- Numer. Algor 53, 171–194 (2010). https://doi.org/10.1007/s11075-009-9349-1
  
 
 # Arguments
@@ -3332,7 +3332,7 @@ function collapse_tree_at_index(t::ColoredRootedTree, index::Int)
     #change the color of the parent to 2
     new_tree.color_sequence[parent] = 2
 
-    #decrement the level of each node after the index untill the next node of the same level
+    #decrement the level of each node after the index until the next node of the same level
     for i in index+1:length(new_tree.level_sequence)
         if new_tree.level_sequence[i] > level_of_node
             new_tree.level_sequence[i] -= 1
@@ -3370,8 +3370,8 @@ function collapse_tree(t::ColoredRootedTree)
     multiplicities = []
 
     # Get list of all collapsible node indices (excluding the root at index 1)
-    collapsable_nodes = findall(t.color_sequence[2:end] .== 1) .+ 1 #plus one is to adjust since [2:end] shifts indices
-    n = length(collapsable_nodes)
+    collapsible_nodes = findall(t.color_sequence[2:end] .== 1) .+ 1 #plus one is to adjust since [2:end] shifts indices
+    n = length(collapsible_nodes)
 
     # Go through all 2^n combinations of collapses
     for i in 0:(2^n - 1)
@@ -3382,7 +3382,7 @@ function collapse_tree(t::ColoredRootedTree)
         for j in 1:n
             if ((i >> (j - 1)) & 1) == 1
                 # we lose an index every time we collapse a node so we need to adjust the index if its after ours
-                adjusted_index = collapsable_nodes[j] - num_collapses
+                adjusted_index = collapsible_nodes[j] - num_collapses
 
                 #check if the adjusted index is still valid
                 if new_tree.color_sequence[adjusted_index] != 1
@@ -3406,7 +3406,7 @@ function collapse_tree(t::ColoredRootedTree)
             continue
         end
 
-        # Check if tree is already in the list update tree list or multiplicty respectively
+        # Check if tree is already in the list update tree list or multiplicity respectively
         index = findfirst(t -> t == new_tree, trees)
         if isnothing(index)
             push!(trees, new_tree)
