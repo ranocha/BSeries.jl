@@ -1093,6 +1093,333 @@ function RootedTrees.derivative_weight(t::RootedTree,
     return result
 end
 
+
+#####################################################################
+# defining the new methods, not sure where best place for this code is.
+
+"""
+    TwoDerivativeRungeKuttaMethod{T, RKm} <: AbstractTimeIntegrationMethod
+
+Two-derivative Runge–Kutta (TDRK) method composed of multiple
+`RungeKuttaMethod`s defining base and derivative components.
+"""
+struct TwoDerivativeRungeKuttaMethod{T, RKm <: AbstractVector{<:RungeKuttaMethod{T}}} <: RootedTrees.AbstractTimeIntegrationMethod
+    rkm::RKm
+end
+
+"""
+    TwoDerivativeRungeKuttaMethod(rkm)
+
+Construct from a vector of `RungeKuttaMethod`s.  
+Promotes all coefficient types to a common numeric type.
+"""
+function TwoDerivativeRungeKuttaMethod(rkm)
+    T = mapreduce(eltype, promote_type, rkm)           # promote coefficient type
+    As = map(rk -> T.(rk.A), rkm)
+    bs = map(rk -> T.(rk.b), rkm)
+    cs = map(rk -> T.(rk.c), rkm)
+    return TwoDerivativeRungeKuttaMethod(As, bs, cs)
+end
+
+"""
+    TwoDerivativeRungeKuttaMethod(As, bs[, cs])
+
+Construct directly from coefficient arrays.  
+If c not explicitly given, computed as `sum(A, dims = 2)` per usual.
+"""
+function TwoDerivativeRungeKuttaMethod(As, bs, cs = map(A -> vec(sum(A, dims = 2)), As))
+    rkm = map(RungeKuttaMethod, As, bs, cs)
+    return TwoDerivativeRungeKuttaMethod(rkm)
+end
+
+"""
+    eltype(tdrk::TwoDerivativeRungeKuttaMethod)
+
+Return the element type of the coefficients.
+"""
+Base.eltype(tdrk::TwoDerivativeRungeKuttaMethod{T}) where {T} = T
+
+
+"""
+    TwoDerivativeAdditiveRungeKuttaMethod{T, RKm} <: AbstractTimeIntegrationMethod
+
+Additive two-derivative Runge–Kutta (TDARK) method composed of multiple
+`RungeKuttaMethod`s, typically representing `(f, f′, g)`.
+"""
+struct TwoDerivativeAdditiveRungeKuttaMethod{T, RKm <: AbstractVector{<:RungeKuttaMethod{T}}} <: RootedTrees.AbstractTimeIntegrationMethod
+    rkm::RKm
+end
+
+"""
+    TwoDerivativeAdditiveRungeKuttaMethod(rkm)
+
+Construct from a vector of `RungeKuttaMethod`s (e.g., `(f, f′, g)`).
+Promotes coefficient types to a common numeric type.
+"""
+function TwoDerivativeAdditiveRungeKuttaMethod(rkm)
+    T = mapreduce(eltype, promote_type, rkm)     # promote element type
+    As = map(rk -> T.(rk.A), rkm)
+    bs = map(rk -> T.(rk.b), rkm)
+    cs = map(rk -> T.(rk.c), rkm)
+    return TwoDerivativeAdditiveRungeKuttaMethod(As, bs, cs)
+end
+
+"""
+    TwoDerivativeAdditiveRungeKuttaMethod(As, bs[, cs])
+
+Construct directly from coefficient arrays.  
+"""
+function TwoDerivativeAdditiveRungeKuttaMethod(As, bs, cs = map(A -> vec(sum(A, dims = 2)), As))
+    rkm = map(RungeKuttaMethod, As, bs, cs)
+    return TwoDerivativeAdditiveRungeKuttaMethod(rkm)
+end
+
+"""
+    eltype(tdark::TwoDerivativeAdditiveRungeKuttaMethod)
+
+Return the coefficient element type.
+"""
+Base.eltype(tdark::TwoDerivativeAdditiveRungeKuttaMethod{T}) where {T} = T
+
+#####################################################################
+
+"""
+    elementary_weight(t::ColoredRootedTree, tdrk::TwoDerivativeRungeKuttaMethod) -> Number
+
+Compute the elementary weight associated with the colored rooted tree `t`
+for a two-derivative Runge–Kutta method `tdrk`.
+
+This function first generates all possible collapsed forms of `t` using
+[`collapse_tree`](@ref), then sums their contributions weighted by their
+multiplicities. Each tree’s contribution is obtained from [`tree_weight`](@ref).
+
+
+This follows from the Butcher type order conditions exhibited in, 
+Chan, R.P.K., Tsai, A.Y.J. On explicit two-derivative Runge-Kutta methods.
+- Numer Algor 53, 171–194 (2010). https://doi.org/10.1007/s11075-009-9349-1
+ 
+
+# Arguments
+- `t`: A `ColoredRootedTree` representing the current term.
+- `tdrk`: The `TwoDerivativeRungeKuttaMethod` whose coefficients define the
+  weights.
+
+# Returns
+A scalar weight equal to the sum over all collapsed trees.
+"""
+function elementary_weight(t::ColoredRootedTree, tdrk::TwoDerivativeRungeKuttaMethod)
+    trees, multiplicities = collapse_tree(t)
+
+    sum = zero(eltype(multiplicities))  # accumulator for total weight
+    for (i, tree) in enumerate(trees)  # sum over tree and all collapsed forms
+        sum += multiplicities[i] * tree_weight(tree, tdrk)
+    end
+    return sum
+end
+
+
+"""
+    tree_weight(t::ColoredRootedTree, tdrk::TwoDerivativeRungeKuttaMethod) -> Number
+
+Compute the weight contribution of a single colored rooted tree `t`
+for the two-derivative Runge–Kutta method `tdrk`.
+
+The function recursively evaluates the contribution of each subtree
+using the appropriate `(A, b, c)` coefficients based on node color:
+
+- Color `1` → derivative part, F.           (uses `a1`, `b1`, `c1`)
+- Color `2` → second derivative part, F'.   (uses `a2`, `b2`, `c2`)
+
+# Arguments
+- `t`: A `ColoredRootedTree`.
+- `tdrk`: A `TwoDerivativeRungeKuttaMethod` containing two embedded RK tableau.
+
+# Returns
+A scalar weight equal to the B-series coefficient associated with the tree.
+"""
+function tree_weight(t::ColoredRootedTree, tdrk::TwoDerivativeRungeKuttaMethod)
+    b1 = (tdrk.rkm)[1].b  # regular b coefficients
+    b2 = (tdrk.rkm)[2].b  # derivative b coefficients
+    a1 = (tdrk.rkm)[1].A  # regular A coefficients
+    a2 = (tdrk.rkm)[2].A  # derivative A coefficients
+    c1 = (tdrk.rkm)[1].c  # regular c coefficients
+    c2 = (tdrk.rkm)[2].c  # derivative c coefficients
+
+    level_sequence = t.level_sequence
+    color_sequence = t.color_sequence
+
+    # Choose root b vector based on root color
+    b_root = color_sequence[1] == 1 ? b1 : b2
+
+    # Recursive evaluation of the product of subtree contributions
+    function helper(t::ColoredRootedTree)
+        # Compute contribution of a subtree
+        function subtree_contribution(t::ColoredRootedTree)
+            A, c = t.color_sequence[1] == 1 ? (a1, c1) : (a2, c2)
+
+            # Leaf node contributes only its c-value
+            if length(t.level_sequence) == 1
+                return c
+            else
+                # Internal node: multiply A by recursive subtree product
+                return A * helper(t)
+            end
+        end
+
+        # Initialize product vector (same length as b1)
+        product = ones(eltype(b1), length(b1))
+
+        # Get subtrees of the current node
+        subtrees_array = subtrees(t)
+
+        # If no subtrees, return ones vector
+        if isempty(subtrees_array)
+            return product
+        else
+            # Multiply elementwise by each subtree’s contribution
+            for n in subtrees_array
+                product = product .* subtree_contribution(n)
+            end
+        end
+
+        return product
+    end
+
+    # Final weight = b_root ⋅ product of subtree contributions
+    product = helper(t)
+    result = LinearAlgebra.dot(b_root, product)
+    return result
+end
+
+"""
+    elementary_weight(t::ColoredRootedTree, tdark::TwoDerivativeAdditiveRungeKuttaMethod) -> Number
+
+Compute the elementary weight associated with the colored rooted tree `t`
+for a two-derivative additive Runge–Kutta method `tdark`.
+
+This function first generates all possible collapsed forms of `t` using
+[`collapse_tree`](@ref), then sums their contributions weighted by their
+multiplicities. Each tree’s contribution is obtained from
+[`tree_weight`](@ref).
+
+# Arguments
+- `t`: A `ColoredRootedTree` representing the current term.
+- `tdark`: The `TwoDerivativeAdditiveRungeKuttaMethod` whose coefficients define the weights.
+
+# Returns
+A scalar weight equal to the sum over all collapsed trees.
+"""
+function elementary_weight(t::ColoredRootedTree, tdark::TwoDerivativeAdditiveRungeKuttaMethod)
+    trees, multiplicities = collapse_tree(t)
+
+    sum = 0
+    # Sum over the tree and all its collapsed forms, weighted by multiplicity
+    for (i, tree) in enumerate(trees)
+        sum += multiplicities[i] * tree_weight(tree, tdark)
+    end
+    return sum
+end
+
+
+"""
+    tree_weight(t::ColoredRootedTree, tdark::TwoDerivativeAdditiveRungeKuttaMethod) -> Number
+
+Compute the contribution (elementary weight) of a single colored rooted tree `t`
+for the two-derivative additive Runge–Kutta method `tdark`.
+
+Each node color determines which coefficient tableau `(A, b, c)` is used:
+
+| Color | Meaning      | Coefficients used |
+|:------|:--------------|:-----------------|
+| `0`   | Additive `g` | `(a3, b3, c3)`   |
+| `1`   | Regular `f`   | `(a1, b1, c1)`   |
+| `2`   | Derivative `f′` | `(a2, b2, c2)`   |
+
+The tree is evaluated recursively by multiplying the contributions of its
+subtrees and combining them according to the Butcher recursion. 
+With the proper A,b or c values according to the level sequence and colors of each according to the color sequence.
+
+# Arguments
+- `t`: A `ColoredRootedTree` representing a single B-series term.
+- `tdark`: A `TwoDerivativeAdditiveRungeKuttaMethod` defining all three tableau.
+
+# Returns
+A scalar value representing the coefficient of the tree in the B-series expansion.
+"""
+function tree_weight(t::ColoredRootedTree, tdark::TwoDerivativeAdditiveRungeKuttaMethod)
+    # Key: 0 = additive (g), 1 = regular (f), 2 = derivative (f′)
+    b1 = (tdark.rkm)[1].b  # regular f
+    b2 = (tdark.rkm)[2].b  # derivative f′
+    b3 = (tdark.rkm)[3].b  # additive g
+
+    a1 = (tdark.rkm)[1].A  # regular f
+    a2 = (tdark.rkm)[2].A  # derivative f′
+    a3 = (tdark.rkm)[3].A  # additive g
+
+    c1 = (tdark.rkm)[1].c  # regular f
+    c2 = (tdark.rkm)[2].c  # derivative f′
+    c3 = (tdark.rkm)[3].c  # additive g
+
+    level_sequence = t.level_sequence
+    color_sequence = t.color_sequence
+
+    # Choose the root b-vector based on root color
+    if color_sequence[1] == 0
+        b_root = b3
+    elseif color_sequence[1] == 1
+        b_root = b1
+    else
+        b_root = b2
+    end
+
+    # Recursive computation of subtree products
+    function helper(t::ColoredRootedTree)
+        # Compute contribution of a subtree recursively
+        function subtree_contribution(t::ColoredRootedTree)
+            # Determine coefficient set based on subtree color
+            if t.color_sequence[1] == 0
+                A, c = a3, c3
+            elseif t.color_sequence[1] == 1
+                A, c = a1, c1
+            else
+                A, c = a2, c2
+            end
+
+            # A leaf contributes only its c-vector
+            if length(t.level_sequence) == 1
+                return c
+            else
+                # Internal node: multiply A by the recursive subtree product
+                return A * helper(t)
+            end
+        end
+
+        # Initialize with a ones-vector of appropriate length
+        product = ones(eltype(b1), length(b1))
+
+        # Get all subtrees of the current node
+        subtrees_array = subtrees(t)
+
+        # No subtrees → return ones-vector
+        if isempty(subtrees_array)
+            return product
+        else
+            # Multiply elementwise by each subtree’s contribution
+            for n in subtrees_array
+                product = product .* subtree_contribution(n)
+            end
+        end
+        return product
+    end
+
+    # Compute final result: b_root ⋅ (product of subtree contributions)
+    product = helper(t)
+    result = LinearAlgebra.dot(b_root, product)
+    return result
+end
+
+
+
 # Equation (2.6) of Miyatake & Butcher (2016)
 function _matrix_a(csrk::ContinuousStageRungeKuttaMethod)
     M = csrk.matrix
@@ -1252,6 +1579,105 @@ end
 
 # TODO: bseries(mis::MultirateInfinitesimalSplitMethod)
 # should create a lazy version, optionally a memoized one
+
+
+
+
+"""
+    bseries(tdrk::TwoDerivativeRungeKuttaMethod, order) -> TruncatedBSeries
+
+Construct the truncated B-series of a two-derivative Runge–Kutta method `tdrk`
+up to the specified `order`.
+
+This implementation uses **bicolored rooted trees** to represent the method,
+where color 1 corresponds to the the ability for all trees to collapse, which is essential.
+
+Returns a `TruncatedBSeries{ColoredRootedTree, V}` where `V` is inferred from
+the element type of `tdrk`.
+"""
+function bseries(tdrk::TwoDerivativeRungeKuttaMethod, order)
+    # sanity check: we expect two Runge–Kutta components
+    if length(tdrk.rkm) != 2
+        throw(ArgumentError("Only TwoDerivativeRungeKuttaMethod with a dual splitting is supported. Got $(length(tdrk.rkm)) components."))
+    end
+
+    # determine coefficient type
+    V_tmp = eltype(tdrk)
+    V = V_tmp <: Integer ? Rational{V_tmp} : V_tmp
+
+    # construct an empty B-series with colored rooted trees
+    series = TruncatedBSeries{ColoredRootedTree{Int, Vector{Int}, Vector{Int}}, V}()
+
+    # empty (order-0) tree
+    series[rootedtree(Int[], Int[])] = one(V)
+
+    # iterate over orders
+    for o in 1:order
+        for t in BicoloredRootedTreeIterator(o)
+            # make a colored copy (for now all nodes color=1) since these arnt addative
+            color_sequence = fill(1, length(t.level_sequence))
+            colored_t = rootedtree(t.level_sequence, color_sequence)
+
+            # assign coefficient via elementary weight
+            series[copy(colored_t)] = elementary_weight(t, tdrk)
+        end
+    end
+
+    return series
+end
+
+
+
+"""
+    bseries(tdark::TwoDerivativeAdditiveRungeKuttaMethod, order, Flinear, Glinear)
+        -> TruncatedBSeries
+
+Construct the truncated B-series for a two-derivative additive Runge–Kutta
+method (`TwoDerivativeAdditiveRungeKuttaMethod`) up to the given `order`. 
+Again this is defined as an addative (think IMEX) method where just one component is paired with its second derivative, could be extended to both having second derivatives in future.
+
+This version accounts for possible linearity in the functions `F` and `G`, where 'F' is the component with second derivative.
+
+- `Flinear = true` skips all trees with nonlinear dependence on `F`,
+  i.e. trees whose root is color `1` with two or more children.
+- `Glinear = true` skips all trees with nonlinear dependence on `G`,
+  i.e. trees whose root is color `0` with two or more children.
+
+Returns a `TruncatedBSeries{ColoredRootedTree, V}` where `V` is inferred
+from the coefficient type of `tdark`.
+"""
+function bseries(tdark::TwoDerivativeAdditiveRungeKuttaMethod, order, Flinear, Glinear)
+    if length(tdark.rkm) != 3
+        throw(ArgumentError("Expected a TwoDerivativeAdditiveRungeKuttaMethod with three ."))
+    end
+
+    V_tmp = eltype(tdark)
+    V = V_tmp <: Integer ? Rational{V_tmp} : V_tmp
+
+    # Initialize empty B-series over colored rooted trees
+    series = TruncatedBSeries{ColoredRootedTree{Int, Vector{Int}, Vector{Int}}, V}()
+
+    # Add the empty (order-0) tree
+    series[rootedtree(Int[], Int[])] = one(V)
+
+    # Iterate over all bicolored trees up to the given order
+    for o in 1:order
+        for t in BicoloredRootedTreeIterator(o)
+            # Convert iterator output to a general colored rooted tree
+            t = rootedtree(t.level_sequence, Int.(t.color_sequence))
+            
+            # Skip trees violating F/G linearity assumptions
+            if should_skip_tree(t, Flinear, Glinear)
+                continue
+            end
+
+            # Assign the elementary weight corresponding to this tree
+            series[copy(t)] = elementary_weight(t, tdark)
+        end
+    end
+
+    return series
+end
 
 """
     substitute(b, a, t::AbstractRootedTree)
@@ -2857,5 +3283,178 @@ See also [`order_of_symplecticity`](@ref).
 function is_symplectic(series::TruncatedBSeries; kwargs...)
     order_of_symplecticity(series; kwargs...) == order(series)
 end
+
+#####################################################################
+# Multi-Derivative Features
+
+"""
+    collapse_tree_at_index(t::ColoredRootedTree, index::Int) -> ColoredRootedTree
+
+Collapse the node at position `index` in the colored rooted tree `t`.
+
+This operation is only valid for nodes of color `1`. The parent node of the
+collapsed node must also have color `1`; otherwise, the tree is left unchanged.
+
+The collapse:
+- Changes the color of the collapsed node to `-1`.
+- Changes the color of its parent node to `2`.
+- Decrements the level of all subsequent nodes at deeper levels until the
+  next node at the same level.
+- Removes the collapsed node from the tree.
+
+Returns the new `ColoredRootedTree` with the collapsed structure.
+Throws an error if the node at `index` is not of color `1`.
+"""
+
+function collapse_tree_at_index(t::ColoredRootedTree, index::Int)
+    if t.color_sequence[index] != 1
+        error("Node at index $index is not of type 1 and cannot be collapsed.")
+    end
+    level_of_node = t.level_sequence[index]
+
+    #make a copy of the tree to work with
+    new_tree = deepcopy(t)
+
+    #find the parent by looking for the last node with level one less than the current node
+    parent = findlast(x -> x == level_of_node - 1, new_tree.level_sequence[1:index-1])
+
+    #if the parent node cant collapse then we return, that is if the color of the parent is not 1    
+    if new_tree.color_sequence[parent] != 1
+        return
+    end
+    
+    
+    #main idea 
+
+    #change the color of the node to -1
+    new_tree.color_sequence[index] = -1
+
+    #change the color of the parent to 2
+    new_tree.color_sequence[parent] = 2
+
+    #decrement the level of each node after the index untill the next node of the same level
+    for i in index+1:length(new_tree.level_sequence)
+        if new_tree.level_sequence[i] > level_of_node
+            new_tree.level_sequence[i] -= 1
+        elseif new_tree.level_sequence[i] == level_of_node
+            break
+        end
+    end
+
+    #take the part of the level and color sequence before and after index and concat them into a new tree
+    level_sequence = vcat(new_tree.level_sequence[1:index-1], new_tree.level_sequence[index+1:end])
+    color_sequence = vcat(new_tree.color_sequence[1:index-1], new_tree.color_sequence[index+1:end])
+    new_tree = rootedtree(level_sequence, color_sequence)
+
+    return new_tree
+end
+
+
+"""
+    collapse_tree(t::ColoredRootedTree) -> (trees, multiplicities)
+
+Generate all possible trees obtained by collapsing any combination of
+collapsible nodes in `t`. That is we obtain the set of collapsed variants
+
+A node is collapsible if its color is `1`.  
+Each combination of collapses yields a new tree structure; identical trees
+are merged and their multiplicities accumulated.
+
+Returns a tuple `(trees, multiplicities)` where:
+- `trees` is a vector of unique collapsed trees,
+- `multiplicities` gives how many collapse combinations produce each tree, which is important for order conditions.
+"""
+
+function collapse_tree(t::ColoredRootedTree)
+    trees = []
+    multiplicities = []
+
+    # Get list of all collapsible node indices (excluding the root at index 1)
+    collapsable_nodes = findall(t.color_sequence[2:end] .== 1) .+ 1 #plus one is to adjust since [2:end] shifts indices
+    n = length(collapsable_nodes)
+
+    # Go through all 2^n combinations of collapses
+    for i in 0:(2^n - 1)
+        new_tree = deepcopy(t)
+        num_collapses = 0
+        skip_combination = false
+
+        for j in 1:n
+            if ((i >> (j - 1)) & 1) == 1
+                # we lose an index every time we collapse a node so we need to adjust the index if its after ours
+                adjusted_index = collapsable_nodes[j] - num_collapses
+
+                #check if the adjusted index is still valid
+                if new_tree.color_sequence[adjusted_index] != 1
+                    skip_combination = true
+                    break
+                end
+
+
+                new_tree = collapse_tree_at_index(new_tree, adjusted_index)
+
+                if new_tree === nothing
+                    skip_combination = true
+                    break
+                end
+
+                num_collapses += 1
+            end
+        end
+
+        if skip_combination || new_tree === nothing
+            continue
+        end
+
+        # Check if tree is already in the list update tree list or multiplicty respectively
+        index = findfirst(t -> t == new_tree, trees)
+        if isnothing(index)
+            push!(trees, new_tree)
+            push!(multiplicities, 1)
+        else
+            multiplicities[index] += 1
+        end
+    end
+
+    return trees, multiplicities
+end
+
+
+"""
+    should_skip_tree(t::ColoredRootedTree, Flinear::Bool, Glinear::Bool) -> Bool
+
+Determine whether the colored rooted tree `t` should be skipped when constructing
+the B-series, based on the linearity assumptions for `F` and `G`. This allows for development of more methods when one of the functions is linear.
+
+If `F` (color 1) is linear, any tree whose root node is of color `1` and has
+two or more child subtrees (corresponding to higher derivatives of `F`)
+is skipped.
+
+If `G` (color 0) is linear, any tree whose root node is of color `0` and has
+two or more child subtrees (corresponding to higher derivatives of `G`)
+is skipped.
+
+Returns `true` if the tree should be ignored, and `false` otherwise. 
+"""
+function should_skip_tree(t::ColoredRootedTree, Flinear::Bool, Glinear::Bool)
+    subtrees_array = subtrees(t)
+
+    if Flinear
+        # If F is linear, skip trees where the F-root has more than one child
+        if t.color_sequence[1] == 1 && length(subtrees_array) > 1
+            return true
+        end
+    end
+
+    if Glinear
+        # If G is linear, skip trees where the G-root has more than one child
+        if t.color_sequence[1] == 0 && length(subtrees_array) > 1
+            return true
+        end
+    end
+
+    return false
+end
+
 
 end # module
