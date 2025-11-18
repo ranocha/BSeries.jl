@@ -499,7 +499,7 @@ using Aqua: Aqua
         # Alternative implementation: construct combined method via Butcher tableau
         AA = [A zero(A) zero(A)
               zero(A) A/2 zero(A)
-              zero(A) repeat(b'/2, length(b)) A/2]
+              zero(A) repeat(b' / 2, length(b)) A/2]
         bb = vcat(-b / (2^p - 1),
                   b / 2 * (1 + 1 // (2^p - 1)),
                   b / 2 * (1 + 1 // (2^p - 1)))
