@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Benchmarks · BSeries.jl</title><meta name="title" content="Benchmarks · BSeries.jl"/><meta property="og:title" content="Benchmarks · BSeries.jl"/><meta property="twitter:title" content="Benchmarks · BSeries.jl"/><meta name="description" content="Documentation for BSeries.jl."/><meta property="og:description" content="Documentation for BSeries.jl."/><meta property="twitter:description" content="Documentation for BSeries.jl."/><meta property="og:url" content="https://ranocha.github.io/BSeries.jl/stable/benchmarks/"/><meta property="twitter:url" content="https://ranocha.github.io/BSeries.jl/stable/benchmarks/"/><link rel="canonical" href="https://ranocha.github.io/BSeries.jl/stable/benchmarks/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">BSeries.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../tutorials/bseries_basics/">B-series basics</a></li><li><a class="tocitem" href="../tutorials/rk_order_conditions/">Runge-Kutta order conditions</a></li><li><a class="tocitem" href="../tutorials/bseries_creation/">Creating B-series</a></li><li><a class="tocitem" href="../tutorials/modified_equations/">Modified equations</a></li><li><a class="tocitem" href="../tutorials/modifying_integrators/">Modifying integrators</a></li><li><a class="tocitem" href="../tutorials/symbolic_computations/">Symbolic computations</a></li><li><a class="tocitem" href="../tutorials/code_generation/">Code generation</a></li></ul></li><li class="is-active"><a class="tocitem" href>Benchmarks</a><ul class="internal"><li><a class="tocitem" href="#benchmarks-symbolic-computations"><span>Comparing different symbolic packages</span></a></li><li><a class="tocitem" href="#benchmarks-other-packages"><span>Comparison with other packages</span></a></li><li><a class="tocitem" href="#References"><span>References</span></a></li></ul></li><li><a class="tocitem" href="../api_reference/">API reference</a></li><li><a class="tocitem" href="../contributing/">Contributing</a></li><li><a class="tocitem" href="../license/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Benchmarks</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Benchmarks</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ranocha/BSeries.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ranocha/BSeries.jl/blob/main/docs/src/benchmarks.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="benchmarks"><a class="docs-heading-anchor" href="#benchmarks">Benchmarks</a><a id="benchmarks-1"></a><a class="docs-heading-anchor-permalink" href="#benchmarks" title="Permalink"></a></h1><p>Here, we collect some simple benchmarks of <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a>. Take them with a grain of salt since they run on virtual machines in the cloud to generate the documentation automatically. You can of course also copy the code and run the benchmarks locally yourself.</p><h2 id="benchmarks-symbolic-computations"><a class="docs-heading-anchor" href="#benchmarks-symbolic-computations">Comparing different symbolic packages</a><a id="benchmarks-symbolic-computations-1"></a><a class="docs-heading-anchor-permalink" href="#benchmarks-symbolic-computations" title="Permalink"></a></h2><p>Symbolic computations of <a href="../api_reference/#BSeries.modified_equation-NTuple{4, Any}"><code>modified_equation</code></a>s and <a href="../api_reference/#BSeries.modifying_integrator-NTuple{4, Any}"><code>modifying_integrator</code></a>s in <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> support</p><ul><li><a href="https://github.com/symengine/SymEngine.jl">SymEngine.jl</a>,</li><li><a href="https://github.com/JuliaPy/SymPy.jl">SymPy.jl</a>,</li><li><a href="https://github.com/jverzani/SymPyPythonCall.jl">SymPyPythonCall.jl</a>, and</li><li><a href="https://github.com/JuliaSymbolics/Symbolics.jl">Symbolics.jl</a></li></ul><p>as symbolic backends. Here, we compare them in the context of the explicit midpoint method and the nonlinear oscillator ODE</p><p class="math-container">\[u&#39;(t) = \frac{1}{\| u(t) \|^2} \begin{pmatrix} -u_2(t) \\ u_1(t) \end{pmatrix}.\]</p><p>This particular combination of explicit Runge-Kutta method and ODE is special since the explicit midpoint method is unconditionally energy-conserving for this problem<sup class="footnote-reference"><a id="citeref-RanochaKetcheson2020" href="#footnote-RanochaKetcheson2020" class="footnote-ref">[RanochaKetcheson2020]</a><span class="footnote-preview" id="fn-RanochaKetcheson2020"></span></sup>.</p><p>First, we set up some code to perform the benchmarks. Here, we use a very naive approach, run the code twice (to see the effect of compilation) and use <code>@time</code> to print the runtime. More sophisticated approaches should of course use something like <code>@benchmark</code> from <a href="https://github.com/JuliaCI/BenchmarkTools.jl">BenchmarkTools.jl</a>. However, this simple and cheap version suffices to compare the orders of magnitude.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Benchmarks · BSeries.jl</title><meta name="title" content="Benchmarks · BSeries.jl"/><meta property="og:title" content="Benchmarks · BSeries.jl"/><meta property="twitter:title" content="Benchmarks · BSeries.jl"/><meta name="description" content="Documentation for BSeries.jl."/><meta property="og:description" content="Documentation for BSeries.jl."/><meta property="twitter:description" content="Documentation for BSeries.jl."/><meta property="og:url" content="https://ranocha.github.io/BSeries.jl/stable/benchmarks/"/><meta property="twitter:url" content="https://ranocha.github.io/BSeries.jl/stable/benchmarks/"/><link rel="canonical" href="https://ranocha.github.io/BSeries.jl/stable/benchmarks/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">BSeries.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../tutorials/bseries_basics/">B-series basics</a></li><li><a class="tocitem" href="../tutorials/rk_order_conditions/">Runge-Kutta order conditions</a></li><li><a class="tocitem" href="../tutorials/bseries_creation/">Creating B-series</a></li><li><a class="tocitem" href="../tutorials/composing_bseries/">Composing B-series</a></li><li><a class="tocitem" href="../tutorials/modified_equations/">Modified equations</a></li><li><a class="tocitem" href="../tutorials/modifying_integrators/">Modifying integrators</a></li><li><a class="tocitem" href="../tutorials/symbolic_computations/">Symbolic computations</a></li><li><a class="tocitem" href="../tutorials/code_generation/">Code generation</a></li></ul></li><li class="is-active"><a class="tocitem" href>Benchmarks</a><ul class="internal"><li><a class="tocitem" href="#benchmarks-symbolic-computations"><span>Comparing different symbolic packages</span></a></li><li><a class="tocitem" href="#benchmarks-other-packages"><span>Comparison with other packages</span></a></li><li><a class="tocitem" href="#References"><span>References</span></a></li></ul></li><li><a class="tocitem" href="../api_reference/">API reference</a></li><li><a class="tocitem" href="../contributing/">Contributing</a></li><li><a class="tocitem" href="../license/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Benchmarks</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Benchmarks</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ranocha/BSeries.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ranocha/BSeries.jl/blob/main/docs/src/benchmarks.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="benchmarks"><a class="docs-heading-anchor" href="#benchmarks">Benchmarks</a><a id="benchmarks-1"></a><a class="docs-heading-anchor-permalink" href="#benchmarks" title="Permalink"></a></h1><p>Here, we collect some simple benchmarks of <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a>. Take them with a grain of salt since they run on virtual machines in the cloud to generate the documentation automatically. You can of course also copy the code and run the benchmarks locally yourself.</p><h2 id="benchmarks-symbolic-computations"><a class="docs-heading-anchor" href="#benchmarks-symbolic-computations">Comparing different symbolic packages</a><a id="benchmarks-symbolic-computations-1"></a><a class="docs-heading-anchor-permalink" href="#benchmarks-symbolic-computations" title="Permalink"></a></h2><p>Symbolic computations of <a href="../api_reference/#BSeries.modified_equation-NTuple{4, Any}"><code>modified_equation</code></a>s and <a href="../api_reference/#BSeries.modifying_integrator-NTuple{4, Any}"><code>modifying_integrator</code></a>s in <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> support</p><ul><li><a href="https://github.com/symengine/SymEngine.jl">SymEngine.jl</a>,</li><li><a href="https://github.com/JuliaPy/SymPy.jl">SymPy.jl</a>,</li><li><a href="https://github.com/jverzani/SymPyPythonCall.jl">SymPyPythonCall.jl</a>, and</li><li><a href="https://github.com/JuliaSymbolics/Symbolics.jl">Symbolics.jl</a></li></ul><p>as symbolic backends. Here, we compare them in the context of the explicit midpoint method and the nonlinear oscillator ODE</p><p class="math-container">\[u&#39;(t) = \frac{1}{\| u(t) \|^2} \begin{pmatrix} -u_2(t) \\ u_1(t) \end{pmatrix}.\]</p><p>This particular combination of explicit Runge-Kutta method and ODE is special since the explicit midpoint method is unconditionally energy-conserving for this problem<sup class="footnote-reference"><a id="citeref-RanochaKetcheson2020" href="#footnote-RanochaKetcheson2020" class="footnote-ref">[RanochaKetcheson2020]</a><span class="footnote-preview" id="fn-RanochaKetcheson2020"></span></sup>.</p><p>First, we set up some code to perform the benchmarks. Here, we use a very naive approach, run the code twice (to see the effect of compilation) and use <code>@time</code> to print the runtime. More sophisticated approaches should of course use something like <code>@benchmark</code> from <a href="https://github.com/JuliaCI/BenchmarkTools.jl">BenchmarkTools.jl</a>. However, this simple and cheap version suffices to compare the orders of magnitude.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays
 
 function benchmark(u, dt, subs, order)
   # explicit midpoint method
@@ -48,46 +48,46 @@ subs = Symbolics.substitute
 benchmark(u, dt, subs, 8)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SymEngine
 
  Computing the series coefficients:
-  0.004964 seconds (470 allocations: 81.156 KiB)
-  0.004973 seconds (470 allocations: 81.156 KiB)
+  0.004977 seconds (470 allocations: 81.156 KiB)
+  0.004974 seconds (470 allocations: 81.156 KiB)
 
  Computing the series including elementary differentials:
-  1.107164 seconds (1.63 M allocations: 75.792 MiB, 98.46% compilation time)
-  0.077432 seconds (50.95 k allocations: 1.306 MiB, 56.94% gc time)
+  1.105768 seconds (1.63 M allocations: 75.792 MiB, 3.64% gc time, 98.57% compilation time)
+  0.013065 seconds (50.95 k allocations: 1.307 MiB)
 
  Substituting the initial condition:
-  0.097277 seconds (196.03 k allocations: 9.240 MiB, 94.74% compilation time)
-  0.004457 seconds (10.24 k allocations: 237.625 KiB)
+  0.090161 seconds (196.03 k allocations: 9.244 MiB, 94.74% compilation time)
+  0.004059 seconds (10.24 k allocations: 239.266 KiB)
 
 
 SymPy
 
  Computing the series coefficients:
-  0.004976 seconds (470 allocations: 81.156 KiB)
-  0.004943 seconds (470 allocations: 81.156 KiB)
+  0.004962 seconds (470 allocations: 81.156 KiB)
+  0.004916 seconds (470 allocations: 81.156 KiB)
 
  Computing the series including elementary differentials:
-  3.432239 seconds (3.90 M allocations: 209.600 MiB, 1.87% gc time, 65.34% compilation time)
-  0.777082 seconds (61.49 k allocations: 1.671 MiB, 4.48% compilation time)
+  3.300087 seconds (3.90 M allocations: 209.576 MiB, 1.65% gc time, 64.12% compilation time)
+  0.805410 seconds (61.49 k allocations: 1.671 MiB, 4.35% compilation time)
 
  Substituting the initial condition:
-  0.918833 seconds (613.55 k allocations: 30.958 MiB, 74.34% compilation time)
-  0.165585 seconds (142 allocations: 3.641 KiB)
+  1.294830 seconds (613.55 k allocations: 30.975 MiB, 51.37% compilation time)
+  0.635109 seconds (142 allocations: 3.641 KiB)
 
 
 Symbolics
 
  Computing the series coefficients:
-  0.004967 seconds (470 allocations: 81.156 KiB)
-  0.004924 seconds (470 allocations: 81.156 KiB)
+  0.004997 seconds (470 allocations: 81.156 KiB)
+  0.004921 seconds (470 allocations: 81.156 KiB)
 
  Computing the series including elementary differentials:
-  3.999143 seconds (9.09 M allocations: 385.492 MiB, 1.67% gc time, 90.64% compilation time: 2% of which was recompilation)
-  0.296714 seconds (3.32 M allocations: 98.555 MiB, 0.29% compilation time)
+  4.061647 seconds (9.09 M allocations: 385.461 MiB, 1.55% gc time, 90.86% compilation time: 2% of which was recompilation)
+  0.304859 seconds (3.32 M allocations: 98.358 MiB)
 
  Substituting the initial condition:
-  4.696291 seconds (20.95 M allocations: 710.635 MiB, 1.94% gc time, 70.84% compilation time)
-  1.311301 seconds (17.02 M allocations: 526.948 MiB, 4.49% gc time)</code></pre><p>These results were obtained using the following versions.</p><pre><code class="language-julia hljs">using InteractiveUtils
+  4.667662 seconds (20.95 M allocations: 710.626 MiB, 1.76% gc time, 71.85% compilation time)
+  1.311401 seconds (17.02 M allocations: 526.947 MiB, 4.05% gc time)</code></pre><p>These results were obtained using the following versions.</p><pre><code class="language-julia hljs">using InteractiveUtils
 versioninfo()
 
 using Pkg
@@ -108,8 +108,8 @@ Environment:
   LD_LIBRARY_PATH = /opt/hostedtoolcache/Python/3.9.25/x64/lib
   JULIA_PYTHONCALL_EXE = /home/runner/work/BSeries.jl/BSeries.jl/docs/.CondaPkg/.pixi/envs/default/bin/python
 <span class="sgr32"><span class="sgr1">Status</span></span> `~/work/BSeries.jl/BSeries.jl/docs/Manifest.toml`
-  <span class="sgr90">[ebb8d67c] </span>BSeries v0.1.69 `~/work/BSeries.jl/BSeries.jl`
-  <span class="sgr90">[47965b36] </span>RootedTrees v2.23.1
+  <span class="sgr90">[ebb8d67c] </span>BSeries v0.1.70 `~/work/BSeries.jl/BSeries.jl`
+  <span class="sgr90">[47965b36] </span>RootedTrees v2.24.0
   <span class="sgr90">[123dc426] </span>SymEngine v0.13.0
   <span class="sgr90">[bc8888f7] </span>SymPyPythonCall v0.5.1
 <span class="sgr33">⌅</span> <span class="sgr90">[0c5d862f] </span>Symbolics v6.57.0
@@ -172,15 +172,15 @@ Package version 0.3
 
 Modified equation
 19063/26880
- 16.241182327270508 seconds
+ 15.291079759597778 seconds
 19063/26880
- 17.741979837417603 seconds
+ 15.873250246047974 seconds
 
 Modifying integrator
 5460293/241920
- 15.756554126739502 seconds
+ 13.426281690597534 seconds
 5460293/241920
- 15.76961088180542 seconds</code></pre>
+ 13.407252073287964 seconds</code></pre>
 </div><h3 id="Python-package-pybs"><a class="docs-heading-anchor" href="#Python-package-pybs">Python package <code>pybs</code></a><a id="Python-package-pybs-1"></a><a class="docs-heading-anchor-permalink" href="#Python-package-pybs" title="Permalink"></a></h3><p>Next, we look at the Python package <a href="https://github.com/henriksu/pybs"><code>pybs</code></a> and the following benchmark script. Note that this package does not provide functionality for modifying integrators.</p><div class="markdown"><pre><code class="language-python">import sys
 from importlib.metadata import version
 print&#40;&quot;Python version&quot;, sys.version&#41;
@@ -258,21 +258,21 @@ Package version 0.3
 
 Modified equation
 19063/26880
- 5.854038238525391 seconds
+ 5.658468961715698 seconds
 19063/26880
- 5.757522821426392 seconds
+ 5.609018802642822 seconds
 
 Energy preservation
 9
- 5.898982524871826 seconds
+ 5.752140998840332 seconds
 9
- 5.790135145187378 seconds
+ 5.574377059936523 seconds
 
 Symplecticity &#40;conservation of quadratic invariants&#41;
 9
- 0.036141395568847656 seconds
+ 0.03492140769958496 seconds
 9
- 0.02055525779724121 seconds</code></pre>
+ 0.019527912139892578 seconds</code></pre>
 </div><h3 id="Python-package-orderconditions"><a class="docs-heading-anchor" href="#Python-package-orderconditions">Python package <code>orderconditions</code></a><a id="Python-package-orderconditions-1"></a><a class="docs-heading-anchor-permalink" href="#Python-package-orderconditions" title="Permalink"></a></h3><p>Next, we look at the Python package <a href="https://gitlab.com/v_dallerit/orderconditions"><code>orderconditions</code></a> of Valentin Dallerit and the following benchmark script.</p><div class="markdown"><pre><code class="language-python">import sys
 print&#40;&quot;Python version&quot;, sys.version&#41;
 
@@ -333,15 +333,15 @@ print&#40;&quot;&quot;, end_time - start_time, &quot;seconds&quot;&#41;</code></
 
 Modified equation
 19063/26880
- 1.144122838973999 seconds
+ 1.0927379131317139 seconds
 19063/26880
- 1.148221731185913 seconds
+ 1.076982021331787 seconds
 
 Modifying integrator
 5460293/241920
- 0.9862525463104248 seconds
+ 0.939857006072998 seconds
 5460293/241920
- 0.9852168560028076 seconds</code></pre>
+ 0.9895534515380859 seconds</code></pre>
 </div><h3 id="This-Julia-package-BSeries.jl"><a class="docs-heading-anchor" href="#This-Julia-package-BSeries.jl">This Julia package BSeries.jl</a><a id="This-Julia-package-BSeries.jl-1"></a><a class="docs-heading-anchor-permalink" href="#This-Julia-package-BSeries.jl" title="Permalink"></a></h3><p>Finally, we perform the same task using <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> in Julia.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays
 
 A = @SArray [0 0; 1//2 0]
@@ -405,24 +405,24 @@ end
   println(is_symplectic(series))
 end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Modified equation
 19063//26880
-  0.146755 seconds (90.60 k allocations: 4.916 MiB, 63.69% compilation time)
+  0.156895 seconds (90.60 k allocations: 4.916 MiB, 65.73% compilation time)
 19063//26880
-  0.053278 seconds (1.10 k allocations: 450.867 KiB)
+  0.053744 seconds (1.10 k allocations: 450.867 KiB)
 
 Modifying integrator
 5460293//241920
-  0.030251 seconds (1.12 k allocations: 424.672 KiB, 17.33% compilation time)
+  0.030757 seconds (1.12 k allocations: 424.953 KiB, 18.17% compilation time)
 5460293//241920
-  0.025018 seconds (1.08 k allocations: 422.641 KiB)
+  0.025246 seconds (1.08 k allocations: 422.359 KiB)
 
 Energy preservation
 true
-  2.344056 seconds (4.29 M allocations: 212.401 MiB, 3.07% gc time, 94.44% compilation time)
+  2.361035 seconds (4.29 M allocations: 212.228 MiB, 97.54% compilation time)
 true
-  0.056964 seconds (64.27 k allocations: 4.867 MiB)
+  0.056771 seconds (64.27 k allocations: 4.866 MiB)
 
 Symplecticity (conservation of quadratic invariants)
 true
-  0.436844 seconds (442.70 k allocations: 21.797 MiB, 99.75% compilation time)
+  0.418082 seconds (442.71 k allocations: 21.797 MiB, 99.75% compilation time)
 true
-  0.000780 seconds (1.85 k allocations: 238.867 KiB)</code></pre><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>Hendrik Ranocha and David Ketcheson (2020)   Energy Stability of Explicit Runge-Kutta Methods for Nonautonomous or   Nonlinear Problems.   SIAM Journal on Numerical Analysis   <a href="https://doi.org/10.1137/19M1290346">DOI: 10.1137/19M1290346</a></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-RanochaKetcheson2020"><a class="tag is-link" href="#citeref-RanochaKetcheson2020">RanochaKetcheson2020</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tutorials/code_generation/">« Code generation</a><a class="docs-footer-nextpage" href="../api_reference/">API reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.0 on <span class="colophon-date" title="Monday 17 November 2025 08:10">Monday 17 November 2025</span>. Using Julia version 1.12.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  0.000764 seconds (1.85 k allocations: 238.867 KiB)</code></pre><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>Hendrik Ranocha and David Ketcheson (2020)   Energy Stability of Explicit Runge-Kutta Methods for Nonautonomous or   Nonlinear Problems.   SIAM Journal on Numerical Analysis   <a href="https://doi.org/10.1137/19M1290346">DOI: 10.1137/19M1290346</a></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-RanochaKetcheson2020"><a class="tag is-link" href="#citeref-RanochaKetcheson2020">RanochaKetcheson2020</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tutorials/code_generation/">« Code generation</a><a class="docs-footer-nextpage" href="../api_reference/">API reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.0 on <span class="colophon-date" title="Tuesday 18 November 2025 19:54">Tuesday 18 November 2025</span>. Using Julia version 1.12.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
