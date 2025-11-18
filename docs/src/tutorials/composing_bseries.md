@@ -16,7 +16,7 @@ solution after one step with step size ``h``, and let
 ``u^{n+1}_{2 \times \frac{h}{2}}`` be the solution after two steps with
 step size ``\frac{h}{2}``. The difference between these two approximations
 can be used to estimate the leading-order error term and adapt the
-step size acordingly.
+step size accordingly.
 
 Moreover, we can combine the two approximations to obtain a new approximation
 ``u^{n+1}_R`` by extrapolating to step size ``h = 0`` as follows:
