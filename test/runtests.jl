@@ -463,6 +463,54 @@ using Aqua: Aqua
         end
     end # @testset "compose"
 
+    @testset "Richardson extrapolation" begin
+        # Richardson extrapolation is a technique to increase the order of accuracy
+        # of a time integration method by combining solutions at different step
+        # sizes.
+        # For a method of order p, we can extrapolate:
+        #   u_R = u_{2×h/2} + (u_{2×h/2} - u_h) / (2^p - 1)
+        # This should increase the order by 1.
+
+        # classical RK4 (order 4)
+        A = [0 0 0 0
+             1//2 0 0 0
+             0 1//2 0 0
+             0 0 1 0]
+        b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+        rk = @inferred RungeKuttaMethod(A, b)
+        series_rk = @inferred bseries(rk, 6)
+
+        # Verify base method is order 4
+        @test (@inferred order_of_accuracy(series_rk)) == 4
+
+        # Compute B-series of two steps with half step size
+        series_rk_2 = @inferred compose(series_rk, series_rk, normalize_stepsize = true)
+
+        # Two steps of order 4 method is still order 4
+        @test (@inferred order_of_accuracy(series_rk_2)) == 4
+
+        # Richardson extrapolation
+        p = @inferred order_of_accuracy(series_rk)
+        series_richardson = @inferred (series_rk_2 + (series_rk_2 - series_rk) / (2^p - 1))
+
+        # Richardson extrapolation should increase order to 5
+        @test (@inferred order_of_accuracy(series_richardson)) == 5
+
+        # Alternative implementation: construct combined method via Butcher tableau
+        AA = [A zero(A) zero(A)
+              zero(A) A/2 zero(A)
+              zero(A) repeat(b' / 2, length(b)) A/2]
+        bb = vcat(-b / (2^p - 1),
+                  b / 2 * (1 + 1 // (2^p - 1)),
+                  b / 2 * (1 + 1 // (2^p - 1)))
+        rk_richardson = @inferred RungeKuttaMethod(AA, bb)
+        series_richardson_2 = @inferred bseries(rk_richardson, 6)
+
+        # Both implementations should give the same result
+        @test @inferred all(iszero, values(series_richardson - series_richardson_2))
+        @test (@inferred order_of_accuracy(series_richardson_2)) == 5
+    end # @testset "Richardson extrapolation"
+
     @testset "modified_equation" begin
         t1 = rootedtree([1])
         t2 = rootedtree([1, 2])
