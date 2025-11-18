@@ -1,7 +1,7 @@
 name = "BSeries"
 uuid = "ebb8d67c-85b4-416c-b05f-5f409e808f32"
 authors = ["Hendrik Ranocha <mail@ranocha.de> and contributors"]
-version = "0.1.69"
+version = "0.1.70"
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
