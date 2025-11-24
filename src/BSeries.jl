@@ -1278,13 +1278,6 @@ struct TwoDerivativeRungeKuttaMethod{T,
     b2::VecT
 end
 
-"""
-    TwoDerivativeRungeKuttaMethod(A1, b1, A2, b2, c1 = vec(sum(A1, dims=2)))
-
-Construct a two-derivative Runge–Kutta method from coefficient arrays.
-All inputs are promoted to a common numeric type.  
-`c1` defaults to the usual row-sum condition `sum(A1, dims=2)`.
-"""
 function TwoDerivativeRungeKuttaMethod(A1, b1, A2, b2, c1 = vec(sum(A1, dims=2)))
     # promote all numeric types together
     T = promote_type(eltype(A1), eltype(b1), eltype(A2), eltype(b2), eltype(c1))
