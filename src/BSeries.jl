@@ -1320,8 +1320,10 @@ the element type of `tdrk`.
 function bseries(tdrk::TwoDerivativeRungeKuttaMethod, order)
     # determine coefficient type
     V_tmp = eltype(tdrk)
+    # If people use integer coefficients, they will likely want to have results
+    # as exact as possible. However, general terms are not integers. Thus, we
+    # use rationals instead.
     V = V_tmp <: Integer ? Rational{V_tmp} : V_tmp
-
 
     series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
 
