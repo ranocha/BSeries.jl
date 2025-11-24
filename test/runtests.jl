@@ -3,7 +3,7 @@ using BSeries
 
 using BSeries.Latexify: latexify
 
-using LinearAlgebra: I
+using LinearAlgebra: I, dot
 using StaticArrays: @SArray, @SMatrix, @SVector
 
 using Symbolics: Symbolics
@@ -3245,4 +3245,57 @@ using Aqua: Aqua
             @test substituted == s
         end
     end
+
+    @testset "TwoDerivativeRungeKuttaMethod" begin
+
+        # Example two-derivative RK method (order 3) from "On explicit two-derivative Runge-Kutta methods" from R.P.K. Chan and A.Y.J. Tsai (2010)
+        A1 = [0 0;
+            1//2 0]
+
+        b1 = [1, 0]
+
+        A2 = [0 0;
+            1//8 0]
+
+        b2 = [1//6, 1//3]
+
+        #constructor
+
+        tdrk = TwoDerivativeRungeKuttaMethod(A1, b1, A2, b2)
+
+        @test tdrk isa TwoDerivativeRungeKuttaMethod
+        @test size(tdrk.A1) == (2, 2)
+        @test size(tdrk.A2) == (2, 2)
+        @test length(tdrk.b1) == 2
+        @test length(tdrk.b2) == 2
+
+        # row-sum default for c1
+        @test tdrk.c1 == vec(sum(A1, dims = 2))
+
+        # bseries
+        tdrk_series = @inferred bseries(tdrk, 5)
+
+        #should be 4th order
+        @test @inferred(order_of_accuracy(tdrk_series)) == 4
+
+        #test a collapsing tree as well
+        tree = ColoredRootedTree([1,2,3,4], [1,1,1,1])
+
+        # Compute elementary weight
+        w = collapse_elementary_weight(tree, tdrk)
+
+        # Manual expected weight
+        c = vec(sum(A1, dims=2))
+        cp = vec(sum(A2, dims=2))
+        b = b1
+        bp = b2
+        A = A1
+        Ap = A2
+
+        w_expected = dot(b, A * (A * c)) + dot(bp, A * c) + dot(b, Ap * c) + dot(b, A * cp) + dot(bp, cp)
+
+        @test w == w_expected
+
+    end
+
 end # @testset "BSeries"
