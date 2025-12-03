@@ -10,7 +10,7 @@ we present additional examples of composing B-series.
 ## [Richardson extrapolation](@id compose-richardson-extrapolation)
 
 Richardson extrapolation is a well-known technique to increase the
-order of accuracy of a rime integration method. Assume we are given
+order of accuracy of a time integration method. Assume we are given
 a Runge-Kutta method with step size ``h``. Let ``u^{n+1}_h`` be the
 solution after one step with step size ``h``, and let
 ``u^{n+1}_{2 \times \frac{h}{2}}`` be the solution after two steps with
