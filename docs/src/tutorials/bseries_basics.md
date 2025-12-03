@@ -151,7 +151,9 @@ latexify(coeffs2-coeffs_ex, cdot=false)
 
 This confirms again the accuracy of the method, and shows us that we
 can eliminate one of the leading error terms completely if we take
-$\alpha=3/4$ (this is known as Ralston's method, or sometimes as Heun's method).
+$\alpha = 3 / 4$ (this is known as Ralston's method, or sometimes as
+Heun's method, although the latter is typically associated with
+$\alpha = 1 / 2$).
 
 
 ## B-series for a specific ODE

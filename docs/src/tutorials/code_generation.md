@@ -6,7 +6,7 @@ Although [BSeries.jl](https://github.com/ranocha/BSeries.jl) is compatible with 
 [symbolic backends](@ref tutorial-symbolic-computations), it's currently easiest to
 perform code generation using [Symbolics.jl](https://github.com/JuliaSymbolics/Symbolics.jl).
 
-First, we generate the B-series that we want work with.
+First, we generate the B-series that we want to work with.
 Here we take a generic 2nd-order RK method and generate terms only up to 3rd order,
 in order to work with the leading truncation error.
 

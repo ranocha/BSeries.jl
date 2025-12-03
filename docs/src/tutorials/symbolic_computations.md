@@ -16,9 +16,9 @@ as symbolic backends. You can find some performance comparisons of them in the
 
 ## Generating LaTeX code
 
-BSeries.jl allow fully symbolic computations of [`modified_equation`](@ref)s
+BSeries.jl allows fully symbolic computations of [`modified_equation`](@ref)s
 and [`modifying_integrator`](@ref)s. More information about these features
-are available in the respective tutorials. Here, we will also demonstrate how
+is available in the respective tutorials. Here, we will also demonstrate how
 LaTeX code can be generated via
 [Latexify.jl](https://github.com/korsbo/Latexify.jl).
 
