@@ -1294,12 +1294,7 @@ function TwoDerivativeRungeKuttaMethod(A1, b1, A2, b2, c1 = vec(sum(A1, dims=2))
 end
 
 
-"""
-    eltype(tdrk::TwoDerivativeRungeKuttaMethod)
-
-Return the element type of the coefficients.
-"""
-Base.eltype(tdrk::TwoDerivativeRungeKuttaMethod{T, MatT, VecT}) where {T, MatT, VecT} = T
+Base.eltype(tdrk::TwoDerivativeRungeKuttaMethod{T}) where {T} = T
 
 """
     bseries(tdrk::TwoDerivativeRungeKuttaMethod, order) -> TruncatedBSeries
