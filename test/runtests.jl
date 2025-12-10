@@ -3,7 +3,7 @@ using BSeries
 
 using BSeries.Latexify: latexify
 
-using LinearAlgebra: I
+using LinearAlgebra: I, dot
 using StaticArrays: @SArray, @SMatrix, @SVector
 
 using Symbolics: Symbolics
@@ -3293,4 +3293,71 @@ using Aqua: Aqua
             @test substituted == s
         end
     end
+
+    @testset "TwoDerivativeRungeKuttaMethod" begin
+
+        # Example two-derivative RK method (order 3) from "On explicit two-derivative Runge-Kutta methods" from R.P.K. Chan and A.Y.J. Tsai (2010)
+        A1 = [0 0;
+            1//2 0]
+
+        b1 = [1, 0]
+
+        A2 = [0 0;
+            1//8 0]
+
+        b2 = [1//6, 1//3]
+
+        #constructor
+
+        tdrk = TwoDerivativeRungeKuttaMethod(A1, b1, A2, b2)
+
+        @test tdrk isa TwoDerivativeRungeKuttaMethod
+        @test size(tdrk.A1) == (2, 2)
+        @test size(tdrk.A2) == (2, 2)
+        @test length(tdrk.b1) == 2
+        @test length(tdrk.b2) == 2
+
+        # row-sum default for c1
+        @test tdrk.c1 == vec(sum(A1, dims = 2))
+
+        # bseries
+        tdrk_series = @inferred bseries(tdrk, 5)
+
+        #should be 4th order
+        @test @inferred(order_of_accuracy(tdrk_series)) == 4
+
+        #now test with 5 stage 7th order method from Chan and Tsai (2010)
+
+        A_1 = [ 0      0       0       0       0;
+                2//7   0       0       0       0;
+                2//5   0       0       0       0;
+                4//7   0       0       0       0;
+                1       0       0       0       0
+        ]
+
+        b_1 = [1,0,0,0,0]
+
+        A_2 = [
+            0       0       0       0       0;
+            2//49   0       0       0       0;
+            2//25   0       0       0       0;
+            4//49   4//49   0       0       0;
+            -159//832  1715//832  -1875//832  735//832   0
+        ]
+
+        b_2 = [
+            71//960,
+            2401//4800,
+            -625//1728,
+            2401//8640,
+            13//1350
+        ]
+
+        tdrk_2 = TwoDerivativeRungeKuttaMethod(A_1, b_1, A_2, b_2)
+        # bseries
+        tdrk_series_2 = @inferred bseries(tdrk_2, 8)
+        #should be 7th order
+        @test @inferred(order_of_accuracy(tdrk_series_2)) == 7
+    end
+
 end # @testset "BSeries"

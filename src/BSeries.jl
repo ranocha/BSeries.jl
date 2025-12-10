@@ -19,7 +19,7 @@ end
 
 using Latexify: Latexify, LaTeXString
 using Combinatorics: Combinatorics, permutations
-using LinearAlgebra: LinearAlgebra, rank
+using LinearAlgebra: LinearAlgebra, rank, dot
 using SparseArrays: SparseArrays, sparse
 
 @reexport using Polynomials: Polynomials, Polynomial
@@ -45,6 +45,8 @@ export renormalize, renormalize!
 export is_energy_preserving, energy_preserving_order
 
 export order_of_symplecticity, is_symplectic
+
+export TwoDerivativeRungeKuttaMethod
 
 # Types used for traits
 # These traits may decide between different algorithms based on the
@@ -1254,33 +1256,231 @@ end
 # should create a lazy version, optionally a memoized one
 
 """
-    substitute(b, a, t::AbstractRootedTree)
+    TwoDerivativeRungeKuttaMethod(A1, b1, A2, b2, c = vec(sum(A1, dims=2)))
 
-Compute the coefficient corresponding to the tree `t` of the B-series that is
-formed by substituting the B-series `b` into the B-series `a`. It is assumed
-that the B-series `b` has the coefficient zero of the empty tree.
+Represent a two-derivative Runge-Kutta method with Butcher coefficients
+`A1`, `b1`, and `c` for the first derivative and `A2`, `b2` for the second
+derivative.
+If `c` is not provided, the usual "row sum" requirement of consistency with
+autonomous problems is applied.
 
-# References
+Given an ODE ``u'(t) = f(t, u(t))`` with ``u''(t) = g(t, u(t))``,
+one step from ``u^{n}`` to ``u^{n+1}`` is given by
 
-Section 3.2 of
-- Philippe Chartier, Ernst Hairer, Gilles Vilmart (2010)
-  Algebraic Structures of B-series.
-  Foundations of Computational Mathematics
-  [DOI: 10.1007/s10208-010-9065-1](https://doi.org/10.1007/s10208-010-9065-1)
+'''math
+\\begin{aligned}
+  y^i &= u^n + \\Delta t \\sum_j a^{1}_{i,j} f(t^n + c_i \\Delta t, y^i) + \\Delta t^2 \\sum_j a^{2}_{i,j} g(t^n + c_i \\Delta t, y^i), \\\
+  u^{n+1} &= u^n + \\Delta t \\sum_i b^1_{i} f(t^n + c_i \\Delta t, y^i) + \\Delta t^2 \\sum_i b^2_{i} g(t^n + c_i \\Delta t, y^i),
+\\end{aligned}
+'''
+
 """
-function substitute(b, a, t::AbstractRootedTree)
-    result = zero(first(values(a)) * first(values(b)))
+struct TwoDerivativeRungeKuttaMethod{T,
+                                     MatT <: AbstractMatrix{T},
+                                     VecT <: AbstractVector{T}} <:RootedTrees.AbstractTimeIntegrationMethod
+    A1::MatT
+    b1::VecT
+    c1::VecT
+    A2::MatT
+    b2::VecT
+    c2::VecT
+end
 
-    for (forest, skeleton) in PartitionIterator(t)
-        update = a[skeleton]
-        update isa Rational && iszero(update) && continue
-        for tree in forest
-            update *= b[tree]
+function TwoDerivativeRungeKuttaMethod(A1, b1, A2, b2, c1 = vec(sum(A1, dims=2)), c2 = vec(sum(A2, dims=2)))
+    # promote all numeric types together
+    T = promote_type(eltype(A1), eltype(b1), eltype(A2), eltype(b2), eltype(c1))
+
+    A1T = T.(A1)
+    b1T = T.(b1)
+    c1T = T.(c1)
+    A2T = T.(A2)
+    b2T = T.(b2)
+    c2T = T.(c2)
+
+    return TwoDerivativeRungeKuttaMethod{T, typeof(A1T), typeof(b1T)}(
+        A1T, b1T, c1T, A2T, b2T, c2T
+    )
+end
+
+
+Base.eltype(tdrk::TwoDerivativeRungeKuttaMethod{T}) where {T} = T
+
+"""
+    bseries(tdrk::TwoDerivativeRungeKuttaMethod, order) -> TruncatedBSeries
+
+Construct the truncated B-series of a two-derivative Runge–Kutta method `tdrk`
+up to the specified `order`.
+
+Returns a `TruncatedBSeries{RootedTree, V}` where `V` is inferred from
+the element type of `tdrk`.
+"""
+function bseries(tdrk::TwoDerivativeRungeKuttaMethod, order)
+    # determine coefficient type
+    V_tmp = eltype(tdrk)
+    if V_tmp <: Integer
+        # If people use integer coefficients, they will likely want to have results
+        # as exact as possible. However, general terms are not integers. Thus, we
+        # use rationals instead.
+        V = Rational{V_tmp}
+    else
+        V = V_tmp
+    end
+    series = TruncatedBSeries{RootedTree{Int, Vector{Int}}, V}()
+
+    series[rootedtree(Int[])] = one(V)
+    for o in 1:order
+        for t in RootedTreeIterator(o)
+            series[copy(t)] = elementary_weight(t, tdrk)
         end
-        result += update
     end
 
-    return result
+    return series
+end
+
+"""
+    elementary_weight(t::RootedTree, tdrk::TwoDerivativeRungeKuttaMethod) -> Number
+
+Compute the elementary weight associated with the rooted tree `t`
+for a two-derivative Runge–Kutta method `tdrk`.
+
+
+This follows the recursive formula for the Butcher type order conditions exhibited in, 
+Chan, R.P.K., Tsai, A.Y.J. On explicit two-derivative Runge-Kutta methods.
+- Numer. Algor 53, 171–194 (2010). https://doi.org/10.1007/s11075-009-9349-1
+
+#see formula 16 in the paper
+# alpha(t) = b1*eta(subtrees(t)) +b2*eta(collapse_trees(nu))
+
+# Arguments
+- `t`: A `RootedTree` representing the current term.
+- `tdrk`: The `TwoDerivativeRungeKuttaMethod` whose coefficients define the
+  weights.
+
+# Returns
+A scalar weight equal to the sum over all collapsed trees.
+"""
+function elementary_weight(t::RootedTree, tdrk::TwoDerivativeRungeKuttaMethod)
+    b1 = tdrk.b1
+    b2 = tdrk.b2
+    # alpha(t) = b1*eta(subtrees(t)) +b2*eta(collapse_trees(nu))
+    dot(b1, derivative_weight(t, tdrk)) + dot(b2, collapsed_derivative_weight(t, tdrk))
+end
+
+"""
+    derivative_weight(t::RootedTree, tdrk::TwoDerivativeRungeKuttaMethod)
+
+Compute the derivative weight for the standered trees `t` in a two-derivative Runge–Kutta (TDRK) method.
+
+this corresponds to formula 15 in Chan, R.P.K., Tsai, A.Y.J. On explicit two-derivative Runge-Kutta methods.
+
+eta(t) = A1*eta(t) + A2*eta(t/[1,2])
+
+where we are evaluating eta(t) for the elementary weight of the tree t
+
+"""
+function derivative_weight(t::RootedTree, tdrk::TwoDerivativeRungeKuttaMethod)
+    A1 = tdrk.A1
+    c1 = tdrk.c1
+    A2 = tdrk.A2
+    c2 = tdrk.c2
+
+    result1 = zero(c1) .+ one(eltype(c1))
+
+    if t == rootedtree(Int64[]) || t == rootedtree([1])
+        return zero(c1) .+ one(eltype(c1))
+    else
+        subtrees_arr = subtrees(t)
+        l = 1
+        for n in SubtreeIterator(t)
+            tmp = A1 * derivative_weight(subtrees_arr[l], tdrk) .+
+                  A2 * collapsed_derivative_weight(subtrees_arr[l], tdrk)
+            result1 = result1 .* tmp
+            l += 1
+        end
+        return result1
+    end
+end
+"""
+    collapsed_derivative_weight(t::RootedTree, tdrk::TwoDerivativeRungeKuttaMethod)
+
+
+Compute the derivative weight for the standered trees `t` in a two-derivative Runge–Kutta (TDRK) method.
+
+this corresponds to formula 15 in Chan, R.P.K., Tsai, A.Y.J. On explicit two-derivative Runge-Kutta methods.
+
+eta(t) = A1*eta(t) + A2*eta(t\\[1,2])
+
+where we are evaluating eta(t\\[1/2]) part for the elementary weight of the tree t
+"""
+function collapsed_derivative_weight(t::RootedTree, tdrk::TwoDerivativeRungeKuttaMethod)
+    A1 = tdrk.A1
+    c1 = tdrk.c1
+    A2 = tdrk.A2
+    c2 = tdrk.c2
+    
+    result = zero(c2)
+    
+    if t == rootedtree(Int64[])
+        return zero(c1) .+ one(eltype(c1))
+    else
+        collapsed_trees = collapse_tree(t)
+        number_of_trees = length(collapsed_trees)
+
+        for k in 1:number_of_trees
+            treecombinations = collapsed_trees[k]
+            number2 = length(treecombinations)
+            sum = zero(c1) .+ one(eltype(c1))
+
+            for m in 1:number2
+                step = A1 * derivative_weight(treecombinations[m], tdrk) .+
+                       A2 * collapsed_derivative_weight(treecombinations[m], tdrk)
+                sum = sum .* step
+            end
+
+            result = result .+ sum
+        end
+
+        return result
+    end
+end
+
+# Multi-Derivative Features
+
+"""
+    collapse_tree(t::RootedTree)
+
+recursively collapse a rooted tree `t` by removing [1,2] type branches.
+
+A collapse groups the children of `t` into all possible merged subsets,
+corresponding to the combinatorial partitions needed for the collapsed
+derivative weights 'eta(t\\[1,2])` in two-derivative B-series.
+
+Each element of the returned array is one valid list of collapsed
+subtrees of `t`. No modification of `t` is performed.
+"""
+function collapse_tree(t::RootedTree)
+    CollapsedArray = []
+
+    subtrees_arr = subtrees(t)
+    subtrees_multiplicity = length(subtrees_arr)
+ 
+    # Recustive approach to create all the possibilities of subtrees
+    for i in 1:subtrees_multiplicity
+        subsubtrees = subtrees(subtrees_arr[i])
+        numberofsubsubtrees = length(subsubtrees)
+
+        for j in 1:subtrees_multiplicity
+            if j == i
+            elseif j > i
+                push!(subsubtrees, subtrees_arr[j])
+            else j < i
+                pushfirst!(subsubtrees, subtrees_arr[i-j])
+            end
+        end
+        push!(CollapsedArray, subsubtrees)
+    end
+
+    return CollapsedArray
 end
 
 """
