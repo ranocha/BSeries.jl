@@ -3278,24 +3278,38 @@ using Aqua: Aqua
         #should be 4th order
         @test @inferred(order_of_accuracy(tdrk_series)) == 4
 
-        #test a collapsing tree as well
-        tree = ColoredRootedTree([1,2,3,4], [1,1,1,1])
+        #now test with 5 stage 7th order method from Chan and Tsai (2010)
 
-        # Compute elementary weight
-        w = collapse_elementary_weight(tree, tdrk)
+        A_1 = [ 0      0       0       0       0;
+                2//7   0       0       0       0;
+                2//5   0       0       0       0;
+                4//7   0       0       0       0;
+                1       0       0       0       0
+        ]
 
-        # Manual expected weight
-        c = vec(sum(A1, dims=2))
-        cp = vec(sum(A2, dims=2))
-        b = b1
-        bp = b2
-        A = A1
-        Ap = A2
+        b_1 = [1,0,0,0,0]
 
-        w_expected = dot(b, A * (A * c)) + dot(bp, A * c) + dot(b, Ap * c) + dot(b, A * cp) + dot(bp, cp)
+        A_2 = [
+            0       0       0       0       0;
+            2//49   0       0       0       0;
+            2//25   0       0       0       0;
+            4//49   4//49   0       0       0;
+            -159//832  1715//832  -1875//832  735//832   0
+        ]
 
-        @test w == w_expected
+        b_2 = [
+            71//960,
+            2401//4800,
+            -625//1728,
+            2401//8640,
+            13//1350
+        ]
 
+        tdrk_2 = TwoDerivativeRungeKuttaMethod(A_1, b_1, A_2, b_2)
+        # bseries
+        tdrk_series_2 = @inferred bseries(tdrk_2, 8)
+        #should be 7th order
+        @test @inferred(order_of_accuracy(tdrk_series_2)) == 7
     end
 
 end # @testset "BSeries"
