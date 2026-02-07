@@ -1276,7 +1276,7 @@ one step from ``u^{n}`` to ``u^{n+1}`` is given by
 
 # References
 
-- Chan, R.P.K., Tsai, A.Y.J. 
+- Chan, R.P.K., Tsai, A.Y.J.
   "On explicit two-derivative Runge-Kutta methods."
   Numer Algor 53, 171–194 (2010):
   [DOI: 10.1007/s11075-009-9349-1](https://doi.org/10.1007/s11075-009-9349-1)
@@ -1356,7 +1356,7 @@ Compute the elementary weight \$\Phi(t)\$ for a TDRK method.
 Following Chan & Tsai (2010, Eq. 16), the weight is:
 \$\$ \Phi(t) = b_1 \cdot \eta(t) + b_2 \cdot \bar{\eta}(t) \$\$
 """
-function elementary_weight(t::RootedTree, tdrk::TwoDerivativeRungeKuttaMethod)
+function RootedTrees.elementary_weight(t::RootedTree, tdrk::TwoDerivativeRungeKuttaMethod)
     b1 = tdrk.b1
     b2 = tdrk.b2
     # alpha(t) = b1*eta(subtrees(t)) +b2*eta(collapse_trees(nu))
@@ -1371,7 +1371,7 @@ Compute the derivative weight \$\eta(t)\$ for a TDRK method.
 Following Chan & Tsai (2010, Eq. 15):
 \$\$ \eta(t) = A_1 \cdot \prod \eta(t_i) + A_2 \cdot \prod \bar{\eta}(t_j) \$\$
 """
-function derivative_weight(t::RootedTree, tdrk::TwoDerivativeRungeKuttaMethod)
+function RootedTrees.derivative_weight(t::RootedTree, tdrk::TwoDerivativeRungeKuttaMethod)
     A1 = tdrk.A1
     A2 = tdrk.A2
     c = tdrk.c
@@ -1408,9 +1408,9 @@ function collapsed_derivative_weight(t::RootedTree, tdrk::TwoDerivativeRungeKutt
     A1 = tdrk.A1
     A2 = tdrk.A2
     c = tdrk.c
-    
+
     result = zero(c)
-    
+
     if t == rootedtree(Int64[])
         return zero(c) .+ one(eltype(c))
     else
@@ -1454,7 +1454,7 @@ function collapse_tree(t::RootedTree)
 
     subtrees_arr = subtrees(t)
     subtrees_multiplicity = length(subtrees_arr)
- 
+
     # Recustive approach to create all the possibilities of subtrees
     for i in 1:subtrees_multiplicity
         subsubtrees = subtrees(subtrees_arr[i])
