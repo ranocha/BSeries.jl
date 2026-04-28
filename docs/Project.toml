@@ -14,13 +14,13 @@ Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 Documenter = "1"
 LaTeXStrings = "1"
 Latexify = "0.16"
-OrdinaryDiffEq = "6"
+OrdinaryDiffEq = "6, 7.0"
 Plots = "1"
 PyCall = "1"
 StaticArrays = "1"
 SymEngine = "0.13"
 SymPyPythonCall = "0.5"
-Symbolics = "6"
+Symbolics = "6, 7.20"
 
 [preferences.OrdinaryDiffEq]
 PrecompileAutoSpecialize = false
