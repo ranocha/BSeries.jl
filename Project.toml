@@ -1,7 +1,7 @@
 name = "BSeries"
 uuid = "ebb8d67c-85b4-416c-b05f-5f409e808f32"
-authors = ["Hendrik Ranocha <mail@ranocha.de> and contributors"]
 version = "0.1.71"
+authors = ["Hendrik Ranocha <mail@ranocha.de> and contributors"]
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
@@ -30,7 +30,7 @@ BSeriesSymbolicsExt = "Symbolics"
 Combinatorics = "1"
 Latexify = "0.15, 0.16"
 LinearAlgebra = "1"
-OrderedCollections = "1"
+OrderedCollections = "1, 2"
 Polynomials = "2.0.23, 3 - 3.2.8, 3.2.10"
 Reexport = "1"
 Requires = "1"
