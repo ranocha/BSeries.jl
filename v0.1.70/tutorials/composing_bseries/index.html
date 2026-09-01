@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Composing B-series · BSeries.jl</title><meta name="title" content="Composing B-series · BSeries.jl"/><meta property="og:title" content="Composing B-series · BSeries.jl"/><meta property="twitter:title" content="Composing B-series · BSeries.jl"/><meta name="description" content="Documentation for BSeries.jl."/><meta property="og:description" content="Documentation for BSeries.jl."/><meta property="twitter:description" content="Documentation for BSeries.jl."/><meta property="og:url" content="https://ranocha.github.io/BSeries.jl/stable/tutorials/composing_bseries/"/><meta property="twitter:url" content="https://ranocha.github.io/BSeries.jl/stable/tutorials/composing_bseries/"/><link rel="canonical" href="https://ranocha.github.io/BSeries.jl/stable/tutorials/composing_bseries/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">BSeries.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../bseries_basics/">B-series basics</a></li><li><a class="tocitem" href="../rk_order_conditions/">Runge-Kutta order conditions</a></li><li><a class="tocitem" href="../bseries_creation/">Creating B-series</a></li><li class="is-active"><a class="tocitem" href>Composing B-series</a><ul class="internal"><li><a class="tocitem" href="#compose-richardson-extrapolation"><span>Richardson extrapolation</span></a></li><li><a class="tocitem" href="#compose-effective-order"><span>Effective order and composition</span></a></li></ul></li><li><a class="tocitem" href="../modified_equations/">Modified equations</a></li><li><a class="tocitem" href="../modifying_integrators/">Modifying integrators</a></li><li><a class="tocitem" href="../symbolic_computations/">Symbolic computations</a></li><li><a class="tocitem" href="../code_generation/">Code generation</a></li></ul></li><li><a class="tocitem" href="../../benchmarks/">Benchmarks</a></li><li><a class="tocitem" href="../../api_reference/">API reference</a></li><li><a class="tocitem" href="../../contributing/">Contributing</a></li><li><a class="tocitem" href="../../license/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Composing B-series</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Composing B-series</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ranocha/BSeries.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ranocha/BSeries.jl/blob/main/docs/src/tutorials/composing_bseries.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Composing-B-series"><a class="docs-heading-anchor" href="#Composing-B-series">Composing B-series</a><a id="Composing-B-series-1"></a><a class="docs-heading-anchor-permalink" href="#Composing-B-series" title="Permalink"></a></h1><p>B-series can be <a href="../../api_reference/#BSeries.compose-Tuple{Any, Any, RootedTree}"><code>compose</code></a>d, i.e., the result of one B-series can be inserted into another B-series. We saw this operation already in a <a href="../bseries_creation/#tutorial-bseries-creation-RK-compose">previous tutorial</a> creating the B-series of a Runge-Kutta method step by step. Here, we present additional examples of composing B-series.</p><h2 id="compose-richardson-extrapolation"><a class="docs-heading-anchor" href="#compose-richardson-extrapolation">Richardson extrapolation</a><a id="compose-richardson-extrapolation-1"></a><a class="docs-heading-anchor-permalink" href="#compose-richardson-extrapolation" title="Permalink"></a></h2><p>Richardson extrapolation is a well-known technique to increase the order of accuracy of a rime integration method. Assume we are given a Runge-Kutta method with step size <span>$h$</span>. Let <span>$u^{n+1}_h$</span> be the solution after one step with step size <span>$h$</span>, and let <span>$u^{n+1}_{2 \times \frac{h}{2}}$</span> be the solution after two steps with step size <span>$\frac{h}{2}$</span>. The difference between these two approximations can be used to estimate the leading-order error term and adapt the step size accordingly.</p><p>Moreover, we can combine the two approximations to obtain a new approximation <span>$u^{n+1}_R$</span> by extrapolating to step size <span>$h = 0$</span> as follows:</p><p class="math-container">\[u^{n+1}_R = u^{n+1}_{2 \times \frac{h}{2}} + \frac{ u^{n+1}_{2 \times \frac{h}{2}} - u^{n+1}_h }{ 2^p - 1 },\]</p><p>where <span>$p$</span> is the order of accuracy of the original method. First, we use the classical fourth-order Runge-Kutta method as our base method.</p><pre><code class="language-julia hljs">using BSeries
+
+# classical RK4
+A = [0 0 0 0
+      1//2 0 0 0
+      0 1//2 0 0
+      0 0 1 0]
+b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+rk = RungeKuttaMethod(A, b)
+series_rk = bseries(rk, 6)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 1
+  RootedTree{Int64}: [1]                =&gt; 1
+  RootedTree{Int64}: [1, 2]             =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 1//48
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 1//48
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 1//16
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 1//16
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 5//48
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 5//24
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; 0
+  ⋮                                     =&gt; ⋮</code></pre><pre><code class="language-julia hljs">order_of_accuracy(series_rk)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4</code></pre><p>Next, we compute the B-series of two steps with half the step size.</p><pre><code class="language-julia hljs">series_rk_2 = compose(series_rk, series_rk, normalize_stepsize = true)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 1
+  RootedTree{Int64}: [1]                =&gt; 1
+  RootedTree{Int64}: [1, 2]             =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 1//128
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 13//768
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 19//768
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 13//384
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 19//384
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 17//256
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 13//256
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 77//768
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 77//384
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; 5//4608
+  ⋮                                     =&gt; ⋮</code></pre><pre><code class="language-julia hljs">order_of_accuracy(series_rk_2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4</code></pre><p>Finally, we can combine the two B-series to obtain the Richardson-extrapolated B-series.</p><pre><code class="language-julia hljs">p = order_of_accuracy(series_rk)
+series_richardson = series_rk_2 + (series_rk_2 - series_rk) / (2^p - 1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 1
+  RootedTree{Int64}: [1]                =&gt; 1
+  RootedTree{Int64}: [1, 2]             =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 1//120
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 1//60
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 1//40
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 1//30
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 1//20
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 1//15
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 1//20
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 1//10
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 1//5
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; 1//864
+  ⋮                                     =&gt; ⋮</code></pre><pre><code class="language-julia hljs">order_of_accuracy(series_richardson)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">5</code></pre><p>We can also perform this composition of the methods at the level of the Butcher tableau.</p><pre><code class="language-julia hljs">AA = [A zero(A) zero(A)
+      zero(A) A/2 zero(A)
+      zero(A) repeat(b&#39;/2, length(b)) A/2]
+bb = vcat(-b / (2^p - 1),
+          b / 2 * (1 + 1 // (2^p - 1)),
+          b / 2 * (1 + 1 // (2^p - 1)))
+rk_richardson = RungeKuttaMethod(AA, bb)
+series_richardson_2 = bseries(rk_richardson, 6)
+all(iszero, values(series_richardson - series_richardson_2))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><h2 id="compose-effective-order"><a class="docs-heading-anchor" href="#compose-effective-order">Effective order and composition</a><a id="compose-effective-order-1"></a><a class="docs-heading-anchor-permalink" href="#compose-effective-order" title="Permalink"></a></h2><p>B-series representing a mapping such as a time integration method can be <a href="../../api_reference/#BSeries.compose-Tuple{Any, Any, RootedTree}"><code>compose</code></a>d. This operation is equivalent to performing a step with one method after another. Here, we present the example of Butcher&#39;s method of effective order 5. This is a fourth-order Runge-Kutta method resulting in a fifth-order method when composed with a special starting and finishing procedure.</p><p>First, we set up the B-series of the main method (method &quot;a&quot; in Butcher&#39;s paper):</p><pre><code class="language-julia hljs">using BSeries
+
+A = [0 0 0 0 0;
+     1//5 0 0 0 0;
+     0 2//5 0 0 0;
+     3//16 0 5//16 0 0;
+     1//4 0 -5//4 2 0]
+b = [1 // 6, 0, 0, 2 // 3, 1 // 6]
+rk_a = RungeKuttaMethod(A, b)
+series_a = bseries(rk_a, 6)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 1
+  RootedTree{Int64}: [1]                =&gt; 1
+  RootedTree{Int64}: [1, 2]             =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 1//120
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 1//60
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 1//48
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 1//30
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 1//15
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 5//96
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 5//48
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 5//24
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; 0
+  ⋮                                     =&gt; ⋮</code></pre><p>Note that this method is fourth-order accurate:</p><pre><code class="language-julia hljs">order_of_accuracy(series_a)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4</code></pre><p>Next, we set up the starting procedure (method &quot;b&quot; in Butcher&#39;s paper):</p><pre><code class="language-julia hljs">A = [0 0 0 0 0;
+     1//5 0 0 0 0;
+     0 2//5 0 0 0;
+     75//64 -9//4 117//64 0 0;
+     -37//36 7//3 -3//4 4//9 0]
+b = [19 // 144, 0, 25 // 48, 2 // 9, 1 // 8]
+rk_b = RungeKuttaMethod(A, b)
+series_b = bseries(rk_b, 6)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 1
+  RootedTree{Int64}: [1]                =&gt; 1
+  RootedTree{Int64}: [1, 2]             =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 13//320
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 13//160
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 121//960
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 121//480
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 13//1600
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 13//800
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 139//6400
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 13//400
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 139//3200
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 13//200
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 2003//38400
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 2003//19200
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 2003//9600
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; 0
+  ⋮                                     =&gt; ⋮</code></pre><pre><code class="language-julia hljs">order_of_accuracy(series_b)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3</code></pre><p>Note that this method is only third-order accurate - as is the finishing procedure given by</p><pre><code class="language-julia hljs">A = [0 0 0 0 0;
+     1//5 0 0 0 0;
+     0 2//5 0 0 0;
+     161//192 -19//12 287//192 0 0;
+     -27//28 19//7 -291//196 36//49 0]
+b = [7 // 48, 0, 475 // 1008, 2 // 7, 7 // 72]
+rk_c = RungeKuttaMethod(A, b)
+series_c = bseries(rk_c, 6)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 1
+  RootedTree{Int64}: [1]                =&gt; 1
+  RootedTree{Int64}: [1, 2]             =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 41//960
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 41//480
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 119//960
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 119//480
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 41//4800
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 41//2400
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 463//19200
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 41//1200
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 463//9600
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 41//600
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 639//12800
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 639//6400
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 639//3200
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; 0
+  ⋮                                     =&gt; ⋮</code></pre><pre><code class="language-julia hljs">order_of_accuracy(series_c)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3</code></pre><p>Finally, we can compose the three methods to obtain</p><pre><code class="language-julia hljs">series = compose(series_b, series_a, series_c, normalize_stepsize = true)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 1
+  RootedTree{Int64}: [1]                =&gt; 1
+  RootedTree{Int64}: [1, 2]             =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 1//120
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 1//60
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 1//40
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 1//30
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 1//20
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 1//15
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 1//20
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 1//10
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 1//5
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; 121//87480
+  ⋮                                     =&gt; ⋮</code></pre><p>Note that this composition has to be read from left to right. Finally, we check that the resulting <code>series</code> is indeed fifth-order accurate:</p><pre><code class="language-julia hljs">order_of_accuracy(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">5</code></pre><pre><code class="language-julia hljs">series - ExactSolution(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 0
+  RootedTree{Int64}: [1]                =&gt; 0
+  RootedTree{Int64}: [1, 2]             =&gt; 0
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 0
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 0
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 0
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 0
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; -1//174960
+  ⋮                                     =&gt; ⋮</code></pre><h3 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h3><ul><li>Butcher, J. C. &quot;The effective order of Runge-Kutta methods.&quot; In Conference on the numerical solution of differential equations, pp. 133-139. Springer, Berlin, Heidelberg, 1969. <a href="https://doi.org/10.1007/BFb0060019">DOI: 10.1007/BFb0060019</a></li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../bseries_creation/">« Creating B-series</a><a class="docs-footer-nextpage" href="../modified_equations/">Modified equations »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.0 on <span class="colophon-date" title="Tuesday 18 November 2025 20:08">Tuesday 18 November 2025</span>. Using Julia version 1.12.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

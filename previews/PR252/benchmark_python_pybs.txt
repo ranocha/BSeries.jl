@@ -1,0 +1,21 @@
+Python version 3.9.21 (main, Dec 12 2024, 19:08:08) 
+[GCC 13.2.0]
+Package version 0.3
+
+Modified equation
+19063/26880
+ 5.85833740234375 seconds
+19063/26880
+ 5.711167573928833 seconds
+
+Energy preservation
+9
+ 5.898553848266602 seconds
+9
+ 5.765160083770752 seconds
+
+Symplecticity (conservation of quadratic invariants)
+9
+ 0.03591465950012207 seconds
+9
+ 0.020931482315063477 seconds

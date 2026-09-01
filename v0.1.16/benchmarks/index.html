@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Benchmarks · BSeries.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://ranocha.github.io/BSeries.jl/stable/benchmarks/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">BSeries.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../tutorials/modified_equations/">Modified equations</a></li><li><a class="tocitem" href="../tutorials/modifying_integrators/">Modifying integrators</a></li><li><a class="tocitem" href="../tutorials/symbolic_computations/">Symbolic computations</a></li></ul></li><li class="is-active"><a class="tocitem" href>Benchmarks</a><ul class="internal"><li><a class="tocitem" href="#benchmarks-symbolic-computations"><span>Comparing different symbolic packages</span></a></li><li><a class="tocitem" href="#benchmarks-other-packages"><span>Comparison with other packages</span></a></li><li><a class="tocitem" href="#References"><span>References</span></a></li></ul></li><li><a class="tocitem" href="../api_reference/">API reference</a></li><li><a class="tocitem" href="../contributing/">Contributing</a></li><li><a class="tocitem" href="../license/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Benchmarks</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Benchmarks</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ranocha/BSeries.jl/blob/master/docs/src/benchmarks.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="benchmarks"><a class="docs-heading-anchor" href="#benchmarks">Benchmarks</a><a id="benchmarks-1"></a><a class="docs-heading-anchor-permalink" href="#benchmarks" title="Permalink"></a></h1><p>Here, we collect some simple benchmarks of <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a>. Take them with a grain of salt since they run on virtual machines in the cloud to generate the documentation automatically. You can of course also copy the code and run the benchmarks locally yourself.</p><h2 id="benchmarks-symbolic-computations"><a class="docs-heading-anchor" href="#benchmarks-symbolic-computations">Comparing different symbolic packages</a><a id="benchmarks-symbolic-computations-1"></a><a class="docs-heading-anchor-permalink" href="#benchmarks-symbolic-computations" title="Permalink"></a></h2><p>Symbolic computations of <a href="../api_reference/#BSeries.modified_equation-NTuple{4, Any}"><code>modified_equation</code></a>s and <a href="../api_reference/#BSeries.modifying_integrator-NTuple{4, Any}"><code>modifying_integrator</code></a>s in <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> support</p><ul><li><a href="https://github.com/symengine/SymEngine.jl">SymEngine.jl</a>,</li><li><a href="https://github.com/JuliaPy/SymPy.jl">SymPy.jl</a>, and</li><li><a href="https://github.com/JuliaSymbolics/Symbolics.jl">Symbolics.jl</a></li></ul><p>as symbolic backends. Here, we compare them in the context of the explicit midpoint method and the nonlinear oscillator ODE</p><p class="math-container">\[u&#39;(t) = \frac{1}{\| u(t) \|^2} \begin{pmatrix} -u_2(t) \\ u_1(t) \end{pmatrix}.\]</p><p>This particular combination of explicit Runge-Kutta method and ODE is special since the explicit midpoint method is unconditionally energy-conserving for this problem<sup class="footnote-reference"><a id="citeref-RanochaKetcheson2020" href="#footnote-RanochaKetcheson2020">[RanochaKetcheson2020]</a></sup>.</p><p>First, we set up some code to perform the benchmarks. Here, we use a very naive approach, run the code twice (to see the effect of compilation) and use <code>@time</code> to print the runtime. More sophisticated approaches should of course use something like <code>@benchmark</code> from <a href="https://github.com/JuliaCI/BenchmarkTools.jl">BenchmarkTools.jl</a>. However, this simple and cheap version suffices to compare the orders of magnitude.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays
+
+function benchmark(u, dt, subs, order)
+  # explicit midpoint method
+  A = @SArray [0 0; 1//2 0]
+  b = @SArray [0, 1//1]
+  c = @SArray [0, 1//2]
+
+  # nonlinear oscillator
+  f = [-u[2], u[1]] / (u[1]^2 + u[2]^2)
+
+  println(&quot;\n Computing the series coefficients:&quot;)
+  @time coefficients = modifying_integrator(A, b, c, order)
+  @time coefficients = modifying_integrator(A, b, c, order)
+
+  println(&quot;\n Computing the series including elementary differentials:&quot;)
+  @time series = modifying_integrator(f, u, dt, A, b, c, order)
+  @time series = modifying_integrator(f, u, dt, A, b, c, order)
+
+  substitution_variables = Dict(u[1] =&gt; 1//1, u[2] =&gt; 0//1)
+
+  println(&quot;\n Substituting the initial condition:&quot;)
+  @time subs.(series, (substitution_variables, ))
+  @time subs.(series, (substitution_variables, ))
+
+  println(&quot;\n&quot;)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">benchmark (generic function with 1 method)</code></pre><p>Next, we load the symbolic packages and run the benchmarks.</p><pre><code class="language-julia hljs">using SymEngine: SymEngine
+using SymPy: SymPy
+using Symbolics: Symbolics
+
+println(&quot;SymEngine&quot;)
+dt   = SymEngine.symbols(&quot;dt&quot;)
+u    = SymEngine.symbols(&quot;u1, u2&quot;)
+subs = SymEngine.subs
+benchmark(u, dt, subs, 8)
+
+println(&quot;SymPy&quot;)
+dt   = SymPy.symbols(&quot;dt&quot;)
+u    = SymPy.symbols(&quot;u1, u2&quot;)
+subs = SymPy.subs
+benchmark(u, dt, subs, 8)
+
+println(&quot;Symbolics&quot;)
+Symbolics.@variables dt
+u = Symbolics.@variables u1 u2
+subs = Symbolics.substitute
+benchmark(u, dt, subs, 8)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">SymEngine
+
+ Computing the series coefficients:
+  0.007408 seconds (254 allocations: 73.484 KiB)
+  0.007407 seconds (254 allocations: 73.484 KiB)
+
+ Computing the series including elementary differentials:
+  1.132537 seconds (2.31 M allocations: 134.682 MiB, 5.34% gc time, 97.70% compilation time)
+  0.023503 seconds (48.77 k allocations: 1.219 MiB)
+
+ Substituting the initial condition:
+  0.127224 seconds (191.54 k allocations: 10.782 MiB, 14.13% gc time, 79.46% compilation time)
+  0.004413 seconds (10.49 k allocations: 120.258 KiB)
+
+
+SymPy
+
+ Computing the series coefficients:
+  0.007401 seconds (254 allocations: 73.484 KiB)
+  0.007366 seconds (254 allocations: 73.484 KiB)
+
+ Computing the series including elementary differentials:
+  4.992635 seconds (2.50 M allocations: 141.583 MiB, 1.21% gc time, 13.65% compilation time)
+  2.621401 seconds (175.81 k allocations: 4.668 MiB)
+
+ Substituting the initial condition:
+  1.079506 seconds (488.45 k allocations: 34.187 MiB, 1.95% gc time, 19.69% compilation time)
+  0.852241 seconds (204 allocations: 5.703 KiB)
+
+
+Symbolics
+
+ Computing the series coefficients:
+  0.007393 seconds (254 allocations: 73.484 KiB)
+  0.007382 seconds (254 allocations: 73.484 KiB)
+
+ Computing the series including elementary differentials:
+ 31.967389 seconds (48.52 M allocations: 2.928 GiB, 4.30% gc time, 95.40% compilation time)
+  1.163412 seconds (5.31 M allocations: 266.864 MiB, 12.81% gc time)
+
+ Substituting the initial condition:
+  8.179559 seconds (28.01 M allocations: 1.291 GiB, 10.12% gc time, 52.28% compilation time)
+  3.831626 seconds (21.29 M allocations: 898.199 MiB, 6.64% gc time)</code></pre><p>These results were obtained using the following versions.</p><pre><code class="language-julia hljs">using InteractiveUtils
+versioninfo()
+
+using Pkg
+Pkg.status([&quot;BSeries&quot;, &quot;RootedTrees&quot;, &quot;SymEngine&quot;, &quot;SymPy&quot;, &quot;Symbolics&quot;])</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Julia Version 1.6.4
+Commit 35f0c911f4 (2021-11-19 03:54 UTC)
+Platform Info:
+  OS: Linux (x86_64-pc-linux-gnu)
+  CPU: Intel(R) Xeon(R) Platinum 8272CL CPU @ 2.60GHz
+  WORD_SIZE: 64
+  LIBM: libopenlibm
+  LLVM: libLLVM-11.0.1 (ORCJIT, skylake-avx512)
+<span class="sgr32"><span class="sgr1">      Status</span></span> `~/work/BSeries.jl/BSeries.jl/docs/Project.toml`
+ <span class="sgr90"> [ebb8d67c] </span>BSeries v0.1.16 `~/work/BSeries.jl/BSeries.jl`
+ <span class="sgr90"> [123dc426] </span>SymEngine v0.8.7
+ <span class="sgr90"> [24249f21] </span>SymPy v1.1.2
+ <span class="sgr90"> [0c5d862f] </span>Symbolics v3.5.1</code></pre><h2 id="benchmarks-other-packages"><a class="docs-heading-anchor" href="#benchmarks-other-packages">Comparison with other packages</a><a id="benchmarks-other-packages-1"></a><a class="docs-heading-anchor-permalink" href="#benchmarks-other-packages" title="Permalink"></a></h2><p>There are also other open source packages for B-series. Currently, we are aware of the Python packages</p><ul><li><a href="https://github.com/ketch/BSeries"><code>BSeries</code></a></li><li><a href="https://github.com/henriksu/pybs"><code>pybs</code></a></li></ul><p>If you know about similar open source packages out there, please inform us, e.g., by <a href="https://github.com/ranocha/BSeries.jl/issues/new/choose">creating an issue</a> on GitHub.</p><p>The packages listed above and <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> all use different approaches and have different features. Thus, comparisons must be restricted to their common subset of features. Here, we present some simple performance comparisons. Again, we just use (the equivalent of) <code>@time</code> twice to get an idea of the performance after compilation, allowing us to compare orders of magnitude.</p><p>First, we start with the Python package <a href="https://github.com/ketch/BSeries"><code>BSeries</code></a> and the following benchmark script.</p><div class="markdown"><pre><code class="language-python">import sys
+from importlib.metadata import version
+print&#40;&quot;Python version&quot;, sys.version&#41;
+print&#40;&quot;Package version&quot;, version&#40;&#39;pybs&#39;&#41;&#41;
+
+import time
+import BSeries.bs as bs
+import nodepy.runge_kutta_method as rk
+
+midpoint_method &#61; rk.loadRKM&#40;&quot;Mid22&quot;&#41;
+up_to_order &#61; 9
+
+
+print&#40;&quot;\nModified equation&quot;&#41;
+
+start_time &#61; time.time&#40;&#41;
+series &#61; bs.modified_equation&#40;None, None,
+                              midpoint_method.A, midpoint_method.b,
+                              up_to_order, True&#41;
+result &#61; sum&#40;series.values&#40;&#41;&#41;
+end_time &#61; time.time&#40;&#41;
+print&#40;result&#41;
+print&#40;&quot;&quot;, end_time - start_time, &quot;seconds&quot;&#41;
+
+start_time &#61; time.time&#40;&#41;
+series &#61; bs.modified_equation&#40;None, None,
+                              midpoint_method.A, midpoint_method.b,
+                              up_to_order, True&#41;
+result &#61; sum&#40;series.values&#40;&#41;&#41;
+end_time &#61; time.time&#40;&#41;
+print&#40;result&#41;
+print&#40;&quot;&quot;, end_time - start_time, &quot;seconds&quot;&#41;
+
+
+print&#40;&quot;\nModifying integrator&quot;&#41;
+
+start_time &#61; time.time&#40;&#41;
+series &#61; bs.modifying_integrator&#40;None, None,
+                                 midpoint_method.A, midpoint_method.b,
+                                 up_to_order, True&#41;
+result &#61; sum&#40;series.values&#40;&#41;&#41;
+end_time &#61; time.time&#40;&#41;
+print&#40;result&#41;
+print&#40;&quot;&quot;, end_time - start_time, &quot;seconds&quot;&#41;
+
+start_time &#61; time.time&#40;&#41;
+series &#61; bs.modifying_integrator&#40;None, None,
+                                 midpoint_method.A, midpoint_method.b,
+                                 up_to_order, True&#41;
+result &#61; sum&#40;series.values&#40;&#41;&#41;
+end_time &#61; time.time&#40;&#41;
+print&#40;result&#41;
+print&#40;&quot;&quot;, end_time - start_time, &quot;seconds&quot;&#41;</code></pre>
+</div><p>The results are as follows.</p><div class="markdown"><pre><code>Python version 3.8.10 &#40;default, Sep 28 2021, 16:10:42&#41; 
+&#91;GCC 9.3.0&#93;
+Package version 0.3
+
+Modified equation
+19063/26880
+ 16.4361252784729 seconds
+19063/26880
+ 15.731331825256348 seconds
+
+Modifying integrator
+5460293/241920
+ 13.799844980239868 seconds
+5460293/241920
+ 13.931408882141113 seconds</code></pre>
+</div><p>Next, we look at the Python package <a href="https://github.com/henriksu/pybs"><code>pybs</code></a> and the following benchmark script. Note that this package does not provide functionality for modifying integrators.</p><div class="markdown"><pre><code class="language-python">import sys
+from importlib.metadata import version
+print&#40;&quot;Python version&quot;, sys.version&#41;
+print&#40;&quot;Package version&quot;, version&#40;&#39;pybs&#39;&#41;&#41;
+
+import time
+import pybs
+from pybs.rungekutta import methods as rk_methods
+
+midpoint_method &#61; rk_methods.RKmidpoint
+up_to_order &#61; 9
+number_of_terms &#61; pybs.unordered_tree.number_of_trees_up_to_order&#40;up_to_order&#43;1&#41;
+
+from itertools import islice
+def first_values&#40;f, n&#41;:
+  return &#40;f&#40;tree&#41; for tree in islice&#40;pybs.unordered_tree.tree_generator&#40;&#41;, 0, n&#41;&#41;
+
+
+print&#40;&quot;\nModified equation&quot;&#41;
+
+start_time &#61; time.time&#40;&#41;
+midpoint_series &#61; midpoint_method.phi&#40;&#41;
+series &#61; pybs.series.modified_equation&#40;midpoint_series&#41;
+result &#61; sum&#40;first_values&#40;series, number_of_terms&#41;&#41;
+end_time &#61; time.time&#40;&#41;
+print&#40;result&#41;
+print&#40;&quot;&quot;, end_time - start_time, &quot;seconds&quot;&#41;
+
+start_time &#61; time.time&#40;&#41;
+midpoint_series &#61; midpoint_method.phi&#40;&#41;
+series &#61; pybs.series.modified_equation&#40;midpoint_series&#41;
+result &#61; sum&#40;first_values&#40;series, number_of_terms&#41;&#41;
+end_time &#61; time.time&#40;&#41;
+print&#40;result&#41;
+print&#40;&quot;&quot;, end_time - start_time, &quot;seconds&quot;&#41;</code></pre>
+</div><p>The results are as follows.</p><div class="markdown"><pre><code>Python version 3.8.10 &#40;default, Sep 28 2021, 16:10:42&#41; 
+&#91;GCC 9.3.0&#93;
+Package version 0.3
+
+Modified equation
+19063/26880
+ 5.772308826446533 seconds
+19063/26880
+ 5.705084562301636 seconds</code></pre>
+</div><p>Finally, we perform the same task using <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> in Julia.</p><pre><code class="language-julia hljs">using BSeries, StaticArrays
+
+A = @SArray [0 0; 1//2 0]
+b = @SArray [0, 1//1]
+c = @SArray [0, 1//2]
+up_to_order = 9
+
+
+println(&quot;Modified equation&quot;)
+@time begin
+  series = modified_equation(A, b, c, up_to_order)
+  println(sum(values(series)))
+end
+
+@time begin
+  series = modified_equation(A, b, c, up_to_order)
+  println(sum(values(series)))
+end
+
+
+println(&quot;\nModifying integrator&quot;)
+@time begin
+  series = modifying_integrator(A, b, c, up_to_order)
+  println(sum(values(series)))
+end
+
+@time begin
+  series = modifying_integrator(A, b, c, up_to_order)
+  println(sum(values(series)))
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Modified equation
+19063//26880
+  0.214059 seconds (129.21 k allocations: 8.243 MiB, 62.06% compilation time)
+19063//26880
+  0.081135 seconds (638 allocations: 382.891 KiB)
+
+Modifying integrator
+5460293//241920
+  0.042180 seconds (642 allocations: 345.875 KiB, 12.17% compilation time)
+5460293//241920
+  0.036995 seconds (614 allocations: 344.266 KiB)</code></pre><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><p>Hendrik Ranocha and David Ketcheson (2020)   Energy Stability of Explicit Runge-Kutta Methods for Nonautonomous or   Nonlinear Problems.   SIAM Journal on Numerical Analysis   <a href="https://doi.org/10.1137/19M1290346">DOI: 10.1137/19M1290346</a></p><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-RanochaKetcheson2020"><a class="tag is-link" href="#citeref-RanochaKetcheson2020">RanochaKetcheson2020</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tutorials/symbolic_computations/">« Symbolic computations</a><a class="docs-footer-nextpage" href="../api_reference/">API reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.10 on <span class="colophon-date" title="Thursday 9 December 2021 11:02">Thursday 9 December 2021</span>. Using Julia version 1.6.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
