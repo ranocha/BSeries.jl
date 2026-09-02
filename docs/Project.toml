@@ -16,13 +16,13 @@ Documenter = "1"
 DocumenterCodeBlocks = "1.0"
 LaTeXStrings = "1"
 Latexify = "0.16"
-OrdinaryDiffEq = "6"
+OrdinaryDiffEq = "6, 7.8"
 Plots = "1"
 PyCall = "1"
 StaticArrays = "1"
 SymEngine = "0.13"
 SymPyPythonCall = "0.5"
-Symbolics = "6"
+Symbolics = "6, 7.39"
 
 [preferences.OrdinaryDiffEq]
 PrecompileAutoSpecialize = false
