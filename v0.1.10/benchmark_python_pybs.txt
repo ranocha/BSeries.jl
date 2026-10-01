@@ -1,0 +1,7 @@
+Python version 3.8.10 (default, Jun  2 2021, 10:49:15) 
+[GCC 9.4.0]
+Package version 0.3
+19063/26880
+ 5.783093690872192 seconds
+19063/26880
+ 5.718868732452393 seconds

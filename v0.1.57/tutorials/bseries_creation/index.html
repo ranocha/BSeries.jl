@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Creating B-series · BSeries.jl</title><meta name="title" content="Creating B-series · BSeries.jl"/><meta property="og:title" content="Creating B-series · BSeries.jl"/><meta property="twitter:title" content="Creating B-series · BSeries.jl"/><meta name="description" content="Documentation for BSeries.jl."/><meta property="og:description" content="Documentation for BSeries.jl."/><meta property="twitter:description" content="Documentation for BSeries.jl."/><meta property="og:url" content="https://ranocha.github.io/BSeries.jl/stable/tutorials/bseries_creation/"/><meta property="twitter:url" content="https://ranocha.github.io/BSeries.jl/stable/tutorials/bseries_creation/"/><link rel="canonical" href="https://ranocha.github.io/BSeries.jl/stable/tutorials/bseries_creation/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">BSeries.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../bseries_basics/">B-series basics</a></li><li><a class="tocitem" href="../rk_order_conditions/">Runge-Kutta order conditions</a></li><li class="is-active"><a class="tocitem" href>Creating B-series</a><ul class="internal"><li><a class="tocitem" href="#B-series-for-Runge-Kutta-methods"><span>B-series for Runge-Kutta methods</span></a></li><li><a class="tocitem" href="#B-series-for-additive-Runge-Kutta-methods"><span>B-series for additive Runge-Kutta methods</span></a></li><li><a class="tocitem" href="#B-series-for-Rosenbrock-methods"><span>B-series for Rosenbrock methods</span></a></li><li><a class="tocitem" href="#tutorial-bseries-creation-AVF"><span>B-series for the average vector field method</span></a></li><li><a class="tocitem" href="#tutorial-bseries-creation-compose"><span>Composing B-series</span></a></li></ul></li><li><a class="tocitem" href="../modified_equations/">Modified equations</a></li><li><a class="tocitem" href="../modifying_integrators/">Modifying integrators</a></li><li><a class="tocitem" href="../symbolic_computations/">Symbolic computations</a></li><li><a class="tocitem" href="../code_generation/">Code generation</a></li></ul></li><li><a class="tocitem" href="../../benchmarks/">Benchmarks</a></li><li><a class="tocitem" href="../../api_reference/">API reference</a></li><li><a class="tocitem" href="../../contributing/">Contributing</a></li><li><a class="tocitem" href="../../license/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Creating B-series</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Creating B-series</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ranocha/BSeries.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ranocha/BSeries.jl/blob/main/docs/src/tutorials/bseries_creation.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="tutorial-bseries-creation"><a class="docs-heading-anchor" href="#tutorial-bseries-creation">Creating B-series</a><a id="tutorial-bseries-creation-1"></a><a class="docs-heading-anchor-permalink" href="#tutorial-bseries-creation" title="Permalink"></a></h1><p>We have already seen some ways of creating B-series in the <a href="../bseries_basics/#tutorial-bseries-basics">basic tutorial</a>. In this tutorial, we look at ways to obtain the B-series of different time integration methods.</p><h2 id="B-series-for-Runge-Kutta-methods"><a class="docs-heading-anchor" href="#B-series-for-Runge-Kutta-methods">B-series for Runge-Kutta methods</a><a id="B-series-for-Runge-Kutta-methods-1"></a><a class="docs-heading-anchor-permalink" href="#B-series-for-Runge-Kutta-methods" title="Permalink"></a></h2><p><a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> and <a href="https://github.com/SciML/RootedTrees.jl">RootedTrees.jl</a> provide the type <a href="../../api_reference/#RootedTrees.RungeKuttaMethod"><code>RungeKuttaMethod</code></a> as wrapper of Butcher coefficients <code>A, b, c</code> of Runge-Kutta methods. For example, you can create the classical explicit, fourth-order Runge-Kutta method as follows.</p><pre><code class="language-julia hljs">using BSeries
+
+# classical RK4
+A = [0 0 0 0
+      1//2 0 0 0
+      0 1//2 0 0
+      0 0 1 0]
+b = [1 // 6, 1 // 3, 1 // 3, 1 // 6]
+rk = RungeKuttaMethod(A, b)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">RungeKuttaMethod{Rational{Int64}} with
+A: 4×4 Matrix{Rational{Int64}}:
+ 0//1  0//1  0//1  0//1
+ 1//2  0//1  0//1  0//1
+ 0//1  1//2  0//1  0//1
+ 0//1  0//1  1//1  0//1
+b: 4-element Vector{Rational{Int64}}:
+ 1//6
+ 1//3
+ 1//3
+ 1//6
+c: 4-element Vector{Rational{Int64}}:
+ 0//1
+ 1//2
+ 1//2
+ 1//1
+</code></pre><p>Instead of passing the Butcher coefficients explicitly to <a href="../../api_reference/#BSeries.bseries"><code>bseries</code></a>, you can also pass the wrapper struct <code>rk</code>. In fact, this is the preferred method.</p><pre><code class="language-julia hljs">series = bseries(rk, 5)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         =&gt; 1//1
+  RootedTree{Int64}: [1]             =&gt; 1//1
+  RootedTree{Int64}: [1, 2]          =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]       =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]       =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]    =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]    =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]    =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]    =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5] =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4, 4] =&gt; 1//48
+  RootedTree{Int64}: [1, 2, 3, 4, 3] =&gt; 1//48
+  RootedTree{Int64}: [1, 2, 3, 4, 2] =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3, 3] =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3, 2] =&gt; 1//16
+  RootedTree{Int64}: [1, 2, 3, 2, 3] =&gt; 1//16
+  RootedTree{Int64}: [1, 2, 3, 2, 2] =&gt; 5//48
+  RootedTree{Int64}: [1, 2, 2, 2, 2] =&gt; 5//24</code></pre><p>We can check that the classical Runge-Kutta method is indeed fourth-order accurate.</p><pre><code class="language-julia hljs">series - ExactSolution(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         =&gt; 0//1
+  RootedTree{Int64}: [1]             =&gt; 0//1
+  RootedTree{Int64}: [1, 2]          =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3]       =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 2]       =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 3]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 2]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 2, 2]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4, 5] =&gt; -1//120
+  RootedTree{Int64}: [1, 2, 3, 4, 4] =&gt; 1//240
+  RootedTree{Int64}: [1, 2, 3, 4, 3] =&gt; -1//240
+  RootedTree{Int64}: [1, 2, 3, 4, 2] =&gt; 1//120
+  RootedTree{Int64}: [1, 2, 3, 3, 3] =&gt; -1//120
+  RootedTree{Int64}: [1, 2, 3, 3, 2] =&gt; -1//240
+  RootedTree{Int64}: [1, 2, 3, 2, 3] =&gt; 1//80
+  RootedTree{Int64}: [1, 2, 3, 2, 2] =&gt; 1//240
+  RootedTree{Int64}: [1, 2, 2, 2, 2] =&gt; 1//120</code></pre><pre><code class="language-julia hljs">order_of_accuracy(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4</code></pre><h2 id="B-series-for-additive-Runge-Kutta-methods"><a class="docs-heading-anchor" href="#B-series-for-additive-Runge-Kutta-methods">B-series for additive Runge-Kutta methods</a><a id="B-series-for-additive-Runge-Kutta-methods-1"></a><a class="docs-heading-anchor-permalink" href="#B-series-for-additive-Runge-Kutta-methods" title="Permalink"></a></h2><p><a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> and <a href="https://github.com/SciML/RootedTrees.jl">RootedTrees.jl</a> also support additive Runge-Kutta methods via the wrapper <a href="../../api_reference/#RootedTrees.AdditiveRungeKuttaMethod"><code>AdditiveRungeKuttaMethod</code></a>. For example, we can write the Störmer-Verlet method as additive Runge-Kutta method following Table II.2.1 of Hairer, Lubich, and Wanner (2002).</p><pre><code class="language-julia hljs">using BSeries
+
+As = [
+    [0 0; 1//2 1//2],
+    [1//2 0; 1//2 0],
+]
+bs = [
+    [1 // 2, 1 // 2],
+    [1 // 2, 1 // 2],
+]
+ark = AdditiveRungeKuttaMethod(As, bs)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">AdditiveRungeKuttaMethod{Rational{Int64}} with methods
+1. RungeKuttaMethod{Rational{Int64}} with
+A: 2×2 Matrix{Rational{Int64}}:
+ 0//1  0//1
+ 1//2  1//2
+b: 2-element Vector{Rational{Int64}}:
+ 1//2
+ 1//2
+c: 2-element Vector{Rational{Int64}}:
+ 0//1
+ 1//1
+2. RungeKuttaMethod{Rational{Int64}} with
+A: 2×2 Matrix{Rational{Int64}}:
+ 1//2  0//1
+ 1//2  0//1
+b: 2-element Vector{Rational{Int64}}:
+ 1//2
+ 1//2
+c: 2-element Vector{Rational{Int64}}:
+ 1//2
+ 1//2
+</code></pre><p>We can create the B-series as usual, truncated to order 3.</p><pre><code class="language-julia hljs">series = bseries(ark, 3)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{BicoloredRootedTree{Int64, Vector{Int64}, Vector{Bool}}, Rational{Int64}} with 21 entries:
+  ColoredRootedTree{Int64}: (Int64[], Bool[])          =&gt; 1//1
+  ColoredRootedTree{Int64}: ([1], Bool[0])             =&gt; 1//1
+  ColoredRootedTree{Int64}: ([1], Bool[1])             =&gt; 1//1
+  ColoredRootedTree{Int64}: ([1, 2], Bool[0, 0])       =&gt; 1//2
+  ColoredRootedTree{Int64}: ([1, 2], Bool[1, 0])       =&gt; 1//2
+  ColoredRootedTree{Int64}: ([1, 2], Bool[0, 1])       =&gt; 1//2
+  ColoredRootedTree{Int64}: ([1, 2], Bool[1, 1])       =&gt; 1//2
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[0, 0, 0]) =&gt; 1//4
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[1, 0, 0]) =&gt; 1//4
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[0, 1, 0]) =&gt; 0//1
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[1, 1, 0]) =&gt; 0//1
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[0, 0, 1]) =&gt; 1//4
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[1, 0, 1]) =&gt; 1//4
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[0, 1, 1]) =&gt; 1//4
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[1, 1, 1]) =&gt; 1//4
+  ColoredRootedTree{Int64}: ([1, 2, 2], Bool[0, 0, 0]) =&gt; 1//2
+  ColoredRootedTree{Int64}: ([1, 2, 2], Bool[1, 0, 0]) =&gt; 1//2
+  ColoredRootedTree{Int64}: ([1, 2, 2], Bool[0, 1, 0]) =&gt; 1//4
+  ColoredRootedTree{Int64}: ([1, 2, 2], Bool[1, 1, 0]) =&gt; 1//4
+  ⋮                                                    =&gt; ⋮</code></pre><p>For additive Runge-Kutta methods like this, we use colored rooted trees. Again, we can check the order of accuracy by comparing the coefficients to the exact solution.</p><pre><code class="language-julia hljs">series - ExactSolution(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{BicoloredRootedTree{Int64, Vector{Int64}, Vector{Bool}}, Rational{Int64}} with 21 entries:
+  ColoredRootedTree{Int64}: (Int64[], Bool[])          =&gt; 0//1
+  ColoredRootedTree{Int64}: ([1], Bool[0])             =&gt; 0//1
+  ColoredRootedTree{Int64}: ([1], Bool[1])             =&gt; 0//1
+  ColoredRootedTree{Int64}: ([1, 2], Bool[0, 0])       =&gt; 0//1
+  ColoredRootedTree{Int64}: ([1, 2], Bool[1, 0])       =&gt; 0//1
+  ColoredRootedTree{Int64}: ([1, 2], Bool[0, 1])       =&gt; 0//1
+  ColoredRootedTree{Int64}: ([1, 2], Bool[1, 1])       =&gt; 0//1
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[0, 0, 0]) =&gt; 1//12
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[1, 0, 0]) =&gt; 1//12
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[0, 1, 0]) =&gt; -1//6
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[1, 1, 0]) =&gt; -1//6
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[0, 0, 1]) =&gt; 1//12
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[1, 0, 1]) =&gt; 1//12
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[0, 1, 1]) =&gt; 1//12
+  ColoredRootedTree{Int64}: ([1, 2, 3], Bool[1, 1, 1]) =&gt; 1//12
+  ColoredRootedTree{Int64}: ([1, 2, 2], Bool[0, 0, 0]) =&gt; 1//6
+  ColoredRootedTree{Int64}: ([1, 2, 2], Bool[1, 0, 0]) =&gt; 1//6
+  ColoredRootedTree{Int64}: ([1, 2, 2], Bool[0, 1, 0]) =&gt; -1//12
+  ColoredRootedTree{Int64}: ([1, 2, 2], Bool[1, 1, 0]) =&gt; -1//12
+  ⋮                                                    =&gt; ⋮</code></pre><pre><code class="language-julia hljs">order_of_accuracy(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2</code></pre><p>We can also create LaTeX code for this B-series as follows.</p><pre><code class="language-julia hljs">using Latexify
+latexify(series)</code></pre><p class="math-container">\[F_{f}\mathopen{}\left( \varnothing \right)\mathclose{} + h \cdot F_{f}\mathopen{}\left( \rootedtree[.] \right)\mathclose{} + h \cdot F_{f}\mathopen{}\left( \rootedtree[o] \right)\mathclose{} + \frac{1}{2} \cdot h^{2} \cdot F_{f}\mathopen{}\left( \rootedtree[.[.]] \right)\mathclose{} + \frac{1}{2} \cdot h^{2} \cdot F_{f}\mathopen{}\left( \rootedtree[o[.]] \right)\mathclose{} + \frac{1}{2} \cdot h^{2} \cdot F_{f}\mathopen{}\left( \rootedtree[.[o]] \right)\mathclose{} + \frac{1}{2} \cdot h^{2} \cdot F_{f}\mathopen{}\left( \rootedtree[o[o]] \right)\mathclose{} + \frac{1}{4} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[.[.[.]]] \right)\mathclose{} + \frac{1}{4} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[o[.[.]]] \right)\mathclose{} + \frac{1}{4} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[.[.[o]]] \right)\mathclose{} + \frac{1}{4} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[o[.[o]]] \right)\mathclose{} + \frac{1}{4} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[.[o[o]]] \right)\mathclose{} + \frac{1}{4} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[o[o[o]]] \right)\mathclose{} + \frac{1}{4} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[.[.][.]] \right)\mathclose{} + \frac{1}{4} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[o[.][.]] \right)\mathclose{} + \frac{1}{4} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[.[o][.]] \right)\mathclose{} + \frac{1}{4} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[o[o][.]] \right)\mathclose{} + \frac{1}{8} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[.[o][o]] \right)\mathclose{} + \frac{1}{8} \cdot h^{3} \cdot F_{f}\mathopen{}\left( \rootedtree[o[o][o]] \right)\mathclose{}\]</p><p>When compiled using the preamble code shown in the docstring of <code>RootedTrees.latexify</code>, the output looks as follows.</p><p><img src="https://user-images.githubusercontent.com/12693098/216765237-0ec1138f-e3bb-45e4-bc81-9de6a3904e46.jpg" alt="bseries-SV"/></p><h3 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h3><ul><li>Ernst Hairer, Gerhard Wanner, Christian Lubich. Geometric numerical integration. Springer, 2002. <a href="https://doi.org/10.1007/3-540-30666-8">DOI: 10.1007/3-540-30666-8</a></li></ul><h2 id="B-series-for-Rosenbrock-methods"><a class="docs-heading-anchor" href="#B-series-for-Rosenbrock-methods">B-series for Rosenbrock methods</a><a id="B-series-for-Rosenbrock-methods-1"></a><a class="docs-heading-anchor-permalink" href="#B-series-for-Rosenbrock-methods" title="Permalink"></a></h2><p><a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> and <a href="https://github.com/SciML/RootedTrees.jl">RootedTrees.jl</a> also support Rosenbrock (Rosenbrock-Wanner, ROW) methods via the wrapper <a href="../../api_reference/#RootedTrees.RosenbrockMethod"><code>RosenbrockMethod</code></a>. For example, a classical ROW method of Kaps and Rentrop (1979) can be parameterized as follows.</p><pre><code class="language-julia hljs">using BSeries
+
+γ = [0.395 0 0 0;
+     -0.767672395484 0.395 0 0;
+     -0.851675323742 0.522967289188 0.395 0;
+     0.288463109545 0.880214273381e-1 -0.337389840627 0.395]
+A = [0 0 0 0;
+     0.438 0 0 0;
+     0.796920457938 0.730795420615e-1 0 0;
+     0.796920457938 0.730795420615e-1 0 0]
+b = [0.199293275701, 0.482645235674, 0.680614886256e-1, 0.25]
+ros = RosenbrockMethod(γ, A, b)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">RosenbrockMethod{Float64} with
+γ: 4×4 Matrix{Float64}:
+  0.395     0.0         0.0      0.0
+ -0.767672  0.395       0.0      0.0
+ -0.851675  0.522967    0.395    0.0
+  0.288463  0.0880214  -0.33739  0.395
+A: 4×4 Matrix{Float64}:
+ 0.0      0.0        0.0  0.0
+ 0.438    0.0        0.0  0.0
+ 0.79692  0.0730795  0.0  0.0
+ 0.79692  0.0730795  0.0  0.0
+b: 4-element Vector{Float64}:
+ 0.199293275701
+ 0.482645235674
+ 0.0680614886256
+ 0.25
+c: 4-element Vector{Float64}:
+ 0.0
+ 0.438
+ 0.8699999999995001
+ 0.8699999999995001
+</code></pre><p>We can create the B-series as usual, truncated to order 5.</p><pre><code class="language-julia hljs">series = bseries(ros, 5)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Float64} with 18 entries:
+  RootedTree{Int64}: Int64[]         =&gt; 1.0
+  RootedTree{Int64}: [1]             =&gt; 1.0
+  RootedTree{Int64}: [1, 2]          =&gt; 0.5
+  RootedTree{Int64}: [1, 2, 3]       =&gt; 0.166667
+  RootedTree{Int64}: [1, 2, 2]       =&gt; 0.333333
+  RootedTree{Int64}: [1, 2, 3, 4]    =&gt; 0.0416667
+  RootedTree{Int64}: [1, 2, 3, 3]    =&gt; 0.0833333
+  RootedTree{Int64}: [1, 2, 3, 2]    =&gt; 0.125
+  RootedTree{Int64}: [1, 2, 2, 2]    =&gt; 0.25
+  RootedTree{Int64}: [1, 2, 3, 4, 5] =&gt; 0.00872428
+  RootedTree{Int64}: [1, 2, 3, 4, 4] =&gt; 0.00418004
+  RootedTree{Int64}: [1, 2, 3, 4, 3] =&gt; 0.0320513
+  RootedTree{Int64}: [1, 2, 3, 4, 2] =&gt; 0.0467417
+  RootedTree{Int64}: [1, 2, 3, 3, 3] =&gt; 0.05
+  RootedTree{Int64}: [1, 2, 3, 3, 2] =&gt; 0.00387949
+  RootedTree{Int64}: [1, 2, 3, 2, 3] =&gt; 0.0469263
+  RootedTree{Int64}: [1, 2, 3, 2, 2] =&gt; 0.09295
+  RootedTree{Int64}: [1, 2, 2, 2, 2] =&gt; 0.19998</code></pre><p>Again, we can check the order of accuracy by comparing the coefficients to the exact solution.</p><pre><code class="language-julia hljs">series - ExactSolution(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Float64} with 18 entries:
+  RootedTree{Int64}: Int64[]         =&gt; 0.0
+  RootedTree{Int64}: [1]             =&gt; 5.99965e-13
+  RootedTree{Int64}: [1, 2]          =&gt; -1.52767e-13
+  RootedTree{Int64}: [1, 2, 3]       =&gt; -2.12913e-13
+  RootedTree{Int64}: [1, 2, 2]       =&gt; -2.50522e-13
+  RootedTree{Int64}: [1, 2, 3, 4]    =&gt; -1.37446e-13
+  RootedTree{Int64}: [1, 2, 3, 3]    =&gt; -8.44186e-14
+  RootedTree{Int64}: [1, 2, 3, 2]    =&gt; -8.9137e-14
+  RootedTree{Int64}: [1, 2, 2, 2]    =&gt; -3.5999e-13
+  RootedTree{Int64}: [1, 2, 3, 4, 5] =&gt; 0.000390949
+  RootedTree{Int64}: [1, 2, 3, 4, 4] =&gt; -0.0124866
+  RootedTree{Int64}: [1, 2, 3, 4, 3] =&gt; 0.00705128
+  RootedTree{Int64}: [1, 2, 3, 4, 2] =&gt; 0.0134083
+  RootedTree{Int64}: [1, 2, 3, 3, 3] =&gt; -9.44661e-14
+  RootedTree{Int64}: [1, 2, 3, 3, 2] =&gt; -0.0627872
+  RootedTree{Int64}: [1, 2, 3, 2, 3] =&gt; -0.00307372
+  RootedTree{Int64}: [1, 2, 3, 2, 2] =&gt; -0.00705
+  RootedTree{Int64}: [1, 2, 2, 2, 2] =&gt; -2.0e-5</code></pre><pre><code class="language-julia hljs">order_of_accuracy(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4</code></pre><h3 id="References-2"><a class="docs-heading-anchor" href="#References-2">References</a><a class="docs-heading-anchor-permalink" href="#References-2" title="Permalink"></a></h3><ul><li>Peter Kaps and Peter Rentrop. &quot;Generalized Runge-Kutta methods of order four with stepsize control for stiff ordinary differential equations.&quot; Numerische Mathematik 33, no. 1 (1979): 55-68. <a href="https://doi.org/10.1007/BF01396495">DOI: 10.1007/BF01396495</a></li></ul><h2 id="tutorial-bseries-creation-AVF"><a class="docs-heading-anchor" href="#tutorial-bseries-creation-AVF">B-series for the average vector field method</a><a id="tutorial-bseries-creation-AVF-1"></a><a class="docs-heading-anchor-permalink" href="#tutorial-bseries-creation-AVF" title="Permalink"></a></h2><p>Consider the autonomous ODE</p><p class="math-container">\[u&#39;(t) = f\bigl( u(t) \bigr).\]</p><p>The average vector field method</p><p class="math-container">\[u^{n+1} = u^{n} + \Delta t \int_0^1 f\bigl(\xi u^{n+1} + (1 - \xi) u^{n}\bigr) \mathrm{d} \xi\]</p><p>introduced by McLachlan, Quispel, and Robidoux (1999) is a second-order accurate method. Quispel and McLaren (2008) discovered that it is indeed a B-series method. Its coefficients are given explicitly as</p><p class="math-container">\[\begin{align*}
+b(.) &amp;= 1, \\
+b([t_1, ..., t_n]) &amp;= b(t_1)...b(t_n) / (n + 1).
+\end{align*}\]</p><p>by Celledoni, McLachlan, McLaren, Owren, Quispel, and Wright (2009). We can implement this up to order 5 in <a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> as follows.</p><pre><code class="language-julia hljs">using BSeries
+
+series = bseries(5) do t, series
+    if order(t) in (0, 1)
+        return 1 // 1
+    else
+        v = 1 // 1
+        n = 0
+        for subtree in SubtreeIterator(t)
+            v *= series[subtree]
+            n += 1
+        end
+        return v / (n + 1)
+    end
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         =&gt; 1//1
+  RootedTree{Int64}: [1]             =&gt; 1//1
+  RootedTree{Int64}: [1, 2]          =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]       =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 2]       =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]    =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 3, 3]    =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 3, 2]    =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2, 2]    =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5] =&gt; 1//16
+  RootedTree{Int64}: [1, 2, 3, 4, 4] =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 4, 3] =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 4, 2] =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 3, 3] =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 3, 3, 2] =&gt; 1//9
+  RootedTree{Int64}: [1, 2, 3, 2, 3] =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 2, 2] =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 2, 2, 2] =&gt; 1//5</code></pre><p><a href="https://github.com/ranocha/BSeries.jl">BSeries.jl</a> also offers a convenience constructor using the type <a href="../../api_reference/#BSeries.AverageVectorFieldMethod"><code>AverageVectorFieldMethod</code></a> as follows.</p><pre><code class="language-julia hljs">series == bseries(AverageVectorFieldMethod(), 5)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">true</code></pre><p>We can check that this method is second-order accurate by comparing it to the B-series of the exact solution, truncated at the same order.</p><pre><code class="language-julia hljs">series - ExactSolution(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 18 entries:
+  RootedTree{Int64}: Int64[]         =&gt; 0//1
+  RootedTree{Int64}: [1]             =&gt; 0//1
+  RootedTree{Int64}: [1, 2]          =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3]       =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 2]       =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4]    =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 3]    =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]    =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 2, 2]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4, 5] =&gt; 13//240
+  RootedTree{Int64}: [1, 2, 3, 4, 4] =&gt; 1//15
+  RootedTree{Int64}: [1, 2, 3, 4, 3] =&gt; 7//120
+  RootedTree{Int64}: [1, 2, 3, 4, 2] =&gt; 1//20
+  RootedTree{Int64}: [1, 2, 3, 3, 3] =&gt; 3//40
+  RootedTree{Int64}: [1, 2, 3, 3, 2] =&gt; 2//45
+  RootedTree{Int64}: [1, 2, 3, 2, 3] =&gt; 1//30
+  RootedTree{Int64}: [1, 2, 3, 2, 2] =&gt; 1//40
+  RootedTree{Int64}: [1, 2, 2, 2, 2] =&gt; 0//1</code></pre><pre><code class="language-julia hljs">order_of_accuracy(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2</code></pre><h3 id="References-3"><a class="docs-heading-anchor" href="#References-3">References</a><a class="docs-heading-anchor-permalink" href="#References-3" title="Permalink"></a></h3><ul><li>Robert I. McLachlan, G. Reinout W. Quispel, and Nicolas Robidoux. &quot;Geometric integration using discrete gradients.&quot; Philosophical Transactions of the Royal Society of London. Series A: Mathematical, Physical and Engineering Sciences 357, no. 1754 (1999): 1021-1045. <a href="https://doi.org/10.1098/rsta.1999.0363">DOI: 10.1098/rsta.1999.0363</a></li><li>G. Reinout W. Quispel, and David Ian McLaren. &quot;A new class of energy-preserving numerical integration methods.&quot; Journal of Physics A: Mathematical and Theoretical 41, no. 4 (2008): 045206. <a href="https://doi.org/10.1088/1751-8113/41/4/045206">DOI: 10.1088/1751-8113/41/4/045206</a></li><li>Elena Celledoni, Robert I. McLachlan, David I. McLaren, Brynjulf Owren, G. Reinout W. Quispel, and William M. Wright. &quot;Energy-preserving Runge-Kutta methods.&quot; ESAIM: Mathematical Modelling and Numerical Analysis 43, no. 4 (2009): 645-649. <a href="https://doi.org/10.1051/m2an/2009020">DOI: 10.1051/m2an/2009020</a></li></ul><h2 id="tutorial-bseries-creation-compose"><a class="docs-heading-anchor" href="#tutorial-bseries-creation-compose">Composing B-series</a><a id="tutorial-bseries-creation-compose-1"></a><a class="docs-heading-anchor-permalink" href="#tutorial-bseries-creation-compose" title="Permalink"></a></h2><p>B-series representing a mapping such as a time integration method can be <a href="../../api_reference/#BSeries.compose-Tuple{Any, Any, RootedTree}"><code>compose</code></a>d. This operation is equivalent to performing a step with one method after another. Here, we present the example of Butcher&#39;s method of effective order 5. This is a fourth-order Runge-Kutta method resulting in a fifth-order method when composed with a special starting and finishing procedure.</p><p>First, we set up the B-series of the main method (method &quot;a&quot; in Butcher&#39;s paper):</p><pre><code class="language-julia hljs">using BSeries
+
+A = [0 0 0 0 0;
+     1//5 0 0 0 0;
+     0 2//5 0 0 0;
+     3//16 0 5//16 0 0;
+     1//4 0 -5//4 2 0]
+b = [1 // 6, 0, 0, 2 // 3, 1 // 6]
+rk_a = RungeKuttaMethod(A, b)
+series_a = bseries(rk_a, 6)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 1//1
+  RootedTree{Int64}: [1]                =&gt; 1//1
+  RootedTree{Int64}: [1, 2]             =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 1//120
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 1//60
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 1//48
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 1//30
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 1//15
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 5//96
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 5//48
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 5//24
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; 0//1
+  ⋮                                     =&gt; ⋮</code></pre><p>Note that this method is fourth-order accurate:</p><pre><code class="language-julia hljs">order_of_accuracy(series_a)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4</code></pre><p>Next, we set up the starting procedure (method &quot;b&quot; in Butcher&#39;s paper):</p><pre><code class="language-julia hljs">A = [0 0 0 0 0;
+     1//5 0 0 0 0;
+     0 2//5 0 0 0;
+     75//64 -9//4 117//64 0 0;
+     -37//36 7//3 -3//4 4//9 0]
+b = [19 // 144, 0, 25 // 48, 2 // 9, 1 // 8]
+rk_b = RungeKuttaMethod(A, b)
+series_b = bseries(rk_b, 6)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 1//1
+  RootedTree{Int64}: [1]                =&gt; 1//1
+  RootedTree{Int64}: [1, 2]             =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 13//320
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 13//160
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 121//960
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 121//480
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 13//1600
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 13//800
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 139//6400
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 13//400
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 139//3200
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 13//200
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 2003//38400
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 2003//19200
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 2003//9600
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; 0//1
+  ⋮                                     =&gt; ⋮</code></pre><pre><code class="language-julia hljs">order_of_accuracy(series_b)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3</code></pre><p>Note that this method is only third-order accurate - as is the finishing procedure given by</p><pre><code class="language-julia hljs">A = [0 0 0 0 0;
+     1//5 0 0 0 0;
+     0 2//5 0 0 0;
+     161//192 -19//12 287//192 0 0;
+     -27//28 19//7 -291//196 36//49 0]
+b = [7 // 48, 0, 475 // 1008, 2 // 7, 7 // 72]
+rk_c = RungeKuttaMethod(A, b)
+series_c = bseries(rk_c, 6)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 1//1
+  RootedTree{Int64}: [1]                =&gt; 1//1
+  RootedTree{Int64}: [1, 2]             =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 41//960
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 41//480
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 119//960
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 119//480
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 41//4800
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 41//2400
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 463//19200
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 41//1200
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 463//9600
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 41//600
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 639//12800
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 639//6400
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 639//3200
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; 0//1
+  ⋮                                     =&gt; ⋮</code></pre><pre><code class="language-julia hljs">order_of_accuracy(series_c)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3</code></pre><p>Finally, we can compose the three methods to obtain</p><pre><code class="language-julia hljs">series = compose(series_b, series_a, series_c, normalize_stepsize = true)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 1//1
+  RootedTree{Int64}: [1]                =&gt; 1//1
+  RootedTree{Int64}: [1, 2]             =&gt; 1//2
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 1//6
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 1//3
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 1//24
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 1//12
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 1//8
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 1//4
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 1//120
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 1//60
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 1//40
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 1//30
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 1//20
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 1//15
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 1//20
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 1//10
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 1//5
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; 121//87480
+  ⋮                                     =&gt; ⋮</code></pre><p>Note that this composition has to be read from left to right. Finally, we check that the resulting <code>series</code> is indeed fifth-order accurate:</p><pre><code class="language-julia hljs">order_of_accuracy(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">5</code></pre><pre><code class="language-julia hljs">series - ExactSolution(series)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">TruncatedBSeries{RootedTree{Int64, Vector{Int64}}, Rational{Int64}} with 38 entries:
+  RootedTree{Int64}: Int64[]            =&gt; 0//1
+  RootedTree{Int64}: [1]                =&gt; 0//1
+  RootedTree{Int64}: [1, 2]             =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3]          =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 2]          =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4]       =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 3]       =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 2]       =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 2, 2]       =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4, 5]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4, 4]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4, 3]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4, 2]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 3, 3]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 3, 2]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 2, 3]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 2, 2]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 2, 2, 2]    =&gt; 0//1
+  RootedTree{Int64}: [1, 2, 3, 4, 5, 6] =&gt; -1//174960
+  ⋮                                     =&gt; ⋮</code></pre><h3 id="References-4"><a class="docs-heading-anchor" href="#References-4">References</a><a class="docs-heading-anchor-permalink" href="#References-4" title="Permalink"></a></h3><ul><li>Butcher, J. C. &quot;The effective order of Runge-Kutta methods.&quot; In Conference on the numerical solution of differential equations, pp. 133-139. Springer, Berlin, Heidelberg, 1969. <a href="https://doi.org/10.1007/BFb0060019">DOI: 10.1007/BFb0060019</a></li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../rk_order_conditions/">« Runge-Kutta order conditions</a><a class="docs-footer-nextpage" href="../modified_equations/">Modified equations »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.0.1 on <span class="colophon-date" title="Friday 22 September 2023 08:44">Friday 22 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

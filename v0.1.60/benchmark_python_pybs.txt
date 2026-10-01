@@ -1,0 +1,15 @@
+Python version 3.9.19 (main, May  8 2024, 14:40:19) 
+[GCC 11.4.0]
+Package version 0.3
+
+Modified equation
+19063/26880
+ 5.8295042514801025 seconds
+19063/26880
+ 5.608755350112915 seconds
+
+Energy preservation
+9
+ 5.77867579460144 seconds
+9
+ 5.637774229049683 seconds
